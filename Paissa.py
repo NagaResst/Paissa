@@ -100,8 +100,10 @@ class ModuleRelativeArticles(tk.Frame):
 
 
 def set_server(server):
+    global status_bar
     global query_server
-    query_server.set(server)
+    query_server = server
+    textbox.set('正在查询服务器： %s' % server)
 
 
 style = ttkbs.Style(theme="flatly")
@@ -109,16 +111,15 @@ root = style.master
 root.geometry('1400x800+200+150')
 root.minsize(600, 360)
 root.title('猴面雀 - FF14市场查询小工具')
-query_server = tk.StringVar()
-query_server.set('猫小胖')
+query_server = '猫小胖'
+
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
-select_server = ttkbs.Label(root, textvariable=query_server, font=16)
-select_server.pack()
+
 
 textbox = tk.StringVar()
-textbox.set('正在查询服务器： %s' % query_server.get())
-status_bar = tk.Label(root, textvariable=textbox, bd=1, anchor='e')
+textbox.set('正在查询服务器： %s' % query_server)
+status_bar = ttkbs.Label(root, textvariable=textbox,  anchor='e')
 status_bar.pack(side='bottom', fill='x')
 
 root.mainloop()

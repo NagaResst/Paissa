@@ -65,8 +65,12 @@ class ModuleLoadPage(tk.Frame):
 
 
 class ModuleIndex(tk.Frame):
-    def __int__(self):
-        return None
+    def __int__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.pack()
+
+    # def creat_query(self, **kwargs):
 
 
 class ModuleItemList(tk.Frame):
@@ -108,7 +112,7 @@ def set_server(server):
 
 style = ttkbs.Style(theme="flatly")
 root = style.master
-root.geometry('1400x800+200+150')
+root.geometry('1000x700+400+150')
 root.minsize(600, 360)
 root.title('猴面雀 - FF14市场查询小工具')
 query_server = '猫小胖'
@@ -116,10 +120,9 @@ query_server = '猫小胖'
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
 
-
 textbox = tk.StringVar()
 textbox.set('正在查询服务器： %s' % query_server)
-status_bar = ttkbs.Label(root, textvariable=textbox,  anchor='e')
+status_bar = tk.Label(root, textvariable=textbox, anchor='se')
 status_bar.pack(side='bottom', fill='x')
 
 root.mainloop()

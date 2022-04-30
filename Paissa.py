@@ -70,7 +70,10 @@ class ModuleIndex(tk.Frame):
         self.master = master
         self.pack()
 
-    # def creat_query(self, **kwargs):
+    def creat_query_box(self, **kwargs):
+        self.query_item = tk.StringVar()
+        tk.Entry(textvariable=query_server, cnf=kwargs).pack()
+        return self.query_item
 
 
 class ModuleItemList(tk.Frame):
@@ -119,6 +122,9 @@ query_server = '猫小胖'
 
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
+
+index = ModuleIndex(root)
+index_page = index.creat_query_box()
 
 textbox = tk.StringVar()
 textbox.set('正在查询服务器： %s' % query_server)

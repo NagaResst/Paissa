@@ -5,11 +5,11 @@ import time
 
 
 class Queryer(object):
-    def __init__(self, query_server):
+    def __init__(self, name, query_server):
         """
         对象初始化
         """
-        self.name = None
+        self.name = name
         self.id = None
         self.stuff = {}
         self.d_cost = 0
@@ -79,12 +79,7 @@ class Queryer(object):
             result = get(query_url)
         itemstr = result.text.replace('null', '"None"')
         itemde = (loads(itemstr))["Results"]
-        if len(itemde) == 1:
-            self.id = itemde[0]['ID']
-            self.name = itemde[0]['Name']
-            return 1
-        elif len(itemde) > 1:
-            return itemde
+        return itemde
 
     def query_item_price(self):
         pass

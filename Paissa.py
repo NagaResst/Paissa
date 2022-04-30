@@ -1,15 +1,22 @@
 import tkinter as tk
-
+from Queryer import Queryer
 import ttkbootstrap as ttkbs
 
 
 class TopMenu(tk.Frame):
+    """
+    顶部菜单栏
+    """
     def __int__(self, master=None):
         super().__init__(master)
         self.master = master
         self.pack()
 
     def creat_menu(self):
+        """
+        服务器选择菜单
+        :return: 服务器名称（str）
+        """
         self.top_menu = ttkbs.Menu(self.master)
         self.area_server = ttkbs.Menu(master=self.top_menu, tearoff=0)
         self.top_menu.add_cascade(label='服务器', menu=self.area_server)
@@ -65,15 +72,36 @@ class ModuleLoadPage(tk.Frame):
 
 
 class ModuleIndex(tk.Frame):
+    """
+    首页查询界面
+    """
     def __int__(self, master=None):
         super().__init__(master)
         self.master = master
         self.pack()
 
     def creat_query_box(self, **kwargs):
-        self.query_item = tk.StringVar()
-        tk.Entry(textvariable=query_server, cnf=kwargs).pack()
-        return self.query_item
+        """
+        物品查询输入框和查询按钮的界面渲染
+        :param kwargs: 用来配置输入框的样式
+        :return: 物品名称（is variable, not str）
+        """
+        self.query_item_name = tk.StringVar()
+        tk.Entry(textvariable=self.query_item_name, cnf=kwargs).place(relx=0.3, rely=0.3, relwidth=0.4)
+        self.commit_botton = ttkbs.Button(text='查询', command=self.query_item_id)
+        self.commit_botton.place(relx=0.65, rely=0.5)
+        return self.query_item_name
+
+    def query_item_id(self):
+        """
+        绑定在查询按钮的方法，用来查询物品的ID
+        物品ID（ [list] ）
+        """
+        global query_server
+        global item_id
+        global query_item
+        query_item = Queryer(self.query_item_name.get(), query_server)
+        item_id = query_item.query_item_id()
 
 
 class ModuleItemList(tk.Frame):
@@ -113,23 +141,37 @@ def set_server(server):
     textbox.set('正在查询服务器： %s' % server)
 
 
+"""
+主窗体控制
+"""
 style = ttkbs.Style(theme="flatly")
 root = style.master
 root.geometry('1000x700+400+150')
 root.minsize(600, 360)
 root.title('猴面雀 - FF14市场查询小工具')
-query_server = '猫小胖'
 
+"""
+定义公共数据
+"""
+query_server = '猫小胖'
+item_id = []
+query_item = None
+
+"""
+创建菜单栏，增加选择服务器的功能
+"""
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
 
 index = ModuleIndex(root)
-index_page = index.creat_query_box()
+index.creat_query_box()
 
+"""
+创建下方状态栏
+"""
 textbox = tk.StringVar()
 textbox.set('正在查询服务器： %s' % query_server)
 status_bar = tk.Label(root, textvariable=textbox, anchor='se')
 status_bar.pack(side='bottom', fill='x')
 
 root.mainloop()
-print(query_server)

@@ -79,6 +79,7 @@ class Queryer(object):
             result = get(query_url)
         itemstr = result.text.replace('null', '"None"')
         itemde = (loads(itemstr))["Results"]
+        itemde = sorted(itemde, key=lambda e: e.__getitem__('ID'), reverse=False)
         return itemde
 
     def query_item_price(self):

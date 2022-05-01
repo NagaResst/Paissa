@@ -3,10 +3,17 @@ from Queryer import Queryer
 import ttkbootstrap as ttkbs
 
 
-class TopMenu(tk.Frame):
+# from ttkbootstrap.tableview import Tableview
+
+
+# import webbrowser
+
+
+class TopMenu(ttkbs.Frame):
     """
     顶部菜单栏
     """
+
     def __int__(self, master=None):
         super().__init__(master)
         self.master = master
@@ -66,30 +73,44 @@ class TopMenu(tk.Frame):
         return self.top_menu
 
 
-class ModuleLoadPage(tk.Frame):
-    def __int__(self):
-        pass
-
-
-class ModuleIndex(tk.Frame):
-    """
-    首页查询界面
-    """
+class ModuleLoadPage(ttkbs.Frame):
     def __int__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.pack()
+        self.frame.pack()
 
-    def creat_query_box(self, **kwargs):
+    def create_loading_page(self):
+        self.frame = ttkbs.Frame(self.master)
+        tk.Label(self.frame, text='Loading...', font=20).pack()
+
+
+class ModuleItemQuery(ttkbs.Frame):
+    """
+    首页查询界面
+    """
+
+    def __int__(self, master=None):
+        super().__init__(master=master)
+        self.master = master
+        self.pack(expand=True, fill="both")
+
+        self.creat_query_box()
+
+    def creat_query_box(self):
         """
         物品查询输入框和查询按钮的界面渲染
-        :param kwargs: 用来配置输入框的样式
         :return: 物品名称（is variable, not str）
         """
-        self.query_item_name = tk.StringVar()
-        tk.Entry(textvariable=self.query_item_name, cnf=kwargs).place(relx=0.3, rely=0.3, relwidth=0.4)
-        self.commit_botton = ttkbs.Button(text='查询', command=self.query_item_id)
-        self.commit_botton.place(relx=0.65, rely=0.5)
+        self.query_box = ttkbs.Frame(self)
+        self.query_item_name = ttkbs.StringVar()
+        self.label1 = ttkbs.Label(master=self.query_box, text='请输入要查询的物品名称：', font=20)
+        self.label1.place(x=60, y=150)
+        self.entry1 = ttkbs.Entry(master=self.query_box, textvariable=self.query_item_name, font=18)
+        self.entry1.place(relx=0.1, y=180, relwidth=0.8, height=60)
+        self.commit_botton = ttkbs.Button(master=self.query_box, bootstyle="outline-button", text='查询',
+                                          command=self.query_item_id)
+        self.commit_botton.place(relx=0.70, y=300)
+        self.query_box.pack(expand=True, fill="both")
         return self.query_item_name
 
     def query_item_id(self):
@@ -100,36 +121,66 @@ class ModuleIndex(tk.Frame):
         global query_server
         global item_id
         global query_item
+        # self.query_box.pack_forget()
         query_item = Queryer(self.query_item_name.get(), query_server)
         item_id = query_item.query_item_id()
+        if len(item_id) == 1:
+            pass
+        else:
+            self.create_item_list(item_id)
+
+    def create_item_list(self, item_id):
+        self.item_list = ttkbs.Frame(self.master)
+        cul = ['item_name', 'item_id']
+        self.label2 = ttkbs.Label(master=self.item_list, text='双击物品名称选择要查询的物品', font=20)
+        self.label2.place(x=60, y=50)
+        self.list_view = ttkbs.Treeview(master=self.item_list, show="headings", columns=cul, selectmode='browse')
+        self.list_view.column('item_name', anchor='center')
+        self.list_view.column('item_id', width=1, anchor='center')
+        self.list_view.heading('item_name', text='物品名称')
+        self.list_view.heading('item_id', text='物品ID')
+        # coldata = ["物品名称"]
+        # self.list_view = Tableview(master=self.master, coldata=coldata, rowdata=item_id, paginated=False,
+        #                            searchable=False, )
+        self.list_view.place(rely=0.15, relx=0.1, relwidth=0.8, relheight=0.7)
+        for item in item_id:
+            self.list_view.insert('', index=99999, values=(item['Name'], item['ID']))
+
+    def select_item(self, event):
+        pass
+        # item = self.list_view.selection()
+        # if item:
+        #     txt = self.list_view(item[0], 'text')
+        #     print(item, '  ', txt)
+        # self.list_view.bind('<ButtonRelease-1>', all)
 
 
-class ModuleItemList(tk.Frame):
+class ModuleHistoryQueryBoard(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleItemDetial(tk.Frame):
+class ModuleItemDetial(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleSaleList(tk.Frame):
+class ModuleSaleList(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleSaleHistory(tk.Frame):
+class ModuleSaleHistory(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleCraftCost(tk.Frame):
+class ModuleCraftCost(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleRelativeArticles(tk.Frame):
+class ModuleRelativeArticles(ttkbs.Frame):
     def __int__(self):
         pass
 
@@ -149,6 +200,7 @@ root = style.master
 root.geometry('1000x700+400+150')
 root.minsize(600, 360)
 root.title('猴面雀 - FF14市场查询小工具')
+root.wm_iconbitmap("Images/ico.ico")
 
 """
 定义公共数据
@@ -163,8 +215,10 @@ query_item = None
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
 
-index = ModuleIndex(root)
-index.creat_query_box()
+load_page = ModuleLoadPage(master=root)
+# load_page.create_loading_page()
+ModuleItemQuery(master=root).creat_query_box()
+# item_list.create_item_list(item_id)
 
 """
 创建下方状态栏

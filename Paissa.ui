@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>mainWindow</class>
+ <widget class="QMainWindow" name="mainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1181</width>
+    <height>777</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>550</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>猴面雀 - FF14市场查询工具</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>10</number>
+    </property>
+    <property name="topMargin">
+     <number>10</number>
+    </property>
+    <property name="rightMargin">
+     <number>10</number>
+    </property>
+    <property name="bottomMargin">
+     <number>10</number>
+    </property>
+    <item row="1" column="0">
+     <widget class="QWidget" name="query_index_page" native="true">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="mouseTracking">
+       <bool>false</bool>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="leftMargin">
+        <number>100</number>
+       </property>
+       <property name="topMargin">
+        <number>150</number>
+       </property>
+       <property name="rightMargin">
+        <number>100</number>
+       </property>
+       <property name="bottomMargin">
+        <number>350</number>
+       </property>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item alignment="Qt::AlignRight">
+          <widget class="QCheckBox" name="query_is_hq">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>查询HQ</string>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="input_item_name">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>60</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="placeholderText">
+            <string>请输入要查询的物品名称</string>
+           </property>
+          </widget>
+         </item>
+         <item alignment="Qt::AlignRight">
+          <widget class="QToolButton" name="query_button">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>查询</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QWidget" name="status_bar" native="true">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>50</height>
+       </size>
+      </property>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>650</x>
+         <y>20</y>
+         <width>411</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item alignment="Qt::AlignRight">
+         <widget class="QLabel" name="label">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>数据更新时间：</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>N/A</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="show_text_server">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>           当前查询服务器：</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="show_server">
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>SERVER</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1181</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="server">
+    <property name="title">
+     <string>服务器</string>
+    </property>
+    <widget class="QMenu" name="server_luxingniao">
+     <property name="title">
+      <string>陆行鸟</string>
+     </property>
+     <property name="query_server" stdset="0">
+      <string>陆行鸟</string>
+     </property>
+     <addaction name="select_server_luxingniao"/>
+     <addaction name="select_server_hongyuhai"/>
+     <addaction name="select_server_shenyizhidi"/>
+     <addaction name="select_server_lanuoxiya"/>
+     <addaction name="select_server_huanyignqundao"/>
+     <addaction name="select_server_mengyachi"/>
+     <addaction name="select_server_yuzhouheyin"/>
+     <addaction name="select_server_woxianxiran"/>
+     <addaction name="select_server_chenxiwangzuo"/>
+    </widget>
+    <widget class="QMenu" name="server_moguli">
+     <property name="title">
+      <string>莫古力</string>
+     </property>
+     <addaction name="select_server_moguli"/>
+     <addaction name="select_server_baiyinxiang"/>
+     <addaction name="select_server_baijinhuanxiang"/>
+     <addaction name="select_server_shenquanhen"/>
+     <addaction name="select_server_chaofengting"/>
+     <addaction name="select_server_lvrenzhanqiao"/>
+     <addaction name="select_server_fuxiaozhijian"/>
+     <addaction name="select_server_longchaoshendian"/>
+     <addaction name="select_server_mengyubaojing"/>
+    </widget>
+    <widget class="QMenu" name="server_maoxiaopang">
+     <property name="title">
+      <string>猫小胖</string>
+     </property>
+     <addaction name="select_server_maoxiaopang"/>
+     <addaction name="select_server_zishuizhanqiao"/>
+     <addaction name="select_server_yanxia"/>
+     <addaction name="select_server_jingyuzhuagnyuan"/>
+     <addaction name="select_server_moduna"/>
+     <addaction name="select_server_haimaochawu"/>
+     <addaction name="select_server_roufenghaiwan"/>
+     <addaction name="select_server_hupoyuan"/>
+    </widget>
+    <widget class="QMenu" name="server_doudouchai">
+     <property name="title">
+      <string>豆豆柴</string>
+     </property>
+     <addaction name="select_server_doudouchai"/>
+     <addaction name="select_server_shuijingta"/>
+     <addaction name="select_server_yinleihu"/>
+     <addaction name="select_server_taiyanghaian"/>
+     <addaction name="select_server_yixiujiade"/>
+     <addaction name="select_server_hongchachuan"/>
+    </widget>
+    <addaction name="select_server_all"/>
+    <addaction name="server_luxingniao"/>
+    <addaction name="server_moguli"/>
+    <addaction name="server_maoxiaopang"/>
+    <addaction name="server_doudouchai"/>
+   </widget>
+   <widget class="QMenu" name="query_history">
+    <property name="title">
+     <string>查询历史</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="about">
+    <property name="title">
+     <string>关于</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>显示隐藏界面</string>
+    </property>
+    <addaction name="action1"/>
+    <addaction name="action2"/>
+    <addaction name="action3"/>
+   </widget>
+   <addaction name="server"/>
+   <addaction name="query_history"/>
+   <addaction name="about"/>
+   <addaction name="menu"/>
+  </widget>
+  <action name="select_server_all">
+   <property name="text">
+    <string>国服</string>
+   </property>
+  </action>
+  <action name="select_server_hongyuhai">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>红玉海</string>
+   </property>
+   <property name="query_server" stdset="0">
+    <string>红玉海</string>
+   </property>
+  </action>
+  <action name="select_server_shenyizhidi">
+   <property name="text">
+    <string>神意之地</string>
+   </property>
+   <property name="query_server" stdset="0">
+    <string>神意之地</string>
+   </property>
+  </action>
+  <action name="select_server_lanuoxiya">
+   <property name="text">
+    <string>拉诺西亚</string>
+   </property>
+   <property name="query_server" stdset="0">
+    <string>拉诺西亚</string>
+   </property>
+  </action>
+  <action name="select_server_huanyignqundao">
+   <property name="text">
+    <string>幻影群岛</string>
+   </property>
+   <property name="query_server" stdset="0">
+    <string>幻影群岛</string>
+   </property>
+  </action>
+  <action name="select_server_mengyachi">
+   <property name="text">
+    <string>萌芽池</string>
+   </property>
+   <property name="query_server" stdset="0">
+    <string>萌芽池</string>
+   </property>
+  </action>
+  <action name="select_server_yuzhouheyin">
+   <property name="text">
+    <string>宇宙和音</string>
+   </property>
+  </action>
+  <action name="select_server_woxianxiran">
+   <property name="text">
+    <string>沃仙曦染</string>
+   </property>
+  </action>
+  <action name="select_server_chenxiwangzuo">
+   <property name="text">
+    <string>晨曦王座</string>
+   </property>
+  </action>
+  <action name="select_server_baiyinxiang">
+   <property name="text">
+    <string>白银乡</string>
+   </property>
+  </action>
+  <action name="select_server_baijinhuanxiang">
+   <property name="text">
+    <string>白金幻象</string>
+   </property>
+  </action>
+  <action name="select_server_shenquanhen">
+   <property name="text">
+    <string>神拳痕</string>
+   </property>
+  </action>
+  <action name="select_server_chaofengting">
+   <property name="text">
+    <string>潮风亭</string>
+   </property>
+  </action>
+  <action name="select_server_lvrenzhanqiao">
+   <property name="text">
+    <string>旅人栈桥</string>
+   </property>
+  </action>
+  <action name="select_server_fuxiaozhijian">
+   <property name="text">
+    <string>拂晓之间</string>
+   </property>
+  </action>
+  <action name="select_server_longchaoshendian">
+   <property name="text">
+    <string>龙巢神殿</string>
+   </property>
+  </action>
+  <action name="select_server_mengyubaojing">
+   <property name="text">
+    <string>梦羽宝境</string>
+   </property>
+  </action>
+  <action name="select_server_zishuizhanqiao">
+   <property name="text">
+    <string>紫水栈桥</string>
+   </property>
+  </action>
+  <action name="select_server_yanxia">
+   <property name="text">
+    <string>延夏</string>
+   </property>
+  </action>
+  <action name="select_server_jingyuzhuagnyuan">
+   <property name="text">
+    <string>静语庄园</string>
+   </property>
+  </action>
+  <action name="select_server_moduna">
+   <property name="text">
+    <string>摩杜纳</string>
+   </property>
+  </action>
+  <action name="select_server_haimaochawu">
+   <property name="text">
+    <string>海猫茶屋</string>
+   </property>
+  </action>
+  <action name="select_server_roufenghaiwan">
+   <property name="text">
+    <string>柔风海湾</string>
+   </property>
+  </action>
+  <action name="select_server_hupoyuan">
+   <property name="text">
+    <string>琥珀原</string>
+   </property>
+  </action>
+  <action name="select_server_shuijingta">
+   <property name="text">
+    <string>水晶塔</string>
+   </property>
+   <property name="toolTip">
+    <string>水晶塔</string>
+   </property>
+  </action>
+  <action name="select_server_yinleihu">
+   <property name="text">
+    <string>银泪湖</string>
+   </property>
+   <property name="toolTip">
+    <string>银泪湖</string>
+   </property>
+  </action>
+  <action name="select_server_taiyanghaian">
+   <property name="text">
+    <string>太阳海岸</string>
+   </property>
+   <property name="toolTip">
+    <string>太阳海岸</string>
+   </property>
+  </action>
+  <action name="select_server_yixiujiade">
+   <property name="text">
+    <string>伊修加德</string>
+   </property>
+   <property name="toolTip">
+    <string>伊修加德</string>
+   </property>
+  </action>
+  <action name="select_server_hongchachuan">
+   <property name="text">
+    <string>红茶川</string>
+   </property>
+   <property name="toolTip">
+    <string>红茶川</string>
+   </property>
+  </action>
+  <action name="select_server_luxingniao">
+   <property name="text">
+    <string>陆行鸟(全区服)</string>
+   </property>
+  </action>
+  <action name="select_server_moguli">
+   <property name="text">
+    <string>莫古力(全区服)</string>
+   </property>
+  </action>
+  <action name="select_server_maoxiaopang">
+   <property name="text">
+    <string>猫小胖(全区服)</string>
+   </property>
+  </action>
+  <action name="select_server_doudouchai">
+   <property name="text">
+    <string>豆豆柴(全区服)</string>
+   </property>
+  </action>
+  <action name="action1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>显示隐藏查询首页</string>
+   </property>
+  </action>
+  <action name="action2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>显示隐藏物品列表</string>
+   </property>
+  </action>
+  <action name="action3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>显示隐藏物品详情</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>action1</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>query_index_page</receiver>
+   <slot>setHidden(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>579</x>
+     <y>368</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

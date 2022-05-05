@@ -160,18 +160,16 @@ startid = int(input('请输入开始ID \n'))
 # startid = 1
 for item_id in i_id:
     if int(item_id) >= startid:
-        try:
-            item_record = ItemQuerier(item_id)
-            print('正在查询物品id %s' % item_record.id)
-            listings = item_record.output_sell_list()
-            history = item_record.output_buyer()
-        except:
-            print("清单初始化失败，15秒后重新查询物品记录")
-            sleep(15)
-            item_record = ItemQuerier(item_id)
-            print('正在查询物品id %s' % item_record.id)
-            listings = item_record.output_sell_list()
-            history = item_record.output_buyer()
+        while True:
+            print('正在查询物品id %s' % item_id)
+            try:
+                item_record = ItemQuerier(item_id)
+                break
+            except:
+                print("%s 查询失败，3秒后重新查询物品记录" % item_id)
+                sleep(3)
+        listings = item_record.output_sell_list()
+        history = item_record.output_buyer()
         relist = []
         for record in listings:
             if record['creatorID'] in m_id or record['sellerID'] in m_id or record['retainerID'] in m_id:

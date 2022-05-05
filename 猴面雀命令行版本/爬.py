@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 from json import loads
 from time import sleep
 
@@ -60,14 +61,27 @@ def query_user_id():
     return re_list
 
 
-def insert_sell_to_db(server, userId, retainerName, retainerId, itemId, itemName):
+def query_user_name():
+    """
+    查询用来匹配的用户名
+    """
+    c = db.cursor()
+    c.execute("select * from userid")
+    record = c.fetchall()
+    re_list = {}
+    for i in record:
+        re_list[i[1]] = i[0]
+    return re_list
+
+
+def insert_sell_to_db(server, userId, retainerName, retainerId, itemId, itemName, creator):
     """
     当发现匹配目标时插入数据库
     """
     c = db.cursor()
     c.execute(
-        "INSERT INTO sell_record ( server, userid,retainer,retainerid,item,itemname ) VALUES  ( '%s','%s','%s','%s','%s','%s' );" % (
-            server, userId, retainerName, retainerId, itemId, itemName))
+        "INSERT INTO sell_record ( server, userid,retainer,retainerid,item,itemname ,creator) VALUES  ( '%s','%s','%s','%s','%s','%s','%s' );" % (
+            server, userId, retainerName, retainerId, itemId, itemName, creator))
     db.commit()
 
 
@@ -134,15 +148,16 @@ db = pymysql.connect(
 # )
 
 m_id = query_user_id()
+u_id = query_user_name()
 print("已经获取到需要匹配的对象%d个。" % len(m_id))
 # print(m_id)
-yon = input("是否需要清楚上次查询的记录")
-if yon == 'y':
-    delete_data_at_db()
+# yon = input("是否需要清楚上次查询的记录")
+# if yon == 'y':
+#     delete_data_at_db()
 i_id = query_item_in_market()
 print("已经获取到可查询物品的ID。")
-# startid = int(input('请输入开始ID \n'))
-startid = 1
+startid = int(input('请输入开始ID \n'))
+# startid = 1
 for item_id in i_id:
     if int(item_id) >= startid:
         try:
@@ -163,11 +178,19 @@ for item_id in i_id:
                 print("已发现雇员 %s 正在售卖物品 %s" % (record['retainerName'], item_record.id))
                 if record['retainerID'] not in relist:
                     itemName = query_item_detial(item_id)
-                    insert_sell_to_db(record['worldName'], record['sellerID'], record['retainerName'],
-                                      record['retainerID'], item_record.id, itemName)
+                    if record['sellerID'] in u_id:
+                        seller = u_id[record['sellerID']]
+                    else:
+                        seller = record['sellerID']
+                    if record['creatorID'] in u_id:
+                        creator = u_id[record['creatorID']]
+                    else:
+                        creator = record['creatorID']
+                    insert_sell_to_db(record['worldName'], seller, record['retainerName'],
+                                      record['retainerID'], item_record.id, itemName, creator)
                     print('已将雇员 %s 记录到数据库中' % record['retainerName'])
                     relist.append(record['retainerID'])
         for record in history:
-            if record['buyerName'] == '爱丽丝铃':
+            if record['buyerName'] in ['爱丽丝铃']:
                 insert_buy_to_db(item_record.id, record['worldName'], record['timestamp'])
 db.close()

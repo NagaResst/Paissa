@@ -163,7 +163,7 @@ class ItemQuerier(object):
                 lastUploadTime = self.timestamp_to_time(self.result['lastUploadTime'])
                 print('\n猴面雀为您查找到 ' + self.name + ' 的最新在售信息。\t\t更新时间： ' + lastUploadTime)
                 self.show_result(self.result)
-                print("%s的 全区服 历史平均成交价格 %d" % (self.result['dcName'], self.result['averagePrice']))
+                print("%s的 全区服 历史平均成交价格 %d" % (self.name, self.result['averagePrice']))
                 print('\n 以下是最近5次的售出记录')
                 for record in self.result['recentHistory']:
                     hq = self.hq_or_not(record['hq'])
@@ -271,7 +271,7 @@ class ItemQuerier(object):
             stuff_list[i]['name'] = result['name']
             query_result = self.query_item_cost_min(self.server, unit['id'], count=1)
             x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
-            if x > 300:
+            if x < 300:
                 stuff_list[i]['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
             else:
                 stuff_list[i]['pricePerUnit'] = query_result['averagePrice']
@@ -449,9 +449,9 @@ logo()
 while True:
     if selectd_server is None:
         selectd_server = select_server()
-    print('请输入要查询的物品全名 , 输入 l 查询本地清单 , 或输入back返回选择服务器 \n')
-    item = input()
     while True:
+        print('请输入要查询的物品全名 , 输入 l 查询本地清单 , 或输入back返回选择服务器 \n')
+        item = input()
         if item == 'back':
             # 查询后返回选择服务器
             selectd_server = None
@@ -459,7 +459,7 @@ while True:
         elif item == 'l' or item == 'L':
             items = load_location_list()
             item = select_locaiton_item(items)
-        elif item is None or item == b'\n' or item == '':
+        if item is None or item == b'\n' or item == '':
             # 误触回车的容错  兼容两种系统
             pass
         else:

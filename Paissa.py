@@ -226,7 +226,7 @@ class Ui_mainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(mainWindow)
-        self.action1.triggered['bool'].connect(self.show_data_box.setHidden) # type: ignore
+        self.action1.triggered['bool'].connect(self.show_data_box.setHidden)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
     def retranslateUi(self, mainWindow):

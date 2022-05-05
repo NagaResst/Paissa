@@ -20,7 +20,7 @@ class ItemQuerier(object):
         查询物品的市场交易记录
         """
         query_url = 'https://universalis.app/api/猫小胖/%s?listings=20' % self.id
-        result = get(query_url)
+        result = get(query_url, timeout=3)
         result = result.text.replace('null', '"None"')
         self.result = loads(result)
 
@@ -42,7 +42,7 @@ def query_item_in_market():
     查询所有可以在板子上交易的物品
     """
     query_url = 'https://universalis.app/api/marketable'
-    result = get(query_url)
+    result = get(query_url, timeout=3)
     result = result.text.replace('[', '').replace(']', '')
     result = result.split(',')
     return result
@@ -112,7 +112,7 @@ def query_item_detial(itemid):
     """
     try:
         query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-        result = get(query_url)
+        result = get(query_url, timeout=3)
         result = loads(result.text)
         return result['item']['name']
     except ConnectionError:

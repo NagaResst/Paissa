@@ -44,17 +44,16 @@ class ItemQuerier(object):
         """
         查询结果序列化成字典
         """
-        result = None
-        try:
-            result = get(url)
-        except ConnectionError:
-            print('\n猴面雀发现网络有点问题，正准备再试一次')
-            sleep(15)
-            result = get(url)
-        finally:
-            # 当属性的值为null的时候，无法转换成字典，将其替换为None
-            result = result.text.replace('null', '"None"')
-            result = loads(result)
+        while True:
+            try:
+                result = get(url, timeout=10)
+                break
+            except:
+                print('\n猴面雀发现网络有点问题，正准备再试一次')
+                sleep(3)
+        # 当属性的值为null的时候，无法转换成字典，将其替换为None
+        result = result.text.replace('null', '"None"')
+        result = loads(result)
         return result
 
     @staticmethod
@@ -108,7 +107,7 @@ class ItemQuerier(object):
         try:
             query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
             print('\n猴面雀正在为您查找需要的数据，请稍候... ')
-            result = get(query_url)
+            result = get(query_url, timeout=10)
         except ConnectionError:
             print('\n猴面雀发现网络有点问题，找不到想要的资料了')
         try:

@@ -105,16 +105,11 @@ class ItemQuerier(object):
         后续可能使用 garlandtools 替换现在的查询接口
         https://garlandtools.cn/api/search.php?text=%E6%B0%B4%E4%B9%8B%E6%99%B6%E7%B0%87&lang=chs&ilvlMin=1&ilvlMax=999
         """
-        result = None
+        query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
+        print('\n猴面雀正在为您查找需要的数据，请稍候... ')
+        result = self.init_query_result(query_url)
+        itemde = result["Results"]
         try:
-            query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
-            print('\n猴面雀正在为您查找需要的数据，请稍候... ')
-            result = get(query_url, timeout=10)
-        except:
-            print('\n猴面雀发现网络有点问题，找不到想要的资料了')
-        try:
-            itemstr = result.text.replace('null', '"None"')
-            itemde = (loads(itemstr))["Results"]
             if len(itemde) == 1:
                 self.id = itemde[0]['ID']
                 self.name = itemde[0]['Name']
@@ -131,7 +126,6 @@ class ItemQuerier(object):
         """
         for record in result['listings']:
             hq = self.hq_or_not(record['hq'])
-            # uptime = self.timestamp_to_time(record['lastReviewTime'])
             if 'worldName' in record:
                 print('''单价：%-6d\t数量：%2d  %s\t总价：%-8d\t服务器：%-5.4s \t卖家雇员：%s''' % (
                     record['pricePerUnit'], record['quantity'], hq, (record['total'] * 1.05), record['worldName'],
@@ -151,9 +145,7 @@ class ItemQuerier(object):
         所以listings和hq两个查询参数不能同时使用，如果同时使用，hq过滤条件就会失效。
         """
         self.query_item_id()
-        if self.id is None:
-            pass
-        else:
+        if self.id is not None:
             if self.hq == "HQ" or self.hq == "hq":
                 query_url = 'https://universalis.app/api/v2/%s/%s?listings=15&hq=true&noGst=true' % (
                     self.server, self.id)
@@ -221,7 +213,6 @@ class ItemQuerier(object):
         """
         query_url = 'https://universalis.app/api/history/%s/%s?entries=30' % (self.server, self.id)
         result = self.init_query_result(query_url)
-        # lastUploadTime = float(result['lastUploadTime'] / 1000)
         lastUploadTime = self.timestamp_to_time(result['lastUploadTime'])
         print('\n猴面雀为您查找到 ' + self.name + ' 的30条售出历史。 \t更新时间： ' + lastUploadTime)
         for record in result['entries']:
@@ -238,18 +229,13 @@ class ItemQuerier(object):
                     (record['pricePerUnit'] * record['quantity'] * 1.05),
                     saletime))
 
-    @staticmethod
-    def query_item_detial(itemid):
+    def query_item_detial(self, itemid):
         """
         查询物品的详细信息，查询制作配方和统计成本的前置方法
         """
-        try:
-            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-            result = get(query_url)
-            result = loads(result.text)
-            return result['item']
-        except ConnectionError:
-            print("\n猴面雀发现网络有点问题，找不到想要的资料了")
+        query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+        result = self.init_query_result(query_url)
+        return result['item']
 
     def show_item_craft(self, stuff_list, tab=''):
         """
@@ -306,16 +292,15 @@ class ItemQuerier(object):
         """
         查询物品的制作材料
         """
-        if self.stuff is not None:
-            if len(self.stuff) == 0:
-                print('\n猴面雀正在为您查找制作需要的素材，配方越复杂，猴面雀就需要翻阅越多的资料！')
-                self.stuff = self.query_item_detial(self.id)
-                if 'craft' in self.stuff:
-                    self.stuff = self.stuff['craft'][0]['ingredients']
-                    self.make_item_craft(self.stuff)
-                    print("\n 猴面雀已经为您查找到 %s 的制作配方" % self.name)
-                else:
-                    self.stuff = None
+        if len(self.stuff) == 0:
+            print('\n猴面雀正在为您查找制作需要的素材，配方越复杂，猴面雀就需要翻阅越多的资料！')
+            self.stuff = self.query_item_detial(self.id)
+            if 'craft' in self.stuff:
+                self.stuff = self.stuff['craft'][0]['ingredients']
+                self.make_item_craft(self.stuff)
+                print("\n 猴面雀已经为您查找到 %s 的制作配方" % self.name)
+            else:
+                self.stuff = {}
 
     def query_item_cost(self, stuff_list, count=1, tab=''):
         """
@@ -365,8 +350,7 @@ def select_server():
     """
     服务器选择
     """
-    server = input('请输入要查询的大区服务器,可输入大区简称，例如“ 1 猫、2 鸟、3 猪、4 狗 ” \n')
-    # server = '猫小胖'
+    server = input('请输入要查询的 大区 或者 服务器,可输入大区简称，例如“ 1 猫、2 鸟、3 猪、4 狗 ” \n')
     if server == '1' or server == '猫':
         server = '猫小胖'
         print("猴面雀将为您查询 猫小胖 的市场数据")
@@ -460,7 +444,7 @@ def logo():
 =@@@@@@@@....................................................=@@@O@@@O@O@
 ========   欢迎使用猴面雀价格查询小工具    夕山菀@紫水栈桥   ============
 ========     老婆！ 是老婆啊！！    琉森@紫水栈桥 专用版     ============
-                                                    Ver 1.2.6
+                                                    Ver 1.2.7
 """)
 
 
@@ -480,7 +464,11 @@ while True:
         if item == 'l' or item == 'L':
             items = load_location_list()
             item = select_locaiton_item(items)
-        if item is None or item == b'\n' or item == '':
+        if item == 'b' or item == 'B' or hasattr(item, 'id'):
+            # 查询后返回选择服务器
+            selectd_server = None
+            break
+        elif item is None or item == b'\n' or item == '':
             # 误触回车的容错  兼容两种系统
             pass
         else:

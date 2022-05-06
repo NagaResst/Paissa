@@ -42,17 +42,16 @@ class ItemQuerier(object):
         """
         查询结果序列化成字典
         """
-        result = None
-        try:
-            result = get(url)
-        except ConnectionError:
-            print('\n猴面雀发现网络有点问题，正准备再试一次')
-            sleep(15)
-            result = get(url)
-        finally:
-            # 当属性的值为null的时候，无法转换成字典，将其替换为None
-            result = result.text.replace('null', '"None"')
-            result = loads(result)
+        while True:
+            try:
+                result = get(url, timeout=10)
+                break
+            except:
+                print('\n猴面雀发现网络有点问题，正准备再试一次')
+                sleep(3)
+        # 当属性的值为null的时候，无法转换成字典，将其替换为None
+        result = result.text.replace('null', '"None"')
+        result = loads(result)
         return result
 
     @staticmethod
@@ -86,12 +85,14 @@ class ItemQuerier(object):
         for i in itemlist:
             print("%-5.d  \t\t%s " % (x, i['Name']))
             x += 1
-        print('请输入要查询的物品编号，输入物品名重新查询')
+        print('请输入要查询的物品编号，输入物品名重新查询，输入 b 返回选择服务器')
         user_select = input()
         if user_select.isdigit():
             user_select = (int(user_select)) - 1
             self.id = itemlist[user_select]['ID']
             self.name = itemlist[user_select]['Name']
+        elif user_select == 'b' or user_select == 'B':
+            self.id = None
         else:
             self.__init__(user_select, self.server)
             self.query_item_id()
@@ -106,8 +107,8 @@ class ItemQuerier(object):
         try:
             query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
             print('\n猴面雀正在为您查找需要的数据，请稍候... ')
-            result = get(query_url)
-        except ConnectionError:
+            result = get(query_url, timeout=10)
+        except:
             print('\n猴面雀发现网络有点问题，找不到想要的资料了')
         try:
             itemstr = result.text.replace('null', '"None"')
@@ -117,8 +118,9 @@ class ItemQuerier(object):
                 self.name = itemde[0]['Name']
             elif len(itemde) > 1:
                 self.select_itemid(itemde)
-            print('猴面雀已经为您查找到物品 %s ID：%d' % (self.name, self.id))
-        except TypeError:
+            if self.id is not None:
+                print('猴面雀已经为您查找到物品 %s ID：%d' % (self.name, self.id))
+        except:
             print('\n猴面雀没有找到到您要查找的物品。')
 
     def show_result(self, result, server=None):
@@ -440,23 +442,24 @@ def logo():
 @@@@@@@@@^.....................[O@/............[/`..........=@@OOOOOOOOO@
 =@@@@@@@@....................................................=@@@O@@@O@O@
 ========   欢迎使用猴面雀价格查询小工具    夕山菀@紫水栈桥   ============
-                                        Ver 1.1.1-b
+                                        Ver 1.1.2-b
 """)
 
 
 selectd_server = None
 logo()
 while True:
+    item = None
     if selectd_server is None:
         selectd_server = select_server()
     while True:
-        print('请输入要查询的物品全名 , 输入 l 查询本地清单 , 或输入back返回选择服务器 \n')
-        item = input()
-        if item == 'back':
+        if item == 'b' or item == 'B' or hasattr(item, 'id'):
             # 查询后返回选择服务器
             selectd_server = None
             break
-        elif item == 'l' or item == 'L':
+        print('请输入要查询的物品全名 , 输入 l 查询本地清单 , 或输入 b 返回选择服务器 \n')
+        item = input()
+        if item == 'l' or item == 'L':
             items = load_location_list()
             item = select_locaiton_item(items)
         if item is None or item == b'\n' or item == '':
@@ -472,10 +475,10 @@ while True:
                 select = input("""
 输入 h 查询售出历史 , 输入 m 查询更多出售信息,  输入 o 显示所有区服的最低价 
 输入 2 查询制作材料 , 输入 l 查询本地清单
-输入其他道具名继续查询，或输入back返回选择服务器 \n
+输入其他道具名继续查询，或输入 b 返回选择服务器 \n
 """)
-                if select == 'back':
-                    item = 'back'
+                if select == 'b' or select == 'B':
+                    item = 'b'
                     break
                 elif select == "h" or select == "H":
                     item.show_sale_history()

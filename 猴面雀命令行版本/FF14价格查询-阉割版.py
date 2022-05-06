@@ -1,8 +1,9 @@
 # -*- coding:UTF-8 -*-
 
-from requests import get
 from json import loads
 from time import localtime, strftime, sleep
+
+from requests import get
 
 
 class ItemQuerier(object):
@@ -348,7 +349,15 @@ def select_server():
     """
     服务器选择
     """
-    server = input('请输入要查询的 大区 或者 服务器,可输入大区简称，例如“ 1 猫、2 鸟、3 猪、4 狗 ” \n')
+    while True:
+        server = input('请输入要查询的 大区 或者 服务器,可输入大区简称，例如“ 1 猫、2 鸟、3 猪、4 狗 ” \n')
+        server_list = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原', '陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛',
+                       '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座', '莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
+                       '梦羽宝境', '豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川', '猫', '狗', '猪', '鸟', '1', '2', '3', '4']
+        if server in server_list:
+            break
+        else:
+            print('输入的 服务器 或者 大区 名称不对，需要重新输入')
     if server == '1' or server == '猫':
         server = '猫小胖'
         print("猴面雀将为您查询 猫小胖 的市场数据")

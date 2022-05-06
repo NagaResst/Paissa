@@ -498,6 +498,8 @@ while True:
                     item.show_more_result()
                 elif select == "o" or select == "O":
                     item.show_every_server()
+                elif select == "t" or select == "T":
+                    item.show_true_id()
                 elif select == "2":
                     item.query_item_craft()
                     item.show_item_craft(item.stuff)

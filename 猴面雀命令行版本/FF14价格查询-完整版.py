@@ -387,9 +387,10 @@ def load_location_list():
             item_list = list_text.split('\n')
         return item_list
     except IOError:
-        with open(r'FF14价格查询清单.txt', 'w', encoding='utf-8') as list_file:
-            list_file.write('')
-        print('同目录下没有找到 “FF14价格查询清单.txt” ，已为您生成空文件，一行写入一个物品')
+        # with open(r'FF14价格查询清单.txt', 'w', encoding='utf-8') as list_file:
+        #     list_file.write('')
+        # print('同目录下没有找到 “FF14价格查询清单.txt” ，已为您生成空文件，一行写入一个物品')
+        print('同目录下没有找到 FF14价格查询清单.txt 。请手动创建，每行写入一个想要查询的物品名称')
 
 
 def select_locaiton_item(item_list):
@@ -452,7 +453,7 @@ def logo():
 =@@@@@@@@....................................................=@@@O@@@O@O@
 ========   欢迎使用猴面雀价格查询小工具    夕山菀@紫水栈桥   ============
 ========     老婆！ 是老婆啊！！    琉森@紫水栈桥 专用版     ============
-                                                    Ver 1.2.7
+                                                    Ver 1.2.8
 """)
 
 

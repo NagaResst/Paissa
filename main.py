@@ -11,7 +11,6 @@ from select_item_list import Ui_select_item_list
 class mainWindow(Ui_mainWindow):
     def __int__(self):
         super().__init__()
-
         self.uptime = None
         self.query_item = None
         self.is_hq = None
@@ -70,12 +69,15 @@ class select_item_list(Ui_select_item_list):
 
 
 def query_item():
-    input_name = query_item_ui.input_item_name.text()
+    input_name = query_item_page.input_item_name.text()
     print(input_name)
     item = Queryer(input_name, ui.query_server)
     item_list = item.query_item_id()
-    select_item_list = Ui_select_item_list()
-    select_item_list.setupUi(ui.show_data_box)
+    if len(item_list) > 1:
+        select_item_list = Ui_select_item_list()
+        select_item_list.setupUi(ui.select_item)
+
+        ui.show_data_box.setCurrentIndex(1)
     print(item_list)
 
 
@@ -92,9 +94,7 @@ ui = mainWindow()
 ui.setupUi(widget)
 ui.setupMenu()
 widget.show()
-query_item_ui = query_item_id()
-query_item_ui.setupUi(ui.show_data_box)
-query_item_ui.query_button.clicked.connect(query_item)
-# select_item = Ui_select_item_list()
-# select_item.setupUi(ui.show_data_box)
+query_item_page = query_item_id()
+query_item_page.setupUi(ui.query_item)
+query_item_page.query_button.clicked.connect(query_item)
 sys.exit(app.exec_())

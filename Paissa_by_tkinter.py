@@ -1,6 +1,6 @@
 import tkinter as tk
-import tkinter.ttk as ttk
 from Queryer import Queryer
+import ttkbootstrap as ttkbs
 
 
 # from ttkbootstrap.tableview import Tableview
@@ -9,7 +9,7 @@ from Queryer import Queryer
 # import webbrowser
 
 
-class TopMenu(tk.Frame):
+class TopMenu(ttkbs.Frame):
     """
     顶部菜单栏
     """
@@ -24,15 +24,15 @@ class TopMenu(tk.Frame):
         服务器选择菜单
         :return: 服务器名称（str）
         """
-        self.top_menu = tk.Menu(self.master)
-        self.area_server = tk.Menu(master=self.top_menu, tearoff=0)
+        self.top_menu = ttkbs.Menu(self.master)
+        self.area_server = ttkbs.Menu(master=self.top_menu, tearoff=0)
         self.top_menu.add_cascade(label='服务器', menu=self.area_server)
         self.top_menu.add_command(label='查询历史')
         self.top_menu.add_command(label='关于')
-        self.menu_server_niao = tk.Menu(self.area_server, tearoff=0)
-        self.menu_server_mao = tk.Menu(self.area_server, tearoff=0)
-        self.menu_server_zhu = tk.Menu(self.area_server, tearoff=0)
-        self.menu_server_gou = tk.Menu(self.area_server, tearoff=0)
+        self.menu_server_niao = ttkbs.Menu(self.area_server, tearoff=0)
+        self.menu_server_mao = ttkbs.Menu(self.area_server, tearoff=0)
+        self.menu_server_zhu = ttkbs.Menu(self.area_server, tearoff=0)
+        self.menu_server_gou = ttkbs.Menu(self.area_server, tearoff=0)
         self.area_server.add_command(label='国服（等待跨大区开放后支持）')
         self.area_server.add_cascade(label='陆行鸟', menu=self.menu_server_niao)
         self.area_server.add_cascade(label='猫小胖', menu=self.menu_server_mao)
@@ -73,18 +73,18 @@ class TopMenu(tk.Frame):
         return self.top_menu
 
 
-class ModuleLoadPage(tk.Frame):
+class ModuleLoadPage(ttkbs.Frame):
     def __int__(self, master=None):
         super().__init__(master)
         self.master = master
         self.frame.pack()
 
     def create_loading_page(self):
-        self.frame = tk.Frame(self.master)
+        self.frame = ttkbs.Frame(self.master)
         tk.Label(self.frame, text='Loading...', font=20).pack()
 
 
-class ModuleItemQuery(tk.Frame):
+class ModuleItemQuery(ttkbs.Frame):
     """
     首页查询界面
     """
@@ -94,18 +94,21 @@ class ModuleItemQuery(tk.Frame):
         self.master = master
         self.pack(expand=True, fill="both")
 
+        self.creat_query_box()
+
     def creat_query_box(self):
         """
         物品查询输入框和查询按钮的界面渲染
         :return: 物品名称（is variable, not str）
         """
-        self.query_box = tk.Frame(self)
-        self.query_item_name = tk.StringVar()
-        self.label1 = tk.Label(master=self.query_box, text='请输入要查询的物品名称：', font=20)
+        self.query_box = ttkbs.Frame(self)
+        self.query_item_name = ttkbs.StringVar()
+        self.label1 = ttkbs.Label(master=self.query_box, text='请输入要查询的物品名称：', font=20)
         self.label1.place(x=60, y=150)
-        self.entry1 = tk.Entry(master=self.query_box, textvariable=self.query_item_name, font=18)
+        self.entry1 = ttkbs.Entry(master=self.query_box, textvariable=self.query_item_name, font=18)
         self.entry1.place(relx=0.1, y=180, relwidth=0.8, height=60)
-        self.commit_botton = tk.Button(master=self.query_box, text='查询', command=self.query_item_id)
+        self.commit_botton = ttkbs.Button(master=self.query_box, bootstyle="outline-button", text='查询',
+                                          command=self.query_item_id)
         self.commit_botton.place(relx=0.70, y=300)
         self.query_box.pack(expand=True, fill="both")
         return self.query_item_name
@@ -127,11 +130,11 @@ class ModuleItemQuery(tk.Frame):
             self.create_item_list(item_id)
 
     def create_item_list(self, item_id):
-        self.item_list = tk.Frame(self.master)
+        self.item_list = ttkbs.Frame(self.master)
         cul = ['item_name', 'item_id']
-        self.label2 = tk.Label(master=self.item_list, text='双击物品名称选择要查询的物品', font=20)
+        self.label2 = ttkbs.Label(master=self.item_list, text='双击物品名称选择要查询的物品', font=20)
         self.label2.place(x=60, y=50)
-        self.list_view = ttk.Treeview(master=self.item_list, show="headings", columns=cul, selectmode='browse')
+        self.list_view = ttkbs.Treeview(master=self.item_list, show="headings", columns=cul, selectmode='browse')
         self.list_view.column('item_name', anchor='center')
         self.list_view.column('item_id', width=1, anchor='center')
         self.list_view.heading('item_name', text='物品名称')
@@ -152,32 +155,32 @@ class ModuleItemQuery(tk.Frame):
         # self.list_view.bind('<ButtonRelease-1>', all)
 
 
-class ModuleHistoryQueryBoard(tk.Frame):
+class ModuleHistoryQueryBoard(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleItemDetial(tk.Frame):
+class ModuleItemDetial(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleSaleList(tk.Frame):
+class ModuleSaleList(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleSaleHistory(tk.Frame):
+class ModuleSaleHistory(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleCraftCost(tk.Frame):
+class ModuleCraftCost(ttkbs.Frame):
     def __int__(self):
         pass
 
 
-class ModuleRelativeArticles(tk.Frame):
+class ModuleRelativeArticles(ttkbs.Frame):
     def __int__(self):
         pass
 
@@ -192,7 +195,8 @@ def set_server(server):
 """
 主窗体控制
 """
-root = tk.Tk()
+style = ttkbs.Style(theme="flatly")
+root = style.master
 root.geometry('1000x700+400+150')
 root.minsize(600, 360)
 root.title('猴面雀 - FF14市场查询小工具')
@@ -211,11 +215,10 @@ query_item = None
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
 
-# load_page = ModuleLoadPage(master=root)
-# load_page.create_loading_page()
-index = ModuleItemQuery(master=root)
-query_item_name = index.creat_query_box()
-# item_list.create_item_list(item_id)
+index = ModuleItemQuery(root)
+index_page = index.creat_query_box()
+
+
 
 """
 创建下方状态栏

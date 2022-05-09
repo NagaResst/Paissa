@@ -11,8 +11,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_select_item_list(QtWidgets.QWidget):
+class Ui_select_item_list(object):
     def setupUi(self, select_item_list):
+        select_item_list.setObjectName("select_item_list")
+        select_item_list.resize(736, 571)
         self.gridLayout_2 = QtWidgets.QGridLayout(select_item_list)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.gridLayout = QtWidgets.QGridLayout()
@@ -51,4 +53,4 @@ class Ui_select_item_list(QtWidgets.QWidget):
     def retranslateUi(self, select_item_list):
         _translate = QtCore.QCoreApplication.translate
         select_item_list.setWindowTitle(_translate("select_item_list", "Form"))
-        self.pushButton.setText(_translate("select_item_list", "PushButton"))
+        self.pushButton.setText(_translate("select_item_list", "选择物品"))

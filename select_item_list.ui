@@ -40,7 +40,7 @@
         </font>
        </property>
        <property name="text">
-        <string>PushButton</string>
+        <string>选择物品</string>
        </property>
       </widget>
      </item>

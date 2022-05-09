@@ -1,3 +1,7 @@
+"""
+Date:2021/4/21 14:49
+Author :四翼妄为
+"""
 import sys
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
                              QHBoxLayout, QGridLayout, QPushButton, QVBoxLayout, QListWidget, QStackedLayout)
@@ -90,3 +94,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
     sys.exit(app.exec_())
+

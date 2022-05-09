@@ -99,8 +99,14 @@ class Ui_mainWindow(object):
         self.gridLayout.addWidget(self.status_bar, 0, 0, 1, 1)
         self.show_data_area = QtWidgets.QGridLayout()
         self.show_data_area.setObjectName("show_data_area")
-        self.show_data_box = QtWidgets.QWidget(self.centralwidget)
+        self.show_data_box = QtWidgets.QStackedWidget(self.centralwidget)
         self.show_data_box.setObjectName("show_data_box")
+        self.query_item = QtWidgets.QWidget()
+        self.query_item.setObjectName("query_item")
+        self.show_data_box.addWidget(self.query_item)
+        self.select_item = QtWidgets.QWidget()
+        self.select_item.setObjectName("select_item")
+        self.show_data_box.addWidget(self.select_item)
         self.show_data_area.addWidget(self.show_data_box, 0, 0, 1, 1)
         self.gridLayout.addLayout(self.show_data_area, 1, 0, 1, 1)
         self.gridLayout.setRowMinimumHeight(0, 30)
@@ -251,7 +257,6 @@ class Ui_mainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(mainWindow)
-        self.action1.triggered['bool'].connect(self.show_data_box.setHidden) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
     def retranslateUi(self, mainWindow):

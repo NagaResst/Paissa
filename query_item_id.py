@@ -14,9 +14,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_query_item_id(object):
     def setupUi(self, query_item_id):
         query_item_id.setObjectName("query_item_id")
-        query_item_id.resize(400, 300)
-        self.gridLayout = QtWidgets.QGridLayout(query_item_id)
-        self.gridLayout.setObjectName("gridLayout")
+        query_item_id.resize(670, 405)
+        self.verticalLayout = QtWidgets.QVBoxLayout(query_item_id)
+        self.verticalLayout.setObjectName("verticalLayout")
         self.query_box = QtWidgets.QVBoxLayout()
         self.query_box.setContentsMargins(80, 0, 80, 0)
         self.query_box.setObjectName("query_box")
@@ -46,7 +46,7 @@ class Ui_query_item_id(object):
         self.query_button.setFont(font)
         self.query_button.setObjectName("query_button")
         self.query_box.addWidget(self.query_button, 0, QtCore.Qt.AlignRight)
-        self.gridLayout.addLayout(self.query_box, 0, 0, 1, 1)
+        self.verticalLayout.addLayout(self.query_box)
 
         self.retranslateUi(query_item_id)
         QtCore.QMetaObject.connectSlotsByName(query_item_id)

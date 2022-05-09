@@ -102,8 +102,6 @@ class ItemQuerier(object):
     def query_item_id(self):
         """
         查询官方的物品ID，为后面的查询提供支持
-        后续可能使用 garlandtools 替换现在的查询接口
-        https://garlandtools.cn/api/search.php?text=%E6%B0%B4%E4%B9%8B%E6%99%B6%E7%B0%87&lang=chs&ilvlMin=1&ilvlMax=999
         """
         query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
         print('\n猴面雀正在为您查找需要的数据，请稍候... ')

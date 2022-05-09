@@ -23,16 +23,16 @@ class Queryer(object):
         """
         查询结果序列化成字典
         """
-        result = None
-        try:
-            result = get(url)
-        except ConnectionError:
-            time.sleep(15)
-            result = get(url)
-        finally:
-            # 当属性的值为null的时候，无法转换成字典，将其替换为None
-            result = result.text.replace('null', '"None"')
-            result = loads(result)
+        while True:
+            try:
+                result = get(url, timeout=10)
+                break
+            except:
+                print('\n猴面雀发现网络有点问题，正准备再试一次')
+                time.sleep(3)
+        # 当属性的值为null的时候，无法转换成字典，将其替换为None
+        result = result.text.replace('null', '"None"')
+        result = loads(result)
         return result
 
     @staticmethod
@@ -72,15 +72,9 @@ class Queryer(object):
         查询官方的物品ID，为后面的查询提供支持
         """
         query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
-        try:
-            result = get(query_url)
-        except:
-            time.sleep(10)
-            result = get(query_url)
-        itemstr = result.text.replace('null', '"None"')
-        itemde = (loads(itemstr))["Results"]
-        itemde = sorted(itemde, key=lambda e: e.__getitem__('ID'), reverse=False)
-        return itemde
+        result = self.init_query_result(query_url)
+        itemde = result["Results"]
+        return sorted(itemde, key=lambda e: e.__getitem__('ID'), reverse=False)
 
     def query_item_price(self):
         pass

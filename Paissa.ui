@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1084</width>
-    <height>731</height>
+    <width>1000</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,7 +29,7 @@
    <string>猴面雀 - FF14市场查询工具</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" rowstretch="0,0">
+   <layout class="QGridLayout" name="gridLayout" rowstretch="1,20" rowminimumheight="30,0">
     <property name="leftMargin">
      <number>10</number>
     </property>
@@ -52,7 +52,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,1,1,1,1">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1,1,1,1">
          <property name="spacing">
           <number>6</number>
          </property>
@@ -61,6 +61,12 @@
          </property>
          <item>
           <widget class="QFrame" name="frame">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>30</height>
+            </size>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -70,11 +76,11 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="query_server">
+          <widget class="QLabel" name="show_text_uptime">
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -83,11 +89,17 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="update_time">
+          <widget class="QLabel" name="show_update_time">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -100,7 +112,7 @@
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -113,7 +125,7 @@
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>12</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -140,8 +152,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1084</width>
-     <height>23</height>
+     <width>1000</width>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="server">
@@ -233,6 +245,9 @@
    <addaction name="menu"/>
   </widget>
   <action name="select_server_all">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>国服</string>
    </property>
@@ -244,15 +259,9 @@
    <property name="text">
     <string>红玉海</string>
    </property>
-   <property name="query_server" stdset="0">
-    <string>红玉海</string>
-   </property>
   </action>
   <action name="select_server_shenyizhidi">
    <property name="text">
-    <string>神意之地</string>
-   </property>
-   <property name="query_server" stdset="0">
     <string>神意之地</string>
    </property>
   </action>
@@ -260,23 +269,14 @@
    <property name="text">
     <string>拉诺西亚</string>
    </property>
-   <property name="query_server" stdset="0">
-    <string>拉诺西亚</string>
-   </property>
   </action>
   <action name="select_server_huanyignqundao">
    <property name="text">
     <string>幻影群岛</string>
    </property>
-   <property name="query_server" stdset="0">
-    <string>幻影群岛</string>
-   </property>
   </action>
   <action name="select_server_mengyachi">
    <property name="text">
-    <string>萌芽池</string>
-   </property>
-   <property name="query_server" stdset="0">
     <string>萌芽池</string>
    </property>
   </action>

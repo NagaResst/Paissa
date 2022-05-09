@@ -1,120 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>query_item_id</class>
- <widget class="QFrame" name="query_item_id">
+ <widget class="QWidget" name="query_item_id">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1081</width>
-    <height>683</height>
+    <width>400</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Frame</string>
+   <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="1">
+  <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="QWidget" name="query_index_page" native="true">
-     <property name="enabled">
-      <bool>true</bool>
+    <layout class="QVBoxLayout" name="query_box" stretch="0,0,0">
+     <property name="leftMargin">
+      <number>80</number>
      </property>
-     <property name="mouseTracking">
-      <bool>false</bool>
+     <property name="topMargin">
+      <number>0</number>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
+     <property name="rightMargin">
+      <number>80</number>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2" rowstretch="2">
-      <property name="leftMargin">
-       <number>100</number>
-      </property>
-      <property name="topMargin">
-       <number>100</number>
-      </property>
-      <property name="rightMargin">
-       <number>100</number>
-      </property>
-      <property name="bottomMargin">
-       <number>200</number>
-      </property>
-      <item row="0" column="0">
-       <layout class="QVBoxLayout" name="query_box" stretch="0,0,0">
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item alignment="Qt::AlignRight">
-         <widget class="QCheckBox" name="query_is_hq">
-          <property name="minimumSize">
-           <size>
-            <width>15</width>
-            <height>15</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Arial</family>
-            <pointsize>16</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>查询HQ</string>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="input_item_name">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>60</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>16</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="placeholderText">
-           <string>请输入要查询的物品名称</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignRight">
-         <widget class="QToolButton" name="query_button">
-          <property name="minimumSize">
-           <size>
-            <width>80</width>
-            <height>35</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Arial</family>
-            <pointsize>14</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>查询</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item alignment="Qt::AlignRight">
+      <widget class="QCheckBox" name="query_is_hq">
+       <property name="minimumSize">
+        <size>
+         <width>15</width>
+         <height>15</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>16</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>查询HQ</string>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="input_item_name">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Agency FB</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="placeholderText">
+        <string>请输入要查询的物品名称</string>
+       </property>
+      </widget>
+     </item>
+     <item alignment="Qt::AlignRight">
+      <widget class="QToolButton" name="query_button">
+       <property name="minimumSize">
+        <size>
+         <width>120</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>查询</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

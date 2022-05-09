@@ -1,7 +1,7 @@
-from requests import get
-from json import loads
-import math
 import time
+from json import loads
+
+from requests import get
 
 
 class Queryer(object):
@@ -28,7 +28,6 @@ class Queryer(object):
                 result = get(url, timeout=10)
                 break
             except:
-                print('\n猴面雀发现网络有点问题，正准备再试一次')
                 time.sleep(3)
         # 当属性的值为null的时候，无法转换成字典，将其替换为None
         result = result.text.replace('null', '"None"')
@@ -84,3 +83,11 @@ class Queryer(object):
 
     def query_every_server(self):
         pass
+
+
+if __name__ == '__main__':
+    item = '木条'
+    server = '猫小胖'
+    itemObj = Queryer(item, server)
+    item_list = itemObj.query_item_id()
+    print(item_list)

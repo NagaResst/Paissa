@@ -3,13 +3,15 @@ import sys
 from PyQt5 import QtWidgets
 
 from Paissa import Ui_mainWindow
+from Queryer import Queryer
 from query_item_id import Ui_query_item_id
+from select_item_list import Ui_select_item_list
 
 
 class mainWindow(Ui_mainWindow):
     def __int__(self):
         super().__init__()
-        self.query_server = None
+
         self.uptime = None
         self.query_item = None
         self.is_hq = None
@@ -20,6 +22,7 @@ class mainWindow(Ui_mainWindow):
 
     def setupMenu(self):
         """选择服务器菜单栏行为"""
+        self.query_server = '猫小胖'
         self.select_server_luxingniao.triggered.connect(lambda: self.click_select_server('陆行鸟'))
         self.select_server_hongyuhai.triggered.connect(lambda: self.click_select_server("红玉海"))
         self.select_server_shenyizhidi.triggered.connect(lambda: self.click_select_server("神意之地"))
@@ -49,20 +52,49 @@ class mainWindow(Ui_mainWindow):
         self.select_server_taiyanghaian.triggered.connect(lambda: self.click_select_server("太阳海岸"))
         self.select_server_yixiujiade.triggered.connect(lambda: self.click_select_server("伊修加德"))
         self.select_server_hongchachuan.triggered.connect(lambda: self.click_select_server("红茶川"))
-        self.select_server_luxingniao.triggered.connect(lambda: self.click_select_server("陆行鸟(全区服)"))
-        self.select_server_moguli.triggered.connect(lambda: self.click_select_server("莫古力(全区服)"))
-        self.select_server_maoxiaopang.triggered.connect(lambda: self.click_select_server("猫小胖(全区服)"))
-        self.select_server_doudouchai.triggered.connect(lambda: self.click_select_server("豆豆柴(全区服)"))
+        self.select_server_luxingniao.triggered.connect(lambda: self.click_select_server("陆行鸟"))
+        self.select_server_moguli.triggered.connect(lambda: self.click_select_server("莫古力"))
+        self.select_server_maoxiaopang.triggered.connect(lambda: self.click_select_server("猫小胖"))
+        self.select_server_doudouchai.triggered.connect(lambda: self.click_select_server("豆豆柴"))
         """选择服务器菜单栏行为结束"""
 
 
-"""主程序开始"""
+class query_item_id(Ui_query_item_id):
+    def __int__(self):
+        super().__init__()
+
+
+class select_item_list(Ui_select_item_list):
+    def __int__(self):
+        super().__init__()
+
+
+def query_item():
+    input_name = query_item_ui.input_item_name.text()
+    print(input_name)
+    item = Queryer(input_name, ui.query_server)
+    item_list = item.query_item_id()
+    select_item_list = Ui_select_item_list()
+    select_item_list.setupUi(ui.show_data_box)
+    print(item_list)
+
+
+"""
+公共数据部分
+"""
+
+"""
+主程序开始
+"""
 app = QtWidgets.QApplication(sys.argv)
 widget = QtWidgets.QMainWindow()
 ui = mainWindow()
 ui.setupUi(widget)
 ui.setupMenu()
 widget.show()
-query_item_ui = Ui_query_item_id()
+query_item_ui = query_item_id()
 query_item_ui.setupUi(ui.show_data_box)
+query_item_ui.query_button.clicked.connect(query_item)
+# select_item = Ui_select_item_list()
+# select_item.setupUi(ui.show_data_box)
 sys.exit(app.exec_())

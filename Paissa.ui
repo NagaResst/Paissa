@@ -44,6 +44,12 @@
     </property>
     <item row="0" column="0">
      <widget class="QWidget" name="status_bar" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
@@ -52,31 +58,24 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1,1,1,1">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,1,2,1">
          <property name="spacing">
-          <number>6</number>
+          <number>15</number>
+         </property>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetFixedSize</enum>
          </property>
          <property name="leftMargin">
           <number>0</number>
          </property>
-         <item>
-          <widget class="QFrame" name="frame">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>30</height>
-            </size>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
+         <item alignment="Qt::AlignRight">
           <widget class="QLabel" name="show_text_uptime">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>1</verstretch>
+            </sizepolicy>
+           </property>
            <property name="font">
             <font>
              <family>Arial</family>
@@ -88,8 +87,14 @@
            </property>
           </widget>
          </item>
-         <item>
+         <item alignment="Qt::AlignLeft">
           <widget class="QLabel" name="show_update_time">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>1</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -103,12 +108,18 @@
             </font>
            </property>
            <property name="text">
-            <string>N/A</string>
+            <string>2022-5-9 14:40:47</string>
            </property>
           </widget>
          </item>
-         <item>
+         <item alignment="Qt::AlignRight">
           <widget class="QLabel" name="show_text_server">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>1</verstretch>
+            </sizepolicy>
+           </property>
            <property name="font">
             <font>
              <family>Arial</family>
@@ -120,8 +131,14 @@
            </property>
           </widget>
          </item>
-         <item>
+         <item alignment="Qt::AlignLeft">
           <widget class="QLabel" name="show_server">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>1</verstretch>
+            </sizepolicy>
+           </property>
            <property name="font">
             <font>
              <family>Arial</family>
@@ -129,7 +146,7 @@
             </font>
            </property>
            <property name="text">
-            <string>SERVER</string>
+            <string>猫小胖</string>
            </property>
           </widget>
          </item>
@@ -162,9 +179,6 @@
     </property>
     <widget class="QMenu" name="server_luxingniao">
      <property name="title">
-      <string>陆行鸟</string>
-     </property>
-     <property name="query_server" stdset="0">
       <string>陆行鸟</string>
      </property>
      <addaction name="select_server_luxingniao"/>

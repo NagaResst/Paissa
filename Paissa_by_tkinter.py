@@ -1,5 +1,5 @@
 import tkinter as tk
-
+import tkinter.ttk as ttk
 from Queryer import Queryer
 
 
@@ -94,8 +94,6 @@ class ModuleItemQuery(tk.Frame):
         self.master = master
         self.pack(expand=True, fill="both")
 
-        self.creat_query_box()
-
     def creat_query_box(self):
         """
         物品查询输入框和查询按钮的界面渲染
@@ -133,7 +131,7 @@ class ModuleItemQuery(tk.Frame):
         cul = ['item_name', 'item_id']
         self.label2 = tk.Label(master=self.item_list, text='双击物品名称选择要查询的物品', font=20)
         self.label2.place(x=60, y=50)
-        self.list_view = tk.Treeview(master=self.item_list, show="headings", columns=cul, selectmode='browse')
+        self.list_view = ttk.Treeview(master=self.item_list, show="headings", columns=cul, selectmode='browse')
         self.list_view.column('item_name', anchor='center')
         self.list_view.column('item_id', width=1, anchor='center')
         self.list_view.heading('item_name', text='物品名称')
@@ -213,10 +211,10 @@ query_item = None
 menu = TopMenu(master=root)
 root.config(menu=menu.creat_menu())
 
-load_page = ModuleLoadPage(master=root)
+# load_page = ModuleLoadPage(master=root)
 # load_page.create_loading_page()
 index = ModuleItemQuery(master=root)
-index.creat_query_box()
+query_item_name = index.creat_query_box()
 # item_list.create_item_list(item_id)
 
 """

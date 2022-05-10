@@ -33,7 +33,7 @@ class Ui_mainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.status_bar.sizePolicy().hasHeightForWidth())
         self.status_bar.setSizePolicy(sizePolicy)
-        self.status_bar.setMaximumSize(QtCore.QSize(16777215, 50))
+        self.status_bar.setMaximumSize(QtCore.QSize(16777215, 70))
         self.status_bar.setObjectName("status_bar")
         self.gridLayout_3 = QtWidgets.QGridLayout(self.status_bar)
         self.gridLayout_3.setObjectName("gridLayout_3")
@@ -410,7 +410,7 @@ class Ui_mainWindow(object):
         self.menubar.addAction(self.about.menuAction())
 
         self.retranslateUi(mainWindow)
-        self.show_data_box.setCurrentIndex(2)
+        self.show_data_box.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
     def retranslateUi(self, mainWindow):

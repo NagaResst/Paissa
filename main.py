@@ -21,7 +21,9 @@ class mainWindow(Ui_mainWindow):
         self.show_server.setText(server)
 
     def setupMenu(self):
-        """选择服务器菜单栏行为"""
+        """
+        选择服务器菜单栏行为
+        """
         self.query_server = '猫小胖'
         self.select_server_luxingniao.triggered.connect(lambda: self.click_select_server('陆行鸟'))
         self.select_server_hongyuhai.triggered.connect(lambda: self.click_select_server("红玉海"))
@@ -56,7 +58,6 @@ class mainWindow(Ui_mainWindow):
         self.select_server_moguli.triggered.connect(lambda: self.click_select_server("莫古力"))
         self.select_server_maoxiaopang.triggered.connect(lambda: self.click_select_server("猫小胖"))
         self.select_server_doudouchai.triggered.connect(lambda: self.click_select_server("豆豆柴"))
-        """选择服务器菜单栏行为结束"""
 
 
 class query_item_id(Ui_query_item_id):
@@ -105,6 +106,7 @@ widget = QW.QMainWindow()
 ui = mainWindow()
 ui.setupUi(widget)
 ui.setupMenu()
+ui.show_data_box.setCurrentIndex(0)
 widget.show()
 query_item_page = query_item_id()
 query_item_page.setupUi(ui.query_item)

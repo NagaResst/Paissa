@@ -1,6 +1,8 @@
 import tkinter as tk
-from Queryer import Queryer
+
 import ttkbootstrap as ttkbs
+
+from Queryer import Queryer
 
 
 # from ttkbootstrap.tableview import Tableview
@@ -217,8 +219,6 @@ root.config(menu=menu.creat_menu())
 
 index = ModuleItemQuery(root)
 index_page = index.creat_query_box()
-
-
 
 """
 创建下方状态栏

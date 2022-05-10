@@ -79,7 +79,7 @@
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>10</pointsize>
+             <pointsize>12</pointsize>
             </font>
            </property>
            <property name="text">
@@ -104,11 +104,11 @@
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>10</pointsize>
+             <pointsize>12</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>2022-5-9 14:40:47</string>
+            <string>N/A</string>
            </property>
           </widget>
          </item>
@@ -123,7 +123,7 @@
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>10</pointsize>
+             <pointsize>12</pointsize>
             </font>
            </property>
            <property name="text">
@@ -142,7 +142,7 @@
            <property name="font">
             <font>
              <family>Arial</family>
-             <pointsize>10</pointsize>
+             <pointsize>12</pointsize>
             </font>
            </property>
            <property name="text">
@@ -159,8 +159,14 @@
      <layout class="QGridLayout" name="show_data_area">
       <item row="0" column="0">
        <widget class="QStackedWidget" name="show_data_box">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
         <widget class="QWidget" name="query_item"/>
         <widget class="QWidget" name="select_item"/>
+        <widget class="QWidget" name="show_price"/>
+        <widget class="QWidget" name="show_craft"/>
+        <widget class="QWidget" name="about_this"/>
        </widget>
       </item>
      </layout>
@@ -173,14 +179,30 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <widget class="QMenu" name="server">
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>服务器</string>
     </property>
     <widget class="QMenu" name="server_luxingniao">
+     <property name="font">
+      <font>
+       <family>Arial</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="title">
       <string>陆行鸟</string>
      </property>
@@ -239,27 +261,30 @@
     <addaction name="server_doudouchai"/>
    </widget>
    <widget class="QMenu" name="query_history">
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>查询历史</string>
     </property>
    </widget>
    <widget class="QMenu" name="about">
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>关于</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menu">
-    <property name="title">
-     <string>显示隐藏界面</string>
-    </property>
-    <addaction name="action1"/>
-    <addaction name="action2"/>
-    <addaction name="action3"/>
-   </widget>
    <addaction name="server"/>
    <addaction name="query_history"/>
    <addaction name="about"/>
-   <addaction name="menu"/>
   </widget>
   <action name="select_server_all">
    <property name="enabled">
@@ -267,6 +292,12 @@
    </property>
    <property name="text">
     <string>国服</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_hongyuhai">
@@ -276,115 +307,253 @@
    <property name="text">
     <string>红玉海</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_shenyizhidi">
    <property name="text">
     <string>神意之地</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_lanuoxiya">
    <property name="text">
     <string>拉诺西亚</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_huanyignqundao">
    <property name="text">
     <string>幻影群岛</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_mengyachi">
    <property name="text">
     <string>萌芽池</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_yuzhouheyin">
    <property name="text">
     <string>宇宙和音</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_woxianxiran">
    <property name="text">
     <string>沃仙曦染</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_chenxiwangzuo">
    <property name="text">
     <string>晨曦王座</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_baiyinxiang">
    <property name="text">
     <string>白银乡</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_baijinhuanxiang">
    <property name="text">
     <string>白金幻象</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_shenquanhen">
    <property name="text">
     <string>神拳痕</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_chaofengting">
    <property name="text">
     <string>潮风亭</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_lvrenzhanqiao">
    <property name="text">
     <string>旅人栈桥</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_fuxiaozhijian">
    <property name="text">
     <string>拂晓之间</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_longchaoshendian">
    <property name="text">
     <string>龙巢神殿</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_mengyubaojing">
    <property name="text">
     <string>梦羽宝境</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_zishuizhanqiao">
    <property name="text">
     <string>紫水栈桥</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_yanxia">
    <property name="text">
     <string>延夏</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_jingyuzhuagnyuan">
    <property name="text">
     <string>静语庄园</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_moduna">
    <property name="text">
     <string>摩杜纳</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_haimaochawu">
    <property name="text">
     <string>海猫茶屋</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_roufenghaiwan">
    <property name="text">
     <string>柔风海湾</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_hupoyuan">
    <property name="text">
     <string>琥珀原</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_shuijingta">
@@ -394,6 +563,12 @@
    <property name="toolTip">
     <string>水晶塔</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_yinleihu">
    <property name="text">
@@ -401,6 +576,12 @@
    </property>
    <property name="toolTip">
     <string>银泪湖</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_taiyanghaian">
@@ -410,6 +591,12 @@
    <property name="toolTip">
     <string>太阳海岸</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_yixiujiade">
    <property name="text">
@@ -417,6 +604,12 @@
    </property>
    <property name="toolTip">
     <string>伊修加德</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_hongchachuan">
@@ -426,25 +619,55 @@
    <property name="toolTip">
     <string>红茶川</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_luxingniao">
    <property name="text">
     <string>陆行鸟(全区服)</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="select_server_moguli">
    <property name="text">
     <string>莫古力(全区服)</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_maoxiaopang">
    <property name="text">
     <string>猫小胖(全区服)</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="select_server_doudouchai">
    <property name="text">
     <string>豆豆柴(全区服)</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="action1">

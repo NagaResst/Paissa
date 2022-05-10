@@ -1,6 +1,7 @@
 import sys
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore
+from PyQt5 import QtWidgets as QW
 
 from Paissa import Ui_mainWindow
 from Queryer import Queryer
@@ -70,15 +71,26 @@ class select_item_list(Ui_select_item_list):
 
 def query_item():
     input_name = query_item_page.input_item_name.text()
-    print(input_name)
     item = Queryer(input_name, ui.query_server)
     item_list = item.query_item_id()
     if len(item_list) > 1:
-        select_item_list = Ui_select_item_list()
-        select_item_list.setupUi(ui.select_item)
-
+        select_item_page = select_item_list()
+        select_item_page.setupUi(ui.select_item)
+        r = 0
+        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QW.QHeaderView.Stretch)
+        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QW.QHeaderView.Fixed)
+        select_item_page.items_list_widget.setColumnWidth(0, 120)
+        select_item_page.items_list_widget.setRowCount(len(item_list))
+        for i in item_list:
+            item_id = QW.QTableWidgetItem(str(i['ID']))
+            item_id.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            item_name = QW.QTableWidgetItem(i['Name'])
+            item_name.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            select_item_page.items_list_widget.setItem(r, 0, item_id)
+            select_item_page.items_list_widget.setItem(r, 1, item_name)
+            r += 1
+        select_item_page.items_list_widget.repaint()
         ui.show_data_box.setCurrentIndex(1)
-    print(item_list)
 
 
 """
@@ -88,8 +100,8 @@ def query_item():
 """
 主程序开始
 """
-app = QtWidgets.QApplication(sys.argv)
-widget = QtWidgets.QMainWindow()
+app = QW.QApplication(sys.argv)
+widget = QW.QMainWindow()
 ui = mainWindow()
 ui.setupUi(widget)
 ui.setupMenu()

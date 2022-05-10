@@ -86,7 +86,7 @@ class Queryer(object):
 
 
 if __name__ == '__main__':
-    item = '木条'
+    item = '水晶'
     server = '猫小胖'
     itemObj = Queryer(item, server)
     item_list = itemObj.query_item_id()

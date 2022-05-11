@@ -1,7 +1,6 @@
 import sys
 
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets as QW
+from PyQt5 import QtWidgets
 
 from Paissa import Ui_mainWindow
 from Queryer import Queryer
@@ -9,8 +8,13 @@ from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
 
+"""
+.ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
+所以 ui文件 和成对出现的 py文件 不会做任何修改，界面行为在这里进行重新定义，后台查询功能在 Queryer 内实现。
+"""
 
-class mainWindow(Ui_mainWindow):
+
+class MainWindow(Ui_mainWindow):
     def __int__(self):
         super().__init__()
 
@@ -53,17 +57,17 @@ class mainWindow(Ui_mainWindow):
         self.select_server_doudouchai.triggered.connect(lambda: click_select_server("豆豆柴"))
 
 
-class query_item_id(Ui_query_item_id):
+class QueryItemId(Ui_query_item_id):
     def __int__(self):
         super().__init__()
 
 
-class select_item_list(Ui_select_item_list):
+class SelectItemList(Ui_select_item_list):
     def __int__(self):
         super().__init__()
 
 
-class show_price(Ui_show_price):
+class ShowPrice(Ui_show_price):
     def __int__(self):
         super().__init__()
 
@@ -75,8 +79,10 @@ def click_select_server(server):
     global item
     global query_server
     query_server = server
+    # 修改界面上显示的当前服务器
     ui.show_server.setText(server)
     item.server = server
+    # 立刻刷新价格显示的界面
     queru_price()
 
 
@@ -90,15 +96,15 @@ def query_item():
     if len(item_list) > 1:
         r = 0
         select_item_page.items_list_widget.clearContents()
-        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QW.QHeaderView.Stretch)
-        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QW.QHeaderView.Fixed)
+        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
         select_item_page.items_list_widget.setColumnWidth(0, 120)
         select_item_page.items_list_widget.setRowCount(len(item_list))
         for i in item_list:
-            item_id = QW.QTableWidgetItem(str(i['ID']))
-            item_id.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-            item_name = QW.QTableWidgetItem(i['Name'])
-            item_name.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            item_id = QtWidgets.QTableWidgetItem(str(i['ID']))
+            item_id.setTextAlignment(4 | 128)
+            item_name = QtWidgets.QTableWidgetItem(i['Name'])
+            item_name.setTextAlignment(4 | 128)
             select_item_page.items_list_widget.setItem(r, 0, item_id)
             select_item_page.items_list_widget.setItem(r, 1, item_name)
             r += 1
@@ -108,6 +114,9 @@ def query_item():
         item.id = item_list[0]['ID']
         item.name = item_list[0]['Name']
         queru_price()
+    else:
+        # TODO: 加入一个弹出提示框，提示用户输入错误，查询不到数据
+        pass
 
 
 def select_item(selectd):
@@ -128,37 +137,44 @@ def select_item(selectd):
 def queru_price():
     """
     价格查询
+    TODO: HQ图标的显示
     """
     global hq
     price_list = item.query_item_price(hq)
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str(int(price_list["averagePrice"])))
-    r = 0
     """
     正在售出列表填充
     """
+    r = 0
+    # 设定表格行数
     show_price_page.sale_list.setRowCount(len(price_list['listings']))
+    # 清空所有数据
     show_price_page.sale_list.clearContents()
-    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QW.QHeaderView.Stretch)
-    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QW.QHeaderView.Fixed)
-    show_price_page.sale_list.verticalHeader().setSectionResizeMode(QW.QHeaderView.Stretch)
+    # 设定表格样式
+    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+    show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     show_price_page.sale_list.setColumnWidth(1, 20)
+    # 开始填充数据
     for i in price_list["listings"]:
-        pricePerUnit = QW.QTableWidgetItem(str(i['pricePerUnit']))
-        pricePerUnit.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        quantity = QW.QTableWidgetItem(str(i['quantity']))
-        quantity.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        total = QW.QTableWidgetItem(str(int(i['total'] * 1.05)))
-        total.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        retainerName = QW.QTableWidgetItem(i['retainerName'])
-        retainerName.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        lastReviewTime = QW.QTableWidgetItem(item.timestamp_to_time(i['lastReviewTime']))
-        lastReviewTime.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        # 准备数据
+        pricePerUnit = QtWidgets.QTableWidgetItem(str(i['pricePerUnit']))
+        pricePerUnit.setTextAlignment(4 | 128)
+        quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
+        quantity.setTextAlignment(4 | 128)
+        total = QtWidgets.QTableWidgetItem(str(int(i['total'] * 1.05)))
+        total.setTextAlignment(4 | 128)
+        retainerName = QtWidgets.QTableWidgetItem(i['retainerName'])
+        retainerName.setTextAlignment(4 | 128)
+        lastReviewTime = QtWidgets.QTableWidgetItem(item.timestamp_to_time(i['lastReviewTime']))
+        lastReviewTime.setTextAlignment(4 | 128)
         if 'worldName' in i:
-            worldName = QW.QTableWidgetItem(i['worldName'])
+            worldName = QtWidgets.QTableWidgetItem(i['worldName'])
         else:
-            worldName = QW.QTableWidgetItem(item.server)
-        worldName.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            worldName = QtWidgets.QTableWidgetItem(item.server)
+        worldName.setTextAlignment(4 | 128)
+        # 填充数据 r = row
         show_price_page.sale_list.setItem(r, 0, pricePerUnit)
         show_price_page.sale_list.setItem(r, 2, quantity)
         show_price_page.sale_list.setItem(r, 3, total)
@@ -166,32 +182,34 @@ def queru_price():
         show_price_page.sale_list.setItem(r, 5, retainerName)
         show_price_page.sale_list.setItem(r, 6, lastReviewTime)
         r += 1
+    # 表格重绘
     show_price_page.sale_list.repaint()
     """
     全服比价列表填充
     """
+    # 查询全服比价的数据
     server_list = item.server_list()
     all_server_list = item.query_every_server(server_list)
     show_price_page.all_server.setRowCount(len(all_server_list))
     show_price_page.all_server.clearContents()
-    show_price_page.all_server.horizontalHeader().setSectionResizeMode(QW.QHeaderView.Stretch)
-    show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QW.QHeaderView.Fixed)
+    show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
     show_price_page.all_server.setColumnWidth(2, 20)
-    show_price_page.all_server.verticalHeader().setSectionResizeMode(QW.QHeaderView.Stretch)
+    show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     t = 0
     for i in all_server_list:
-        server = QW.QTableWidgetItem(i['server'])
-        server.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        pricePerUnit = QW.QTableWidgetItem(str(i['pricePerUnit']))
-        pricePerUnit.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        quantity = QW.QTableWidgetItem(str(i['quantity']))
-        quantity.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        total = QW.QTableWidgetItem(str(int(i['total'] * 1.05)))
-        total.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        retainerName = QW.QTableWidgetItem(i['retainerName'])
-        retainerName.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        lastReviewTime = QW.QTableWidgetItem(item.timestamp_to_time(i['lastReviewTime']))
-        lastReviewTime.setTextAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        server = QtWidgets.QTableWidgetItem(i['server'])
+        server.setTextAlignment(4 | 128)
+        pricePerUnit = QtWidgets.QTableWidgetItem(str(i['pricePerUnit']))
+        pricePerUnit.setTextAlignment(4 | 128)
+        quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
+        quantity.setTextAlignment(4 | 128)
+        total = QtWidgets.QTableWidgetItem(str(int(i['total'] * 1.05)))
+        total.setTextAlignment(4 | 128)
+        retainerName = QtWidgets.QTableWidgetItem(i['retainerName'])
+        retainerName.setTextAlignment(4 | 128)
+        lastReviewTime = QtWidgets.QTableWidgetItem(item.timestamp_to_time(i['lastReviewTime']))
+        lastReviewTime.setTextAlignment(4 | 128)
         show_price_page.all_server.setItem(t, 0, server)
         show_price_page.all_server.setItem(t, 1, pricePerUnit)
         show_price_page.all_server.setItem(t, 3, quantity)
@@ -203,6 +221,7 @@ def queru_price():
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
     ui.item_icon.show()
+    # TODO: 加入物品的图标给 ui.item_icon
     ui.jump_to_wiki.show()
     ui.show_cost.show()
     ui.back_query.show()
@@ -211,7 +230,7 @@ def queru_price():
 
 def select_hq_ornot(status):
     """
-    CheckButton
+    查询HQ的CheckButton
     """
     global hq
     hq = status
@@ -236,9 +255,9 @@ hq = None
 """
 主程序开始
 """
-app = QW.QApplication(sys.argv)
-widget = QW.QMainWindow()
-ui = mainWindow()
+app = QtWidgets.QApplication(sys.argv)
+widget = QtWidgets.QMainWindow()
+ui = MainWindow()
 ui.setupUi(widget)
 ui.setupMenu()
 ui.jump_to_wiki.setOpenExternalLinks(True)
@@ -253,7 +272,7 @@ widget.show()
 """
 物品查询首页
 """
-query_item_page = query_item_id()
+query_item_page = QueryItemId()
 query_item_page.setupUi(ui.query_item)
 query_item_page.query_button.clicked.connect(query_item)
 query_item_page.input_item_name.returnPressed.connect(query_item)
@@ -262,15 +281,16 @@ query_item_page.query_is_hq.clicked.connect(select_hq_ornot)
 """
 模糊搜索时选择物品的界面
 """
-select_item_page = select_item_list()
+select_item_page = SelectItemList()
 select_item_page.setupUi(ui.select_item)
 select_item_page.back.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
 select_item_page.items_list_widget.doubleClicked.connect(select_item)
+# 在选择物品界面选中物品后点击“选择物品”的按钮，把选中行作为对象传给价格查询模块
 select_item_page.select_this.clicked.connect(lambda: select_item(select_item_page.items_list_widget.selectedItems()))
 
 """
 价格显示界面
 """
-show_price_page = show_price()
+show_price_page = ShowPrice()
 show_price_page.setupUi(ui.show_price)
 sys.exit(app.exec_())

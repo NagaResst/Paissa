@@ -1,6 +1,6 @@
 import time
 from json import loads
-
+from marketable import marketable
 from requests import get
 
 
@@ -73,8 +73,13 @@ class Queryer(object):
         """
         query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
         result = self.init_query_result(query_url)
-        itemde = result["Results"]
-        return sorted(itemde, key=lambda e: e.__getitem__('ID'), reverse=False)
+        all_list = result["Results"]
+        item_list = []
+        # 过滤掉不可在市场上交易的物品
+        for item in all_list:
+            if item['ID'] in marketable:
+                item_list.append(item)
+        return sorted(item_list, key=lambda e: e.__getitem__('ID'), reverse=False)
 
     def query_item_price(self, hq):
         """

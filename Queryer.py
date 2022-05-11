@@ -98,10 +98,10 @@ class Queryer(object):
                     pass
             server_sale = {
                 'server': server,
-                'pricePerUnit': result['listings'][0]['pricePerUnit'],
+                'pricePerUnit': "{:,.0f}".format(result['listings'][0]['pricePerUnit']),
                 'hq': result['listings'][0]['hq'],
                 'quantity': result['listings'][0]['quantity'],
-                'total': result['listings'][0]['total'],
+                'total': "{:,.0f}".format(result['listings'][0]['total']),
                 'retainerName': result['listings'][0]['retainerName'],
                 'lastReviewTime': result['listings'][0]['lastReviewTime']
             }

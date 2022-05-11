@@ -18,9 +18,11 @@ class Queryer(object):
         self.result = None
 
     @staticmethod
-    def init_query_result(url):
+    def init_query_result(url, is_price: bool = False):
         """
         查询结果序列化成字典
+        :param url: 查询url
+        :param is_price: 默认False，如果url是查价格的需要is_price = True
         """
         while True:
             try:
@@ -31,6 +33,17 @@ class Queryer(object):
         # 当属性的值为null的时候，无法转换成字典，将其替换为None
         result = result.text.replace('null', '"None"')
         result = loads(result)
+        if is_price:
+            result_listings = result.get('listings')
+            for v in result_listings:
+                v['pricePerUnit'] = "{:,.0f}".format(v.get('pricePerUnit'))  # 格式化成不带小数点，但是带千分位符的str数字
+                v['total'] = "{:,.0f}".format(v.get('total'))  # 格式化成不带小数点，但是带千分位符的str数字
+            result_recentHistory = result.get('recentHistory')
+            for v in result_recentHistory:
+                v['pricePerUnit'] = "{:,.0f}".format(v.get('pricePerUnit'))  # 格式化成不带小数点，但是带千分位符的str数字
+                v['total'] = "{:,.0f}".format(v.get('total'))  # 格式化成不带小数点，但是带千分位符的str数字
+            result['listings'] = result_listings  # 写入
+            result['recentHistory'] = result_recentHistory  # 写入
         return result
 
     @staticmethod
@@ -83,7 +96,7 @@ class Queryer(object):
                 self.server, self.id)
         else:
             query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-        self.result = self.init_query_result(query_url)
+        self.result = self.init_query_result(query_url, is_price=True)
         return self.result
 
     def query_every_server(self, server_list):
@@ -92,7 +105,7 @@ class Queryer(object):
             query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, self.id)
             while True:
                 try:
-                    result = self.init_query_result(query_url)
+                    result = self.init_query_result(query_url, is_price=True)
                     break
                 except:
                     pass

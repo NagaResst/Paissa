@@ -106,16 +106,19 @@ class Queryer(object):
             query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, self.id)
             result = self.init_query_result(query_url)
             # 为前端界面重新组织本服的最低价数据
-            server_sale = {
-                'server': server,
-                'pricePerUnit': result['listings'][0]['pricePerUnit'],
-                'hq': result['listings'][0]['hq'],
-                'quantity': result['listings'][0]['quantity'],
-                'total': result['listings'][0]['total'],
-                'retainerName': result['listings'][0]['retainerName'],
-                'lastReviewTime': result['listings'][0]['lastReviewTime']
-            }
-            listings.append(server_sale)
+            try:
+                server_sale = {
+                    'server': server,
+                    'pricePerUnit': result['listings'][0]['pricePerUnit'],
+                    'hq': result['listings'][0]['hq'],
+                    'quantity': result['listings'][0]['quantity'],
+                    'total': result['listings'][0]['total'],
+                    'retainerName': result['listings'][0]['retainerName'],
+                    'lastReviewTime': result['listings'][0]['lastReviewTime']
+                }
+                listings.append(server_sale)
+            except:
+                pass
         return listings
 
 

@@ -91,32 +91,42 @@ def query_item():
     模糊搜索查询物品
     """
     global item
+    global last_query
+    global item_count
     input_name = query_item_page.input_item_name.text()
-    item_list = item.query_item_id(input_name)
-    if len(item_list) > 1:
-        r = 0
-        select_item_page.items_list_widget.clearContents()
-        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
-        select_item_page.items_list_widget.setColumnWidth(0, 120)
-        select_item_page.items_list_widget.setRowCount(len(item_list))
-        for i in item_list:
-            item_id = QtWidgets.QTableWidgetItem(str(i['ID']))
-            item_id.setTextAlignment(4 | 128)
-            item_name = QtWidgets.QTableWidgetItem(i['Name'])
-            item_name.setTextAlignment(4 | 128)
-            select_item_page.items_list_widget.setItem(r, 0, item_id)
-            select_item_page.items_list_widget.setItem(r, 1, item_name)
-            r += 1
-        select_item_page.items_list_widget.repaint()
+    # 如果与上一次查询结果一致，那么直接使用上次查询的列表
+    if input_name == last_query and item_count > 1:
         ui.show_data_box.setCurrentIndex(1)
-    elif len(item_list) == 1:
-        item.id = item_list[0]['ID']
-        item.name = item_list[0]['Name']
-        queru_price()
+    elif input_name == last_query and item_count == 1:
+        ui.show_data_box.setCurrentIndex(2)
     else:
-        # TODO: 加入一个弹出提示框，提示用户输入错误，查询不到数据
-        pass
+        last_query = input_name
+        item_list = item.query_item_id(input_name)
+        item_count = len(item_list)
+        if item_count > 1:
+            r = 0
+            select_item_page.items_list_widget.clearContents()
+            select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+            select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
+            select_item_page.items_list_widget.setColumnWidth(0, 120)
+            select_item_page.items_list_widget.setRowCount(len(item_list))
+            for i in item_list:
+                item_id = QtWidgets.QTableWidgetItem(str(i['ID']))
+                item_id.setTextAlignment(4 | 128)
+                item_name = QtWidgets.QTableWidgetItem(i['Name'])
+                item_name.setTextAlignment(4 | 128)
+                select_item_page.items_list_widget.setItem(r, 0, item_id)
+                select_item_page.items_list_widget.setItem(r, 1, item_name)
+                r += 1
+            select_item_page.items_list_widget.repaint()
+            ui.show_data_box.setCurrentIndex(1)
+        elif item_count == 1:
+            item.id = item_list[0]['ID']
+            item.name = item_list[0]['Name']
+            queru_price()
+        else:
+            # TODO: 加入一个弹出提示框，提示用户输入错误，查询不到数据
+            pass
 
 
 def select_item(selectd):
@@ -148,7 +158,10 @@ def queru_price():
     """
     r = 0
     # 设定表格行数
-    show_price_page.sale_list.setRowCount(len(price_list['listings']))
+    if len(price_list['listings']) > 9:
+        show_price_page.sale_list.setRowCount(len(price_list['listings']))
+    else:
+        show_price_page.sale_list.setRowCount(9)
     # 清空所有数据
     show_price_page.sale_list.clearContents()
     # 设定表格样式
@@ -251,6 +264,8 @@ query_server = '猫小胖'
 item = Queryer(query_server)
 query_history = []
 hq = None
+last_query = None
+item_count = 1
 
 """
 主程序开始

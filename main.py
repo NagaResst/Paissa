@@ -142,7 +142,7 @@ def queru_price():
     global hq
     price_list = item.query_item_price(hq)
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
-    show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str(int(price_list["averagePrice"])))
+    show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
     """
     正在售出列表填充
     """
@@ -159,11 +159,11 @@ def queru_price():
     # 开始填充数据
     for i in price_list["listings"]:
         # 准备数据
-        pricePerUnit = QtWidgets.QTableWidgetItem(str(i['pricePerUnit']))
+        pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
         pricePerUnit.setTextAlignment(4 | 128)
         quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
         quantity.setTextAlignment(4 | 128)
-        total = QtWidgets.QTableWidgetItem(str(int(i['total'] * 1.05)))
+        total = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['total'] * 1.05))
         total.setTextAlignment(4 | 128)
         retainerName = QtWidgets.QTableWidgetItem(i['retainerName'])
         retainerName.setTextAlignment(4 | 128)
@@ -200,11 +200,11 @@ def queru_price():
     for i in all_server_list:
         server = QtWidgets.QTableWidgetItem(i['server'])
         server.setTextAlignment(4 | 128)
-        pricePerUnit = QtWidgets.QTableWidgetItem(str(i['pricePerUnit']))
+        pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
         pricePerUnit.setTextAlignment(4 | 128)
         quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
         quantity.setTextAlignment(4 | 128)
-        total = QtWidgets.QTableWidgetItem(str(int(i['total'] * 1.05)))
+        total = QtWidgets.QTableWidgetItem(str("{:,.0f}".format(i['total'] * 1.05)))
         total.setTextAlignment(4 | 128)
         retainerName = QtWidgets.QTableWidgetItem(i['retainerName'])
         retainerName.setTextAlignment(4 | 128)

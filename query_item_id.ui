@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>477</height>
+    <width>638</width>
+    <height>473</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -73,13 +73,28 @@
        <property name="placeholderText">
         <string>请输入要查询的物品名称</string>
        </property>
+       <property name="clearButtonEnabled">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item alignment="Qt::AlignRight">
       <widget class="QToolButton" name="query_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>120</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>240</width>
          <height>40</height>
         </size>
        </property>

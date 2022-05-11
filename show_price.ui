@@ -6,14 +6,105 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>986</width>
-    <height>594</height>
+    <width>984</width>
+    <height>590</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="7,4">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="7,0,5">
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="show_min_price">
+     <property name="title">
+      <string>全服比价</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QTableWidget" name="all_server">
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SingleSelection</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="showGrid">
+         <bool>false</bool>
+        </property>
+        <property name="rowCount">
+         <number>8</number>
+        </property>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <row/>
+        <column>
+         <property name="text">
+          <string>服务器</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>单价</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string/>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>数量</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>总价</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>雇员</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>更新时间</string>
+         </property>
+        </column>
+        <item row="0" column="0">
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item row="0" column="1">
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item row="1" column="0">
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item row="2" column="0">
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QGroupBox" name="show_sale">
      <property name="title">
@@ -30,29 +121,18 @@
         <property name="editTriggers">
          <set>QAbstractItemView::NoEditTriggers</set>
         </property>
-        <property name="rowCount">
-         <number>50</number>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SingleSelection</enum>
         </property>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="showGrid">
+         <bool>false</bool>
+        </property>
+        <property name="rowCount">
+         <number>30</number>
+        </property>
         <row/>
         <row/>
         <row/>
@@ -90,7 +170,7 @@
         </column>
         <column>
          <property name="text">
-          <string>品质</string>
+          <string/>
          </property>
         </column>
         <column>
@@ -120,99 +200,7 @@
         </column>
         <item row="0" column="0">
          <property name="text">
-          <string>350</string>
-         </property>
-        </item>
-        <item row="0" column="1">
-         <property name="text">
-          <string>HQ图标</string>
-         </property>
-        </item>
-        <item row="0" column="2">
-         <property name="text">
-          <string>99</string>
-         </property>
-        </item>
-        <item row="0" column="3">
-         <property name="text">
-          <string>35000</string>
-         </property>
-        </item>
-        <item row="0" column="4">
-         <property name="text">
-          <string>紫水栈桥</string>
-         </property>
-        </item>
-        <item row="0" column="5">
-         <property name="text">
-          <string>谁家雇员</string>
-         </property>
-        </item>
-        <item row="0" column="6">
-         <property name="text">
-          <string>2022-5-10 16:06:04</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="show_min_price">
-     <property name="title">
-      <string>全服比价</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QTableWidget" name="tableWidget">
-        <property name="editTriggers">
-         <set>QAbstractItemView::NoEditTriggers</set>
-        </property>
-        <property name="rowCount">
-         <number>8</number>
-        </property>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <row/>
-        <column>
-         <property name="text">
-          <string>服务器</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>单价</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>品质</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>数量</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>总价</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>更新时间</string>
-         </property>
-        </column>
-        <item row="0" column="0">
-         <property name="text">
-          <string>紫水栈桥</string>
+          <string/>
          </property>
         </item>
         <item row="0" column="1">
@@ -220,19 +208,47 @@
           <string/>
          </property>
         </item>
-        <item row="1" column="0">
+        <item row="0" column="2">
          <property name="text">
-          <string>延夏</string>
+          <string/>
          </property>
         </item>
-        <item row="2" column="0">
+        <item row="0" column="3">
          <property name="text">
-          <string>静语庄园</string>
+          <string/>
+         </property>
+        </item>
+        <item row="0" column="4">
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item row="0" column="5">
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item row="0" column="6">
+         <property name="text">
+          <string/>
          </property>
         </item>
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="1" column="0" alignment="Qt::AlignLeft|Qt::AlignVCenter">
+    <widget class="QLabel" name="seven_day">
+     <property name="font">
+      <font>
+       <family>Arial</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>当前大区近七天平均售出价格：N/A</string>
+     </property>
     </widget>
    </item>
   </layout>

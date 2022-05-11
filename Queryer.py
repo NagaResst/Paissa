@@ -5,18 +5,17 @@ from requests import get
 
 
 class Queryer(object):
-    def __init__(self, name, query_server):
+    def __init__(self, query_server, item_id=None):
         """
         对象初始化
         """
-        self.name = name
-        self.id = None
+        self.name = None
+        self.id = item_id
         self.stuff = {}
         self.d_cost = 0
         self.o_cost = 0
         self.server = query_server
         self.result = None
-        self.hq = None
 
     @staticmethod
     def init_query_result(url):
@@ -51,11 +50,11 @@ class Queryer(object):
         https://ff.web.sdo.com/web8/index.html#/servers
         跨大区开放后 server_list 将返回所有区服的列表
         """
-        server_list = ['猫小胖']
         select_server_mao = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
         select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿', '梦羽宝境']
         select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座']
         select_server_gou = ['豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
+        server_list = select_server_mao
         if self.server in select_server_mao:
             server_list = ['紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
         elif self.server in select_server_niao:
@@ -66,28 +65,60 @@ class Queryer(object):
             server_list = ['水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
         return server_list
 
-    def query_item_id(self):
+    def query_item_id(self, name):
         """
         查询官方的物品ID，为后面的查询提供支持
         """
-        query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
+        query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
         result = self.init_query_result(query_url)
         itemde = result["Results"]
         return sorted(itemde, key=lambda e: e.__getitem__('ID'), reverse=False)
 
-    def query_item_price(self):
-        pass
+    def query_item_price(self, hq):
+        if hq is True:
+            query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
+                self.server, self.id)
+        elif hq is False:
+            query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=false&noGst=true' % (
+                self.server, self.id)
+        else:
+            query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+        self.result = self.init_query_result(query_url)
+        return self.result
 
-    def query_sale_history(self):
-        pass
-
-    def query_every_server(self):
-        pass
+    def query_every_server(self, server_list):
+        listings = []
+        for server in server_list:
+            query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, self.id)
+            while True:
+                try:
+                    result = self.init_query_result(query_url)
+                    break
+                except:
+                    pass
+            server_sale = {
+                'server': server,
+                'pricePerUnit': result['listings'][0]['pricePerUnit'],
+                'hq': result['listings'][0]['hq'],
+                'quantity': result['listings'][0]['quantity'],
+                'total': result['listings'][0]['total'],
+                'retainerName': result['listings'][0]['retainerName'],
+                'lastReviewTime': result['listings'][0]['lastReviewTime']
+            }
+            listings.append(server_sale)
+        return listings
 
 
 if __name__ == '__main__':
+    # 初始化测试数据
     item = '水晶'
     server = '猫小胖'
-    itemObj = Queryer(item, server)
-    item_list = itemObj.query_item_id()
+    itemObj = Queryer(server)
+    # 物品选择器列表
+    item_list = itemObj.query_item_id(item)
     print(item_list)
+    # 价格查询
+    hq = False
+    itemObj.id = '21697'
+    price_list = itemObj.query_item_price(hq)
+    print(price_list)

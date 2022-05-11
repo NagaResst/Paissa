@@ -110,14 +110,16 @@ def query_item_detial(itemid):
     """
     查询物品的详细信息，查询制作配方和统计成本的前置方法
     """
-    try:
-        query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-        result = get(query_url, timeout=3)
-        result = loads(result.text)
-        return result['item']['name']
-    except ConnectionError:
-        print("\n猴面雀发现网络有点问题，找不到想要的资料了")
-        return '未找到物品'
+    while True:
+        try:
+            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+            break
+        except:
+            print("%s 查询失败，3秒后重新查询物品名称" % item_id)
+            sleep(3)
+    result = get(query_url, timeout=3)
+    result = loads(result.text)
+    return result['item']['name']
 
 
 def delete_data_at_db():

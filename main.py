@@ -162,23 +162,27 @@ def queru_price():
     icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
     query_sale_thread = threading.Thread(target=query_sale_list, args=[icon])
     query_sale_thread.start()
-    get_item_icon_thread = threading.Thread(target=get_item_icon)
+    get_item_icon_thread = False
+    query_every_server_thread = False
+    if item.name != query_history[-1]['itemName']:
+        get_item_icon_thread = threading.Thread(target=get_item_icon)
+        get_item_icon_thread.start()
     # query_sale_list(icon)
     if item.server not in server_list or item.name != query_history[-1]['itemName']:
         server_list = item.server_list()
         # 查询全服比价的数据
-        all_server_list = item.query_every_server(server_list)
-        query_every_server_thread = threading.Thread(target=query_every_server, args=(all_server_list, icon))
+        item.query_every_server(server_list)
+        query_every_server_thread = threading.Thread(target=query_every_server, args=(item.every_server, icon))
         query_every_server_thread.start()
 
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
-    get_item_icon_thread.start()
     ui.jump_to_wiki.show()
     ui.show_cost.show()
     ui.back_query.show()
     query_sale_thread.join()
-    get_item_icon_thread.join()
+    if get_item_icon_thread is True:
+        get_item_icon_thread.join()
     if query_every_server_thread is True:
         query_every_server_thread.join()
     ui.show_data_box.setCurrentIndex(2)
@@ -243,8 +247,8 @@ def query_every_server(all_server_list, icon):
     """
     全服比价列表填充
     """
-    show_price_page.all_server.setRowCount(len(all_server_list))
     show_price_page.all_server.clearContents()
+    show_price_page.all_server.setRowCount(len(all_server_list))
     show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
     show_price_page.all_server.setColumnWidth(2, 20)

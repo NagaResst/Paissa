@@ -112,10 +112,11 @@ class Queryer(object):
         """
         大区内服务器比价
         """
+        self.every_server = []
         def query_single_server(server, id):
             query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, id)
             result = self.init_query_result(query_url)
-            if len(['listings']) != 0:
+            if len(result['listings']) != 0:
                 server_sale = {
                     'server': server,
                     'pricePerUnit': result['listings'][0]['pricePerUnit'],
@@ -135,7 +136,6 @@ class Queryer(object):
             threads.append(thread)
         for t in threads:
             t.join()
-        return self.every_server
 
 
 if __name__ == '__main__':

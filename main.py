@@ -8,6 +8,7 @@ from Queryer import Queryer
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
+import threading
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -159,18 +160,27 @@ def queru_price():
     global item
     global server_list
     icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
-    query_sale_list(icon)
+    query_sale_thread = threading.Thread(target=query_sale_list, args=[icon])
+    query_sale_thread.start()
+    get_item_icon_thread = threading.Thread(target=get_item_icon)
+    # query_sale_list(icon)
     if item.server not in server_list or item.name != query_history[-1]['itemName']:
         server_list = item.server_list()
         # 查询全服比价的数据
         all_server_list = item.query_every_server(server_list)
-        query_every_server(all_server_list, icon)
+        query_every_server_thread = threading.Thread(target=query_every_server, args=(all_server_list, icon))
+        query_every_server_thread.start()
+
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
-    get_item_icon()
+    get_item_icon_thread.start()
     ui.jump_to_wiki.show()
     ui.show_cost.show()
     ui.back_query.show()
+    query_sale_thread.join()
+    get_item_icon_thread.join()
+    if query_every_server_thread is True:
+        query_every_server_thread.join()
     ui.show_data_box.setCurrentIndex(2)
 
 

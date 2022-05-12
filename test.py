@@ -3,10 +3,10 @@ Date:2021/4/21 14:49
 Author :四翼妄为
 """
 import sys
-from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
-                             QHBoxLayout, QGridLayout, QPushButton, QVBoxLayout, QListWidget, QStackedLayout)
-from PyQt5.QtGui import QPalette, QColor
+
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
+                             QHBoxLayout, QPushButton, QVBoxLayout, QListWidget, QStackedLayout)
 
 
 class One(QWidget):

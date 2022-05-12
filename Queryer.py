@@ -2,6 +2,7 @@ import time
 from json import loads
 from marketable import marketable
 from requests import get
+import threading
 
 
 class Queryer(object):
@@ -15,6 +16,7 @@ class Queryer(object):
         self.d_cost = 0
         self.o_cost = 0
         self.server = query_server
+        self.every_server = []
         self.result = None
         self.icon = None
 
@@ -110,13 +112,10 @@ class Queryer(object):
         """
         大区内服务器比价
         """
-        listings = []
-        for server in server_list:
-            # 查询单个服务器的第一个售卖记录
-            query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, self.id)
+        def query_single_server(server, id):
+            query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, id)
             result = self.init_query_result(query_url)
-            # 为前端界面重新组织本服的最低价数据
-            try:
+            if len(['listings']) != 0:
                 server_sale = {
                     'server': server,
                     'pricePerUnit': result['listings'][0]['pricePerUnit'],
@@ -126,10 +125,17 @@ class Queryer(object):
                     'retainerName': result['listings'][0]['retainerName'],
                     'lastReviewTime': result['listings'][0]['lastReviewTime']
                 }
-                listings.append(server_sale)
-            except:
-                pass
-        return listings
+                self.every_server.append(server_sale)
+
+        threads = []
+        for server in server_list:
+            # query_single_server(server, self.id)
+            thread = threading.Thread(target=query_single_server, args=(server, self.id))
+            thread.start()
+            threads.append(thread)
+        for t in threads:
+            t.join()
+        return self.every_server
 
 
 if __name__ == '__main__':
@@ -138,10 +144,13 @@ if __name__ == '__main__':
     server = '猫小胖'
     itemObj = Queryer(server)
     # 物品选择器列表
-    item_list = itemObj.query_item_id(item)
-    print(item_list)
+    # item_list = itemObj.query_item_id(item)
+    # print(item_list)
     # 价格查询
     hq = False
     itemObj.id = '21697'
     # price_list = itemObj.query_item_price(hq)
     # print(price_list)
+    server_list = itemObj.server_list()
+    itemObj.query_every_server(server_list)
+    print(itemObj.every_server)

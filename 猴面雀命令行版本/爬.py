@@ -13,14 +13,18 @@ class ItemQuerier(object):
         """
         self.id = item_id
         self.result = None
-        self.query_item()
 
     def query_item(self):
         """
         查询物品的市场交易记录
         """
         query_url = 'https://universalis.app/api/猫小胖/%s?listings=20' % self.id
-        result = get(query_url, timeout=3)
+        while True:
+            try:
+                result = get(query_url, timeout=5)
+                break
+            except:
+                sleep(1)
         result = result.text.replace('null', '"None"')
         self.result = loads(result)
 
@@ -110,14 +114,14 @@ def query_item_detial(itemid):
     """
     查询物品的详细信息，查询制作配方和统计成本的前置方法
     """
+    query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
     while True:
         try:
-            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+            result = get(query_url, timeout=3)
             break
         except:
-            print("%s 查询失败，3秒后重新查询物品名称" % item_id)
-            sleep(3)
-    result = get(query_url, timeout=3)
+            print("%s 查询失败，重新查询物品名称" % item_id)
+            sleep(1)
     result = loads(result.text)
     return result['item']['name']
 
@@ -155,21 +159,16 @@ print("已经获取到需要匹配的对象%d个。" % len(m_id))
 # print(m_id)
 # yon = input("是否需要清楚上次查询的记录")
 # if yon == 'y':
-#     delete_data_at_db()
+delete_data_at_db()
 i_id = query_item_in_market()
 print("已经获取到可查询物品的ID。")
-startid = int(input('请输入开始ID \n'))
-# startid = 1
+# startid = int(input('请输入开始ID \n'))
+startid = 1
 for item_id in i_id:
     if int(item_id) >= startid:
-        while True:
-            print('正在查询物品id %s' % item_id)
-            try:
-                item_record = ItemQuerier(item_id)
-                break
-            except:
-                print("%s 查询失败，3秒后重新查询物品记录" % item_id)
-                sleep(3)
+        print('正在查询物品id %s' % item_id)
+        item_record = ItemQuerier(item_id)
+        item_record.query_item()
         listings = item_record.output_sell_list()
         history = item_record.output_buyer()
         relist = []

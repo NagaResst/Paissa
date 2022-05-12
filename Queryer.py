@@ -16,6 +16,7 @@ class Queryer(object):
         self.o_cost = 0
         self.server = query_server
         self.result = None
+        self.icon = None
 
     @staticmethod
     def init_query_result(url):
@@ -24,10 +25,10 @@ class Queryer(object):
         """
         while True:
             try:
-                result = get(url, timeout=10)
+                result = get(url, timeout=5)
                 break
             except:
-                time.sleep(3)
+                time.sleep(1)
         # 当属性的值为null的时候，无法转换成字典，将其替换为None
         result = result.text.replace('null', '"None"')
         result = loads(result)
@@ -43,6 +44,15 @@ class Queryer(object):
         timearray = time.localtime(timestamp)
         result = time.strftime("%Y-%m-%d %H:%M:%S", timearray)
         return result
+
+    def get_icon(self, url):
+        while True:
+            try:
+                result = get(url)
+                break
+            except:
+                pass
+        self.icon = result.content
 
     def server_list(self):
         """
@@ -124,7 +134,7 @@ class Queryer(object):
 
 if __name__ == '__main__':
     # 初始化测试数据
-    item = '水晶'
+    item = '夜钢'
     server = '猫小胖'
     itemObj = Queryer(server)
     # 物品选择器列表
@@ -133,5 +143,5 @@ if __name__ == '__main__':
     # 价格查询
     hq = False
     itemObj.id = '21697'
-    price_list = itemObj.query_item_price(hq)
-    print(price_list)
+    # price_list = itemObj.query_item_price(hq)
+    # print(price_list)

@@ -1,6 +1,6 @@
 import sys
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 
 from Paissa import Ui_mainWindow
 from Queryer import Queryer
@@ -93,6 +93,7 @@ def query_item():
     global item
     global last_query
     global item_count
+    global item_list
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
     if input_name == last_query and item_count > 1:
@@ -125,8 +126,7 @@ def query_item():
             item.name = item_list[0]['Name']
             queru_price()
         else:
-            # TODO: 加入一个弹出提示框，提示用户输入错误，查询不到数据
-            pass
+            show_message()
 
 
 def select_item(selectd):
@@ -147,7 +147,6 @@ def select_item(selectd):
 def queru_price():
     """
     价格查询
-    TODO: HQ图标的显示
     """
     global hq
     price_list = item.query_item_price(hq)
@@ -156,6 +155,7 @@ def queru_price():
     """
     正在售出列表填充
     """
+    icon = QtGui.QIcon("Images/hq.png")
     r = 0
     # 设定表格行数
     if len(price_list['listings']) > 9:
@@ -174,7 +174,10 @@ def queru_price():
         # 准备数据
         pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
         pricePerUnit.setTextAlignment(4 | 128)
-        quantity = QtWidgets.QTableWidgetItem(i['quantity'])
+        hqicon = QtWidgets.QTableWidgetItem()
+        hqicon.setIcon(icon)
+        hqicon.setTextAlignment(4 | 128)
+        quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
         quantity.setTextAlignment(4 | 128)
         total = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['total'] * 1.05))
         total.setTextAlignment(4 | 128)
@@ -189,6 +192,8 @@ def queru_price():
         worldName.setTextAlignment(4 | 128)
         # 填充数据 r = row
         show_price_page.sale_list.setItem(r, 0, pricePerUnit)
+        if i['hq'] is True:
+            show_price_page.sale_list.setItem(r, 1, hqicon)
         show_price_page.sale_list.setItem(r, 2, quantity)
         show_price_page.sale_list.setItem(r, 3, total)
         show_price_page.sale_list.setItem(r, 4, worldName)
@@ -215,7 +220,10 @@ def queru_price():
         server.setTextAlignment(4 | 128)
         pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
         pricePerUnit.setTextAlignment(4 | 128)
-        quantity = QtWidgets.QTableWidgetItem(i['quantity'])
+        hqicon = QtWidgets.QTableWidgetItem()
+        hqicon.setIcon(icon)
+        hqicon.setTextAlignment(4 | 128)
+        quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
         quantity.setTextAlignment(4 | 128)
         total = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['total'] * 1.05))
         total.setTextAlignment(4 | 128)
@@ -225,6 +233,8 @@ def queru_price():
         lastReviewTime.setTextAlignment(4 | 128)
         show_price_page.all_server.setItem(t, 0, server)
         show_price_page.all_server.setItem(t, 1, pricePerUnit)
+        if i['hq'] is True:
+            show_price_page.all_server.setItem(t, 2, hqicon)
         show_price_page.all_server.setItem(t, 3, quantity)
         show_price_page.all_server.setItem(t, 4, total)
         show_price_page.all_server.setItem(t, 5, retainerName)
@@ -233,8 +243,7 @@ def queru_price():
     show_price_page.all_server.repaint()
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
-    ui.item_icon.show()
-    # TODO: 加入物品的图标给 ui.item_icon
+    get_item_icon()
     ui.jump_to_wiki.show()
     ui.show_cost.show()
     ui.back_query.show()
@@ -249,12 +258,25 @@ def select_hq_ornot(status):
     hq = status
 
 
+def get_item_icon():
+    for i in item_list:
+        if str(i['ID']) == str(item.id):
+            item.get_icon("https://cafemaker.wakingsands.com" + i['Icon'])
+            ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
+            ui.item_icon.setScaledContents(True)
+            ui.item_icon.show()
+
+
 def back_to_index():
     ui.item_icon.hide()
     ui.jump_to_wiki.hide()
     ui.show_cost.hide()
     ui.back_query.hide()
     ui.show_data_box.setCurrentIndex(0)
+
+
+def show_message():
+    QtWidgets.QMessageBox.warning(ui.query_item, "物品名称错误", "查询不到任何物品")
 
 
 """
@@ -266,6 +288,8 @@ query_history = []
 hq = None
 last_query = None
 item_count = 1
+item_list = []
+
 
 """
 主程序开始
@@ -280,7 +304,7 @@ ui.item_icon.hide()
 ui.jump_to_wiki.hide()
 ui.show_cost.hide()
 ui.back_query.hide()
-ui.back_query.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
+ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
 widget.show()
 

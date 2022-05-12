@@ -1,4 +1,4 @@
-import sys
+import sys,os
 
 from PyQt5 import QtWidgets, QtGui
 
@@ -155,7 +155,7 @@ def queru_price():
     """
     正在售出列表填充
     """
-    icon = QtGui.QIcon("Images/hq.png")
+    icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
     r = 0
     # 设定表格行数
     if len(price_list['listings']) > 9:
@@ -277,6 +277,17 @@ def back_to_index():
 
 def show_message():
     QtWidgets.QMessageBox.warning(ui.query_item, "物品名称错误", "查询不到任何物品")
+
+
+def resource_path(relative_path):
+    """
+    静态资源打包功能，在spec文件的datas中写入目录名
+    """
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 """

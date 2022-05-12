@@ -98,9 +98,9 @@ class Queryer(object):
         if hq is True:
             query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
                 self.server, self.id)
-        elif hq is False:
-            query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=false&noGst=true' % (
-                self.server, self.id)
+        # elif hq is False:
+        #     query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=false&noGst=true' % (
+        #         self.server, self.id)
         else:
             query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
         self.result = self.init_query_result(query_url)

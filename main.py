@@ -1,4 +1,5 @@
-import sys,os
+import os
+import sys
 
 from PyQt5 import QtWidgets, QtGui
 
@@ -83,7 +84,8 @@ def click_select_server(server):
     ui.show_server.setText(server)
     item.server = server
     # 立刻刷新价格显示的界面
-    queru_price()
+    if item.name is not None and ui.show_data_box.currentIndex() != 0:
+        queru_price()
 
 
 def query_item():
@@ -91,20 +93,22 @@ def query_item():
     模糊搜索查询物品
     """
     global item
-    global last_query
-    global item_count
+    global query_history
     global item_list
+    global hq
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
-    if input_name == last_query and item_count > 1:
+    if {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item_list) > 1:
         ui.show_data_box.setCurrentIndex(1)
-    elif input_name == last_query and item_count == 1:
+    elif {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item_list) == 1:
+        ui.item_icon.show()
+        ui.jump_to_wiki.show()
+        ui.show_cost.show()
+        ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
     else:
-        last_query = input_name
         item_list = item.query_item_id(input_name)
-        item_count = len(item_list)
-        if item_count > 1:
+        if len(item_list) > 1:
             r = 0
             select_item_page.items_list_widget.clearContents()
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -121,10 +125,11 @@ def query_item():
                 r += 1
             select_item_page.items_list_widget.repaint()
             ui.show_data_box.setCurrentIndex(1)
-        elif item_count == 1:
+        elif len(item_list) == 1:
             item.id = item_list[0]['ID']
             item.name = item_list[0]['Name']
             queru_price()
+            query_history.append({"itemName": input_name, "HQ": hq, "server": item.server})
         else:
             show_message()
 
@@ -142,6 +147,7 @@ def select_item(selectd):
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
     queru_price()
+    query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
 
 
 def queru_price():
@@ -149,13 +155,32 @@ def queru_price():
     价格查询
     """
     global hq
-    price_list = item.query_item_price(hq)
-    ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
-    show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
+    global query_history
+    global item
+    global server_list
+    icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
+    query_sale_list(icon)
+    if item.server not in server_list or item.name != query_history[-1]['itemName']:
+        server_list = item.server_list()
+        # 查询全服比价的数据
+        all_server_list = item.query_every_server(server_list)
+        query_every_server(all_server_list, icon)
+    ui.jump_to_wiki.setText(
+        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
+    get_item_icon()
+    ui.jump_to_wiki.show()
+    ui.show_cost.show()
+    ui.back_query.show()
+    ui.show_data_box.setCurrentIndex(2)
+
+
+def query_sale_list(icon):
     """
     正在售出列表填充
     """
-    icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
+    price_list = item.query_item_price(hq)
+    ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
+    show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
     r = 0
     # 设定表格行数
     if len(price_list['listings']) > 9:
@@ -202,12 +227,12 @@ def queru_price():
         r += 1
     # 表格重绘
     show_price_page.sale_list.repaint()
+
+
+def query_every_server(all_server_list, icon):
     """
     全服比价列表填充
     """
-    # 查询全服比价的数据
-    server_list = item.server_list()
-    all_server_list = item.query_every_server(server_list)
     show_price_page.all_server.setRowCount(len(all_server_list))
     show_price_page.all_server.clearContents()
     show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -241,13 +266,6 @@ def queru_price():
         show_price_page.all_server.setItem(t, 6, lastReviewTime)
         t += 1
     show_price_page.all_server.repaint()
-    ui.jump_to_wiki.setText(
-        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
-    get_item_icon()
-    ui.jump_to_wiki.show()
-    ui.show_cost.show()
-    ui.back_query.show()
-    ui.show_data_box.setCurrentIndex(2)
 
 
 def select_hq_ornot(status):
@@ -255,7 +273,9 @@ def select_hq_ornot(status):
     查询HQ的CheckButton
     """
     global hq
+    global query_history
     hq = status
+    query_history.append({"itemName": None, "HQ": None, "server": "猫小胖"})
 
 
 def get_item_icon():
@@ -295,12 +315,12 @@ def resource_path(relative_path):
 """
 query_server = '猫小胖'
 item = Queryer(query_server)
-query_history = []
+query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
 hq = None
-last_query = None
 item_count = 1
 item_list = []
-
+server_list = []
+server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
 
 """
 主程序开始

@@ -13,6 +13,7 @@ class Queryer(object):
         对象初始化
         """
         self.name = None
+        self.item_list = []
         self.id = item_id
         self.stuff = {}
         self.d_cost = 0
@@ -92,7 +93,7 @@ class Queryer(object):
         for item in all_list:
             if item['ID'] in marketable:
                 item_list.append(item)
-        return sorted(item_list, key=lambda e: e.__getitem__('ID'), reverse=False)
+        self.item_list = sorted(item_list, key=lambda e: e.__getitem__('ID'), reverse=False)
 
     def query_item_price(self, hq):
         """

@@ -67,14 +67,26 @@
          <pointsize>14</pointsize>
         </font>
        </property>
+       <property name="cursor">
+        <cursorShape>IBeamCursor</cursorShape>
+       </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="maxLength">
+        <number>80</number>
+       </property>
+       <property name="frame">
+        <bool>false</bool>
+       </property>
+       <property name="echoMode">
+        <enum>QLineEdit::Normal</enum>
        </property>
        <property name="placeholderText">
         <string>请输入要查询的物品名称</string>
        </property>
        <property name="clearButtonEnabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
      </item>

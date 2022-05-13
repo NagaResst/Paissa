@@ -9,6 +9,9 @@ from Queryer import Queryer
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
+from loading_page import Ui_load_page
+from history_page import Ui_history_Window
+from cost_page import Ui_cost_page
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -74,6 +77,34 @@ class ShowPrice(Ui_show_price):
         super().__init__()
 
 
+class LoadingPage(Ui_load_page):
+    def __int__(self):
+        super().__init__()
+
+
+class CostPage(Ui_cost_page):
+    def __int__(self):
+        super().__init__()
+
+
+class HistoryPage(Ui_history_Window):
+    def __int__(self):
+        super().__init__()
+
+
+def hidden_history_board():
+    if widget2.isVisible():
+        widget2.hide()
+    elif widget2.isHidden():
+        widget2.show()
+
+
+def create_widget2_page():
+    widget2 = QtWidgets.QMainWindow()
+    history_board = HistoryPage()
+    history_board.setupUi(widget2)
+
+
 def click_select_server(server):
     """
     菜单栏选择服务器重新查询的事件
@@ -93,31 +124,34 @@ def query_item():
     """
     模糊搜索查询物品
     """
-    global item
     global query_history
-    global item_list
     global hq
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
-    if {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item_list) > 1:
+    if {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item.item_list) > 1:
         ui.show_data_box.setCurrentIndex(1)
-    elif {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item_list) == 1:
+    elif {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item.item_list) == 1:
         ui.item_icon.show()
         ui.jump_to_wiki.show()
         ui.show_cost.show()
         ui.back_query.show()
+        ui.query_history.show()
         ui.show_data_box.setCurrentIndex(2)
     # 重新查询
     else:
-        item_list = item.query_item_id(input_name)
-        if len(item_list) > 1:
+        thread_query_item_id = threading.Thread(target=item.query_item_id, args=[input_name])
+        thread_query_item_id.start()
+        ui.show_data_box.setCurrentIndex(4)
+        thread_query_item_id.join()
+        # item.query_item_id(input_name)
+        if len(item.item_list) > 1:
             r = 0
             select_item_page.items_list_widget.clearContents()
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
             select_item_page.items_list_widget.setColumnWidth(0, 120)
-            select_item_page.items_list_widget.setRowCount(len(item_list))
-            for i in item_list:
+            select_item_page.items_list_widget.setRowCount(len(item.item_list))
+            for i in item.item_list:
                 item_id = QtWidgets.QTableWidgetItem(str(i['ID']))
                 item_id.setTextAlignment(4 | 128)
                 item_name = QtWidgets.QTableWidgetItem(i['Name'])
@@ -127,9 +161,9 @@ def query_item():
                 r += 1
             select_item_page.items_list_widget.repaint()
             ui.show_data_box.setCurrentIndex(1)
-        elif len(item_list) == 1:
-            item.id = item_list[0]['ID']
-            item.name = item_list[0]['Name']
+        elif len(item.item_list) == 1:
+            item.id = item.item_list[0]['ID']
+            item.name = item.item_list[0]['Name']
             queru_price()
         else:
             show_message()
@@ -160,8 +194,8 @@ def queru_price():
     """
     global hq
     global query_history
-    global item
     global server_list
+    ui.show_data_box.setCurrentIndex(4)
     query_sale_thread = threading.Thread(target=query_sale_list)
     query_sale_thread.start()
     # 如果查询物品发生了改变，重新请求物品的图标
@@ -181,11 +215,13 @@ def queru_price():
     ui.jump_to_wiki.show()
     ui.show_cost.show()
     ui.back_query.show()
+    ui.query_history.show()
     # 等待正在售出列表查询完成
     query_sale_thread.join()
     ui.show_data_box.setCurrentIndex(2)
     # 查询完成之后将查询记录加入历史记录
     query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
+    history_board.history_list.insertItem(0, query_history[-1]["itemName"])
 
 
 def query_sale_list():
@@ -312,7 +348,7 @@ def get_item_icon():
     """
     物品图标的地址在查询item_list中包含了
     """
-    for i in item_list:
+    for i in item.item_list:
         if str(i['ID']) == str(item.id):
             item.get_icon("https://cafemaker.wakingsands.com" + i['Icon'])
             ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
@@ -325,6 +361,7 @@ def back_to_index():
     ui.jump_to_wiki.hide()
     ui.show_cost.hide()
     ui.back_query.hide()
+    ui.query_history.hide()
     ui.show_data_box.setCurrentIndex(0)
 
 
@@ -332,6 +369,7 @@ def show_message():
     """
     首页查询不到物品的提示
     """
+    ui.show_data_box.setCurrentIndex(0)
     QtWidgets.QMessageBox.warning(ui.query_item, "物品名称错误", "查询不到任何物品")
 
 
@@ -354,7 +392,6 @@ item = Queryer(query_server)
 query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
 hq = None
 item_count = 1
-item_list = []
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
 
@@ -371,8 +408,10 @@ ui.item_icon.hide()
 ui.jump_to_wiki.hide()
 ui.show_cost.hide()
 ui.back_query.hide()
+ui.query_history.hide()
 ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
+ui.query_history.clicked.connect(hidden_history_board)
 widget.show()
 
 """
@@ -399,4 +438,24 @@ select_item_page.select_this.clicked.connect(lambda: select_item(select_item_pag
 """
 show_price_page = ShowPrice()
 show_price_page.setupUi(ui.show_price)
+
+"""
+材料成本树
+"""
+cost_page = CostPage()
+cost_page.setupUi(ui.show_craft)
+
+"""
+loading界面
+"""
+loading_page = LoadingPage()
+loading_page.setupUi(ui.loading_ui)
+
+"""
+查询历史面板
+"""
+widget2 = QtWidgets.QMainWindow()
+history_board = HistoryPage()
+history_board.setupUi(widget2)
+
 sys.exit(app.exec_())

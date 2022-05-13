@@ -58,7 +58,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,10,1,2,1">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,10,1,2,1">
          <property name="spacing">
           <number>15</number>
          </property>
@@ -162,6 +162,19 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="query_history">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>历史查询</string>
+           </property>
+          </widget>
+         </item>
          <item alignment="Qt::AlignRight">
           <widget class="QLabel" name="show_text_uptime">
            <property name="sizePolicy">
@@ -254,13 +267,13 @@
       <item row="0" column="0">
        <widget class="QStackedWidget" name="show_data_box">
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="query_item"/>
         <widget class="QWidget" name="select_item"/>
         <widget class="QWidget" name="show_price"/>
         <widget class="QWidget" name="show_craft"/>
-        <widget class="QWidget" name="about_this"/>
+        <widget class="QWidget" name="loading_ui"/>
        </widget>
       </item>
      </layout>
@@ -354,17 +367,6 @@
     <addaction name="server_maoxiaopang"/>
     <addaction name="server_doudouchai"/>
    </widget>
-   <widget class="QMenu" name="query_history">
-    <property name="font">
-     <font>
-      <family>Arial</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="title">
-     <string>查询历史</string>
-    </property>
-   </widget>
    <widget class="QMenu" name="about">
     <property name="font">
      <font>
@@ -373,11 +375,10 @@
      </font>
     </property>
     <property name="title">
-     <string>关于</string>
+     <string>其他</string>
     </property>
    </widget>
    <addaction name="server"/>
-   <addaction name="query_history"/>
    <addaction name="about"/>
   </widget>
   <action name="select_server_all">
@@ -762,33 +763,6 @@
      <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
-   </property>
-  </action>
-  <action name="action1">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>显示隐藏查询首页</string>
-   </property>
-  </action>
-  <action name="action2">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>显示隐藏物品列表</string>
-   </property>
-  </action>
-  <action name="action3">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>显示隐藏物品详情</string>
    </property>
   </action>
  </widget>

@@ -22,11 +22,13 @@ class ItemQuerier(object):
         while True:
             try:
                 result = get(query_url, timeout=5)
-                break
+                try:
+                    self.result = loads(result.text)
+                    break
+                except:
+                    pass
             except:
                 sleep(3)
-        # result = result.text.replace('null', '"None"')
-        self.result = loads(result.text)
 
     def output_sell_list(self):
         """

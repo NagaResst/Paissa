@@ -1,8 +1,10 @@
+import threading
 import time
 from json import loads
-from marketable import marketable
+
 from requests import get
-import threading
+
+from marketable import marketable
 
 
 class Queryer(object):
@@ -17,7 +19,6 @@ class Queryer(object):
         self.o_cost = 0
         self.server = query_server
         self.every_server = []
-        self.result = None
         self.icon = None
 
     @staticmethod
@@ -28,12 +29,12 @@ class Queryer(object):
         while True:
             try:
                 result = get(url, timeout=5)
+                # 当属性的值为null的时候，无法转换成字典，将其替换为None
+                # result = result.text.replace('null', '"None"')
+                result = loads(result.text)
                 break
             except:
                 time.sleep(1)
-        # 当属性的值为null的时候，无法转换成字典，将其替换为None
-        result = result.text.replace('null', '"None"')
-        result = loads(result)
         return result
 
     @staticmethod
@@ -105,16 +106,17 @@ class Queryer(object):
         #         self.server, self.id)
         else:
             query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-        self.result = self.init_query_result(query_url)
-        return self.result
+        result = self.init_query_result(query_url)
+        return result
 
     def query_every_server(self, server_list):
         """
         大区内服务器比价
         """
         self.every_server = []
-        def query_single_server(server, id):
-            query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, id)
+
+        def query_single_server(server, item_id):
+            query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, item_id)
             result = self.init_query_result(query_url)
             if len(result['listings']) != 0:
                 server_sale = {

@@ -107,6 +107,7 @@ def query_item():
         ui.show_cost.show()
         ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
+    # 重新查询
     else:
         item_list = item.query_item_id(input_name)
         if len(item_list) > 1:
@@ -139,9 +140,13 @@ def select_item(selectd):
     模糊搜索如果返回多个结果，选择其中一个
     """
     global item
-    if type(selectd) is list:
+    print(selectd)
+    if type(selectd) is list and len(selectd) > 0:
         item.id = selectd[0].text()
         item.name = selectd[1].text()
+    elif type(selectd) is list and len(selectd) == 0:
+        item.id = select_item_page.items_list_widget.item(0, 0).text()
+        item.name = select_item_page.items_list_widget.item(0, 1).text()
     else:
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
@@ -159,23 +164,27 @@ def queru_price():
     global server_list
     query_sale_thread = threading.Thread(target=query_sale_list)
     query_sale_thread.start()
+    # 如果查询物品发生了改变，重新请求物品的图标
     if item.name != query_history[-1]['itemName']:
         get_item_icon_thread = threading.Thread(target=get_item_icon)
         get_item_icon_thread.start()
+    # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
     if item.server not in server_list or item.name != query_history[-1]['itemName']:
         server_list = item.server_list()
         # 查询全服比价的数据
         item.query_every_server(server_list)
         query_every_server_thread = threading.Thread(target=query_every_server, args=[item.every_server])
         query_every_server_thread.start()
-
+    # 设置wiki链接
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
     ui.jump_to_wiki.show()
     ui.show_cost.show()
     ui.back_query.show()
+    # 等待正在售出列表查询完成
     query_sale_thread.join()
     ui.show_data_box.setCurrentIndex(2)
+    # 查询完成之后将查询记录加入历史记录
     query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
 
 
@@ -185,9 +194,12 @@ def query_sale_list():
     """
     global hq
     hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
+    # 查询正在售出的记录
     price_list = item.query_item_price(hq)
+    # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
+    # 开始设置正在售出表格
     r = 0
     # 设定表格行数
     if len(price_list['listings']) > 9:
@@ -200,6 +212,7 @@ def query_sale_list():
     show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
     show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    # HQ列
     show_price_page.sale_list.setColumnWidth(1, 20)
     # 开始填充数据
     for i in price_list["listings"]:
@@ -232,7 +245,7 @@ def query_sale_list():
         show_price_page.sale_list.setItem(r, 5, retainerName)
         show_price_page.sale_list.setItem(r, 6, lastReviewTime)
         r += 1
-    # 表格重绘
+    # 表格绘制
     show_price_page.sale_list.repaint()
 
 
@@ -241,12 +254,14 @@ def query_every_server(all_server_list):
     全服比价列表填充
     """
     hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
+    # 设置表格样式
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
     show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
     show_price_page.all_server.setColumnWidth(2, 20)
     show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    # 准备数据
     t = 0
     for i in all_server_list:
         server = QtWidgets.QTableWidgetItem(i['server'])
@@ -264,6 +279,7 @@ def query_every_server(all_server_list):
         retainerName.setTextAlignment(4 | 128)
         lastReviewTime = QtWidgets.QTableWidgetItem(item.timestamp_to_time(i['lastReviewTime']))
         lastReviewTime.setTextAlignment(4 | 128)
+        # 填充数据   t = row
         show_price_page.all_server.setItem(t, 0, server)
         show_price_page.all_server.setItem(t, 1, pricePerUnit)
         if i['hq'] is True:
@@ -276,6 +292,13 @@ def query_every_server(all_server_list):
     show_price_page.all_server.repaint()
 
 
+def make_cost_tree():
+    """
+    # TODO： 成本树 ： 查询初始化 → 锁定成本按钮 → 查询价格 → 查询配方和材料单价 → 构建成本树 → 解锁成本按钮
+    """
+    pass
+
+
 def select_hq_ornot(status):
     """
     查询HQ的CheckButton
@@ -286,6 +309,9 @@ def select_hq_ornot(status):
 
 
 def get_item_icon():
+    """
+    物品图标的地址在查询item_list中包含了
+    """
     for i in item_list:
         if str(i['ID']) == str(item.id):
             item.get_icon("https://cafemaker.wakingsands.com" + i['Icon'])
@@ -303,6 +329,9 @@ def back_to_index():
 
 
 def show_message():
+    """
+    首页查询不到物品的提示
+    """
     QtWidgets.QMessageBox.warning(ui.query_item, "物品名称错误", "查询不到任何物品")
 
 

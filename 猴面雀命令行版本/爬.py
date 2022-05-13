@@ -22,11 +22,11 @@ class ItemQuerier(object):
         while True:
             try:
                 result = get(query_url, timeout=5)
-                result = result.text.replace('null', '"None"')
-                self.result = loads(result)
                 break
             except:
-                sleep(1)
+                sleep(3)
+        # result = result.text.replace('null', '"None"')
+        self.result = loads(result.text)
 
     def output_sell_list(self):
         """
@@ -46,9 +46,8 @@ def query_item_in_market():
     查询所有可以在板子上交易的物品
     """
     query_url = 'https://universalis.app/api/marketable'
-    result = get(query_url, timeout=3)
-    result = result.text.replace('[', '').replace(']', '')
-    result = result.split(',')
+    result = get(query_url, timeout=5)
+    result = result.text.replace('[', '').replace(']', '').split(',')
     return result
 
 
@@ -117,7 +116,7 @@ def query_item_detial(itemid):
     query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
     while True:
         try:
-            result = get(query_url, timeout=3)
+            result = get(query_url, timeout=5)
             break
         except:
             print("%s 查询失败，重新查询物品名称" % item_id)
@@ -159,11 +158,11 @@ print("已经获取到需要匹配的对象%d个。" % len(m_id))
 # print(m_id)
 # yon = input("是否需要清楚上次查询的记录")
 # if yon == 'y':
-# delete_data_at_db()
+delete_data_at_db()
 i_id = query_item_in_market()
 print("已经获取到可查询物品的ID。")
-startid = int(input('请输入开始ID \n'))
-# startid = 1
+# startid = int(input('请输入开始ID \n'))
+startid = 1
 for item_id in i_id:
     if int(item_id) >= startid:
         print('正在查询物品id %s' % item_id)

@@ -22,11 +22,11 @@ class ItemQuerier(object):
         while True:
             try:
                 result = get(query_url, timeout=5)
+                result = result.text.replace('null', '"None"')
+                self.result = loads(result)
                 break
             except:
                 sleep(1)
-        result = result.text.replace('null', '"None"')
-        self.result = loads(result)
 
     def output_sell_list(self):
         """
@@ -159,11 +159,11 @@ print("已经获取到需要匹配的对象%d个。" % len(m_id))
 # print(m_id)
 # yon = input("是否需要清楚上次查询的记录")
 # if yon == 'y':
-delete_data_at_db()
+# delete_data_at_db()
 i_id = query_item_in_market()
 print("已经获取到可查询物品的ID。")
-# startid = int(input('请输入开始ID \n'))
-startid = 1
+startid = int(input('请输入开始ID \n'))
+# startid = 1
 for item_id in i_id:
     if int(item_id) >= startid:
         print('正在查询物品id %s' % item_id)

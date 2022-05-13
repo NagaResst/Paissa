@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 
 from PyQt5 import QtWidgets, QtGui
 
@@ -8,7 +9,6 @@ from Queryer import Queryer
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
-import threading
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -130,7 +130,6 @@ def query_item():
             item.id = item_list[0]['ID']
             item.name = item_list[0]['Name']
             queru_price()
-            query_history.append({"itemName": input_name, "HQ": hq, "server": item.server})
         else:
             show_message()
 
@@ -148,7 +147,6 @@ def select_item(selectd):
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
     queru_price()
-    query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
 
 
 def queru_price():
@@ -159,20 +157,16 @@ def queru_price():
     global query_history
     global item
     global server_list
-    icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
-    query_sale_thread = threading.Thread(target=query_sale_list, args=[icon])
+    query_sale_thread = threading.Thread(target=query_sale_list)
     query_sale_thread.start()
-    get_item_icon_thread = False
-    query_every_server_thread = False
     if item.name != query_history[-1]['itemName']:
         get_item_icon_thread = threading.Thread(target=get_item_icon)
         get_item_icon_thread.start()
-    # query_sale_list(icon)
     if item.server not in server_list or item.name != query_history[-1]['itemName']:
         server_list = item.server_list()
         # 查询全服比价的数据
         item.query_every_server(server_list)
-        query_every_server_thread = threading.Thread(target=query_every_server, args=(item.every_server, icon))
+        query_every_server_thread = threading.Thread(target=query_every_server, args=[item.every_server])
         query_every_server_thread.start()
 
     ui.jump_to_wiki.setText(
@@ -181,17 +175,16 @@ def queru_price():
     ui.show_cost.show()
     ui.back_query.show()
     query_sale_thread.join()
-    if get_item_icon_thread is True:
-        get_item_icon_thread.join()
-    if query_every_server_thread is True:
-        query_every_server_thread.join()
     ui.show_data_box.setCurrentIndex(2)
+    query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
 
 
-def query_sale_list(icon):
+def query_sale_list():
     """
     正在售出列表填充
     """
+    global hq
+    hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
     price_list = item.query_item_price(hq)
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
@@ -214,7 +207,7 @@ def query_sale_list(icon):
         pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
         pricePerUnit.setTextAlignment(4 | 128)
         hqicon = QtWidgets.QTableWidgetItem()
-        hqicon.setIcon(icon)
+        hqicon.setIcon(hq_icon)
         hqicon.setTextAlignment(4 | 128)
         quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
         quantity.setTextAlignment(4 | 128)
@@ -243,10 +236,11 @@ def query_sale_list(icon):
     show_price_page.sale_list.repaint()
 
 
-def query_every_server(all_server_list, icon):
+def query_every_server(all_server_list):
     """
     全服比价列表填充
     """
+    hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
     show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -260,7 +254,7 @@ def query_every_server(all_server_list, icon):
         pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
         pricePerUnit.setTextAlignment(4 | 128)
         hqicon = QtWidgets.QTableWidgetItem()
-        hqicon.setIcon(icon)
+        hqicon.setIcon(hq_icon)
         hqicon.setTextAlignment(4 | 128)
         quantity = QtWidgets.QTableWidgetItem(str(i['quantity']))
         quantity.setTextAlignment(4 | 128)
@@ -289,7 +283,6 @@ def select_hq_ornot(status):
     global hq
     global query_history
     hq = status
-    query_history.append({"itemName": None, "HQ": None, "server": "猫小胖"})
 
 
 def get_item_icon():

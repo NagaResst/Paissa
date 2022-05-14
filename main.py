@@ -141,11 +141,7 @@ def query_item():
         ui.show_data_box.setCurrentIndex(2)
     # 重新查询
     else:
-        ui.show_data_box.setCurrentIndex(4)
-        thread_query_item_id = threading.Thread(target=item.query_item_id, args=[input_name])
-        thread_query_item_id.start()
-        thread_query_item_id.join()
-        # item.query_item_id(input_name)
+        item.query_item_id(input_name)
         if len(item.item_list) > 1:
             r = 0
             select_item_page.items_list_widget.clearContents()
@@ -186,8 +182,7 @@ def select_item(selectd):
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-    thread_queru_price = threading.Thread(target=queru_price)
-    thread_queru_price.start()
+    queru_price()
 
 
 def queru_price():
@@ -201,11 +196,10 @@ def queru_price():
     # 设置wiki链接
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
+    widget.setWindowTitle("猴面雀 - FF14市场查询工具 - "+ item.name )
     query_sale_list()
-    # 如果查询物品发生了改变，重新请求物品的图标
-    if item.name != query_history[-1]['itemName']:
-        get_item_icon_thread = threading.Thread(target=get_item_icon)
-        get_item_icon_thread.start()
+    if item.name != query_history[-2]["itemName"]:
+        get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
     if item.server not in server_list or item.name != query_history[-1]['itemName']:
         server_list = item.server_list()
@@ -280,8 +274,9 @@ def query_sale_list():
     ui.query_history.show()
     ui.show_data_box.setCurrentIndex(2)
     # 查询完成之后将查询记录加入历史记录
+    if item.name != query_history[-1]["itemName"]:
+        history_board.history_list.insertItem(0, item.name)
     query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
-    history_board.history_list.insertItem(0, query_history[-1]["itemName"])
 
 
 def query_every_server(all_server_list):

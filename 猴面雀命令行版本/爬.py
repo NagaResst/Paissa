@@ -119,11 +119,11 @@ def query_item_detial(itemid):
     while True:
         try:
             result = get(query_url, timeout=5)
+            result = loads(result.text)
             break
         except:
             print("%s 查询失败，重新查询物品名称" % item_id)
             sleep(1)
-    result = loads(result.text)
     return result['item']['name']
 
 

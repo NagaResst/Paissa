@@ -147,13 +147,13 @@ if __name__ == '__main__':
     server = '猫小胖'
     itemObj = Queryer(server)
     # 物品选择器列表
-    # item_list = itemObj.query_item_id(item)
-    # print(item_list)
+    itemObj.query_item_id(item)
+    print(itemObj.item_list)
     # 价格查询
     hq = False
     itemObj.id = '21697'
     # price_list = itemObj.query_item_price(hq)
     # print(price_list)
-    server_list = itemObj.server_list()
-    itemObj.query_every_server(server_list)
-    print(itemObj.every_server)
+    # server_list = itemObj.server_list()
+    # itemObj.query_every_server(server_list)
+    # print(itemObj.every_server)

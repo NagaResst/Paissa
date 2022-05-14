@@ -117,6 +117,7 @@ def click_select_server(server):
     item.server = server
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
+        ui.show_data_box.setCurrentIndex(4)
         queru_price()
 
 
@@ -126,6 +127,7 @@ def query_item():
     """
     global query_history
     global hq
+    ui.show_data_box.setCurrentIndex(4)
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
     if {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item.item_list) > 1:
@@ -139,9 +141,9 @@ def query_item():
         ui.show_data_box.setCurrentIndex(2)
     # 重新查询
     else:
+        ui.show_data_box.setCurrentIndex(4)
         thread_query_item_id = threading.Thread(target=item.query_item_id, args=[input_name])
         thread_query_item_id.start()
-        ui.show_data_box.setCurrentIndex(4)
         thread_query_item_id.join()
         # item.query_item_id(input_name)
         if len(item.item_list) > 1:
@@ -174,7 +176,6 @@ def select_item(selectd):
     模糊搜索如果返回多个结果，选择其中一个
     """
     global item
-    print(selectd)
     if type(selectd) is list and len(selectd) > 0:
         item.id = selectd[0].text()
         item.name = selectd[1].text()
@@ -185,7 +186,8 @@ def select_item(selectd):
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-    queru_price()
+    thread_queru_price = threading.Thread(target=queru_price)
+    thread_queru_price.start()
 
 
 def queru_price():
@@ -196,8 +198,10 @@ def queru_price():
     global query_history
     global server_list
     ui.show_data_box.setCurrentIndex(4)
-    query_sale_thread = threading.Thread(target=query_sale_list)
-    query_sale_thread.start()
+    # 设置wiki链接
+    ui.jump_to_wiki.setText(
+        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
+    query_sale_list()
     # 如果查询物品发生了改变，重新请求物品的图标
     if item.name != query_history[-1]['itemName']:
         get_item_icon_thread = threading.Thread(target=get_item_icon)
@@ -207,21 +211,7 @@ def queru_price():
         server_list = item.server_list()
         # 查询全服比价的数据
         item.query_every_server(server_list)
-        query_every_server_thread = threading.Thread(target=query_every_server, args=[item.every_server])
-        query_every_server_thread.start()
-    # 设置wiki链接
-    ui.jump_to_wiki.setText(
-        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
-    ui.jump_to_wiki.show()
-    ui.show_cost.show()
-    ui.back_query.show()
-    ui.query_history.show()
-    # 等待正在售出列表查询完成
-    query_sale_thread.join()
-    ui.show_data_box.setCurrentIndex(2)
-    # 查询完成之后将查询记录加入历史记录
-    query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
-    history_board.history_list.insertItem(0, query_history[-1]["itemName"])
+        query_every_server(item.every_server)
 
 
 def query_sale_list():
@@ -229,6 +219,7 @@ def query_sale_list():
     正在售出列表填充
     """
     global hq
+    global query_history
     hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
     # 查询正在售出的记录
     price_list = item.query_item_price(hq)
@@ -283,6 +274,14 @@ def query_sale_list():
         r += 1
     # 表格绘制
     show_price_page.sale_list.repaint()
+    ui.jump_to_wiki.show()
+    ui.show_cost.show()
+    ui.back_query.show()
+    ui.query_history.show()
+    ui.show_data_box.setCurrentIndex(2)
+    # 查询完成之后将查询记录加入历史记录
+    query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
+    history_board.history_list.insertItem(0, query_history[-1]["itemName"])
 
 
 def query_every_server(all_server_list):

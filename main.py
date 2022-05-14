@@ -196,7 +196,7 @@ def queru_price():
     # 设置wiki链接
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
-    widget.setWindowTitle("猴面雀 - FF14市场查询工具 - "+ item.name )
+    widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     query_sale_list()
     if item.name != query_history[-2]["itemName"]:
         get_item_icon()

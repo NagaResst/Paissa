@@ -3,7 +3,7 @@ import time
 from json import loads
 
 from requests import get
-
+from math import ceil
 from marketable import marketable
 
 
@@ -36,7 +36,7 @@ class Queryer(object):
                 result = loads(result.text)
                 break
             except:
-                time.sleep(1)
+                print('资源请求失败' + url)
         return result
 
     @staticmethod
@@ -56,7 +56,7 @@ class Queryer(object):
                 result = get(url)
                 break
             except:
-                pass
+                print('图标获取失败')
         self.icon = result.content
 
     def server_list(self):
@@ -145,21 +145,128 @@ class Queryer(object):
         for t in threads:
             t.join()
 
+    def query_item_craft(self):
+        """
+        查询物品的制作材料
+        """
+        self.stuff = self.query_item_detial(self.id)
+        if 'craft' in self.stuff:
+            self.stuff = self.stuff['craft'][0]['ingredients']
+            self.make_item_craft(self.stuff)
+
+    def make_item_craft(self, stuff_list):
+        """
+        统计物品的制作材料
+        """
+        i = 0
+        print('开始统计材料')
+        for unit in stuff_list:
+            result = self.query_item_detial(unit['id'])
+            stuff_list[i]['name'] = result['name']
+            query_result = self.query_item_cost_min(unit['id'])
+            x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
+            if x < 300:
+                stuff_list[i]['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
+            else:
+                stuff_list[i]['pricePerUnit'] = query_result['averagePrice']
+            if 'vendors' in result:
+                stuff_list[i]['priceFromNpc'] = result['price']
+            if 'craft' in result:
+                stuff_list[i]['craft'] = result['craft'][0]['ingredients']
+                if 'yield' in result['craft'][0]:
+                    stuff_list[i]['yield'] = result['craft'][0]['yield']
+                self.make_item_craft(stuff_list[i]['craft'])
+            i += 1
+
+    def query_item_detial(self, itemid):
+        """
+        查询物品的详细信息，查询制作配方和统计成本的前置方法
+        """
+        print('开始查询配方')
+        query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+        result = self.init_query_result(query_url)
+        return result['item']
+
+    def query_item_cost_min(self, itemid):
+        """
+        查询单项物品的板子价格
+        """
+        select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿', '梦羽宝境']
+        select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座']
+        select_server_gou = ['豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
+        if self.server in select_server_niao:
+            server = '陆行鸟'
+        elif self.server in select_server_zhu:
+            server = '莫古力'
+        elif self.server in select_server_gou:
+            server = '豆豆柴'
+        else:
+            server = '猫小胖'
+        query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, itemid)
+        result = self.init_query_result(query_url)
+        return result
+
+    def query_item_cost(self, stuff_list, count=1, tab=''):
+        """
+        查询物品的制作成本的计算器
+        """
+        d_cost = 0
+        self.query_item_craft()
+        for stuff in stuff_list:
+            # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
+            n_count = (stuff['amount'] * count)
+            if 'priceFromNpc' in stuff:
+                price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
+            else:
+                price = stuff['pricePerUnit'] * n_count
+            d_cost = d_cost + price
+            if 'yield' in stuff and 'craft' in stuff:
+                # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
+                c_count = 0
+                if n_count > stuff['yield']:
+                    c_count = ceil(n_count / stuff['yield'])
+                elif n_count <= stuff['yield']:
+                    c_count = 1
+                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count, tab=tab + '\t')
+            elif 'craft' in stuff and 'yield' not in stuff:
+                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count, tab=tab + '\t')
+            else:
+                self.o_cost = self.o_cost + price
+        return d_cost
+
+    def show_item_cost(self):
+        """
+        显示物品的制作成本的外壳
+        """
+        if self.stuff is not None:
+            self.d_cost = 0
+            self.o_cost = 0
+            self.d_cost = self.query_item_cost(self.stuff)
+            if self.d_cost == self.o_cost:
+                print('\n材料总价合计 %d' % self.d_cost)
+            else:
+                print('\n直接材料总价合计 %d, \t 原始材料价格总价合计 %d' % (self.d_cost, self.o_cost))
+        else:
+            print('\n猴面雀发现你要查询的物品不能制作！')
+
 
 if __name__ == '__main__':
     # 初始化测试数据
-    item = '群星壁挂'
+    # item = '群星壁挂'
     server = '猫小胖'
     itemObj = Queryer(server)
     # 物品选择器列表
-    itemObj.query_item_id(item)
-    print(itemObj.item_list)
+    # itemObj.query_item_id(item)
+    # print(itemObj.item_list)
     # 价格查询
-    hq = False
-    itemObj.id = '35563'
+    itemObj.id = '22885'
     itemObj.hq = True
-    price_list = itemObj.query_item_price()
-    print(price_list)
+    # price_list = itemObj.query_item_price()
+    # print(price_list)
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
     # print(itemObj.every_server)
+    itemObj.query_item_craft()
+    print(itemObj.stuff)
+    # itemObj.show_item_cost()
+

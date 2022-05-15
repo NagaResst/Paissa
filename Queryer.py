@@ -13,6 +13,7 @@ class Queryer(object):
         对象初始化
         """
         self.name = None
+        self.hq = False
         self.item_list = []
         self.id = item_id
         self.stuff = {}
@@ -95,11 +96,11 @@ class Queryer(object):
                 item_list.append(item)
         self.item_list = sorted(item_list, key=lambda e: e.__getitem__('ID'), reverse=False)
 
-    def query_item_price(self, hq):
+    def query_item_price(self):
         """
         查询市场价格，根据传入的HQ参数选择查询方法
         """
-        if hq is True:
+        if self.hq is True:
             query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
                 self.server, self.id)
         # elif hq is False:
@@ -108,6 +109,10 @@ class Queryer(object):
         else:
             query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
         result = self.init_query_result(query_url)
+        if self.hq is True and len(result['listings']) == 0:
+            self.hq = False
+            query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+            result = self.init_query_result(query_url)
         return result
 
     def query_every_server(self, server_list):
@@ -143,7 +148,7 @@ class Queryer(object):
 
 if __name__ == '__main__':
     # 初始化测试数据
-    item = '夜钢'
+    item = '群星壁挂'
     server = '猫小胖'
     itemObj = Queryer(server)
     # 物品选择器列表
@@ -151,9 +156,10 @@ if __name__ == '__main__':
     print(itemObj.item_list)
     # 价格查询
     hq = False
-    itemObj.id = '21697'
-    # price_list = itemObj.query_item_price(hq)
-    # print(price_list)
+    itemObj.id = '35563'
+    itemObj.hq = True
+    price_list = itemObj.query_item_price()
+    print(price_list)
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
     # print(itemObj.every_server)

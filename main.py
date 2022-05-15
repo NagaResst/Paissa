@@ -1,17 +1,17 @@
 import os
 import sys
-import threading
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtCore import QThread
 
 from Paissa import Ui_mainWindow
 from Queryer import Queryer
+from cost_page import Ui_cost_page
+from history_page import Ui_history_Window
+from loading_page import Ui_load_page
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
-from loading_page import Ui_load_page
-from history_page import Ui_history_Window
-from cost_page import Ui_cost_page
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -109,7 +109,6 @@ def click_select_server(server):
     """
     菜单栏选择服务器重新查询的事件
     """
-    global item
     global query_server
     query_server = server
     # 修改界面上显示的当前服务器
@@ -126,13 +125,13 @@ def query_item():
     模糊搜索查询物品
     """
     global query_history
-    global hq
     ui.show_data_box.setCurrentIndex(4)
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
-    if {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item.item_list) > 1:
+    if {"itemName": input_name} == query_history[-1]['itemName'] and len(item.item_list) > 1:
         ui.show_data_box.setCurrentIndex(1)
-    elif {"itemName": input_name, "HQ": hq, "server": item.server} == query_history[-1] and len(item.item_list) == 1:
+    elif input_name == query_history[-1]['itemName'] == query_history[-1] and item.hq == query_history[-1]['HQ'] \
+            and item.server == query_history[-1]['server'] and len(item.item_list) == 1:
         ui.item_icon.show()
         ui.jump_to_wiki.show()
         ui.show_cost.show()
@@ -189,7 +188,6 @@ def queru_price():
     """
     价格查询
     """
-    global hq
     global query_history
     global server_list
     ui.show_data_box.setCurrentIndex(4)
@@ -198,25 +196,39 @@ def queru_price():
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     query_sale_list()
-    if item.name != query_history[-2]["itemName"]:
-        get_item_icon()
+    get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
-    if item.server not in server_list or item.name != query_history[-1]['itemName']:
+    if item.server not in server_list or item.id != query_history[-1]['itemID']:
         server_list = item.server_list()
         # 查询全服比价的数据
         item.query_every_server(server_list)
         query_every_server(item.every_server)
+    # 查询完成之后将查询记录加入历史记录
+    this_query = {"itemID": item.id, "itemName": item.name, "HQ": item.hq, "server": item.server}
+    if this_query in query_history:
+        item_name = item.name
+        if this_query['HQ'] is True:
+            item_name = item.name + 'HQ'
+        history_item = history_board.history_list.findItems(item_name, QtCore.Qt.MatchExactly)
+        if len(history_item) > 0:
+            history_board.history_list.takeItem(history_board.history_list.row(history_item[0]))
+        query_history.remove(this_query)
+    if item.hq is not True:
+        history_board.history_list.insertItem(0, item.name)
+    elif item.hq is True:
+        history_board.history_list.insertItem(0, item.name + 'HQ')
+    query_history.append(this_query)
+    query_item_page.query_is_hq.setChecked(item.hq)
 
 
 def query_sale_list():
     """
     正在售出列表填充
     """
-    global hq
     global query_history
     hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
     # 查询正在售出的记录
-    price_list = item.query_item_price(hq)
+    price_list = item.query_item_price()
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
@@ -273,10 +285,6 @@ def query_sale_list():
     ui.back_query.show()
     ui.query_history.show()
     ui.show_data_box.setCurrentIndex(2)
-    # 查询完成之后将查询记录加入历史记录
-    if item.name != query_history[-1]["itemName"]:
-        history_board.history_list.insertItem(0, item.name)
-    query_history.append({"itemName": item.name, "HQ": hq, "server": item.server})
 
 
 def query_every_server(all_server_list):
@@ -322,6 +330,23 @@ def query_every_server(all_server_list):
     show_price_page.all_server.repaint()
 
 
+def click_history_query(selected):
+    global query_history
+    if selected.row() != 0:
+        item_name = history_board.history_list.item(selected.row()).text()
+        if item_name[-2:] == 'HQ':
+            item_name = item_name[0:-2]
+            item.hq = True
+        else:
+            item.hq = False
+        for i in query_history:
+            if i["itemName"] == item_name:
+                item.id = i['itemID']
+                item.name = item_name
+                break
+        queru_price()
+
+
 def make_cost_tree():
     """
     # TODO： 成本树 ： 查询初始化 → 锁定成本按钮 → 查询价格 → 查询配方和材料单价 → 构建成本树 → 解锁成本按钮
@@ -333,21 +358,26 @@ def select_hq_ornot(status):
     """
     查询HQ的CheckButton
     """
-    global hq
     global query_history
-    hq = status
+    item.hq = status
 
 
 def get_item_icon():
     """
     物品图标的地址在查询item_list中包含了
     """
-    for i in item.item_list:
-        if str(i['ID']) == str(item.id):
-            item.get_icon("https://cafemaker.wakingsands.com" + i['Icon'])
-            ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
-            ui.item_icon.setScaledContents(True)
-            ui.item_icon.show()
+    if len(item.item_list) > 1:
+        for i in item.item_list:
+            if str(i['ID']) == str(item.id):
+                item.get_icon("https://cafemaker.wakingsands.com" + i['Icon'])
+                break
+    else:
+        item.query_item_id(item.name)
+        item.get_icon("https://cafemaker.wakingsands.com" + item.item_list[0]['Icon'])
+    ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
+    ui.item_icon.setScaledContents(True)
+    ui.item_icon.show()
+
 
 
 def back_to_index():
@@ -383,9 +413,7 @@ def resource_path(relative_path):
 """
 query_server = '猫小胖'
 item = Queryer(query_server)
-query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
-hq = None
-item_count = 1
+query_history = [{"itemID": None, "itemName": None, "HQ": False, "server": "猫小胖"}]
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
 
@@ -451,5 +479,6 @@ loading_page.setupUi(ui.loading_ui)
 widget2 = QtWidgets.QMainWindow()
 history_board = HistoryPage()
 history_board.setupUi(widget2)
+history_board.history_list.clicked.connect(click_history_query)
 
 sys.exit(app.exec_())

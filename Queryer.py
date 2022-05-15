@@ -182,7 +182,6 @@ class Queryer(object):
         """
         查询物品的详细信息，查询制作配方和统计成本的前置方法
         """
-        print('开始查询配方')
         query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
         result = self.init_query_result(query_url)
         return result['item']

@@ -1,8 +1,8 @@
 import os
 import sys
+from json import loads
 
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtCore import QThread
 
 from Paissa import Ui_mainWindow
 from Queryer import Queryer
@@ -17,6 +17,22 @@ from show_price import Ui_show_price
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
 所以 ui文件 和成对出现的 py文件 不会做任何修改，界面行为在这里进行重新定义，后台查询功能在 Queryer 内实现。
 """
+
+
+class RQMainWindow(QtWidgets.QMainWindow):
+    def __init__(self, parent=None):
+        super(RQMainWindow, self).__init__(parent)
+
+    def closeEvent(self, event):
+        global query_history
+        for i in query_history:
+            if i['itemName'] is None:
+                query_history.remove(i)
+        history = {"history": query_history}
+        with open(resource_path(os.path.join(os.getenv('TEMP'), "Paissa_query_history.txt")), 'w', encoding='utf-8') as his:
+            his.write(str(history).replace('None', 'null').replace('False', 'false').replace('True', 'true'))
+        event.accept()
+        sys.exit(0)  # 退出程序
 
 
 class MainWindow(Ui_mainWindow):
@@ -116,7 +132,6 @@ def click_select_server(server):
     item.server = server
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
-        ui.show_data_box.setCurrentIndex(4)
         queru_price()
 
 
@@ -125,21 +140,20 @@ def query_item():
     模糊搜索查询物品
     """
     global query_history
-    ui.show_data_box.setCurrentIndex(4)
+    global first_query
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
-    if {"itemName": input_name} == query_history[-1]['itemName'] and len(item.item_list) > 1:
+    if {"itemName": input_name} == query_history[-1]['itemName'] and len(item.item_list) > 1 and first_query is False:
         ui.show_data_box.setCurrentIndex(1)
-    elif input_name == query_history[-1]['itemName'] == query_history[-1] and item.hq == query_history[-1]['HQ'] \
-            and item.server == query_history[-1]['server'] and len(item.item_list) == 1:
+    elif input_name == query_history[-1]['itemName'] and item.hq == query_history[-1]['HQ'] \
+            and item.server == query_history[-1]['server'] and len(item.item_list) == 1 and first_query is False:
         ui.item_icon.show()
         ui.jump_to_wiki.show()
         ui.show_cost.show()
         ui.back_query.show()
-        ui.query_history.show()
         ui.show_data_box.setCurrentIndex(2)
-    # 重新查询
     else:
+        first_query = False
         item.query_item_id(input_name)
         if len(item.item_list) > 1:
             r = 0
@@ -190,7 +204,6 @@ def queru_price():
     """
     global query_history
     global server_list
-    ui.show_data_box.setCurrentIndex(4)
     # 设置wiki链接
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
@@ -219,6 +232,8 @@ def queru_price():
         history_board.history_list.insertItem(0, item.name + 'HQ')
     query_history.append(this_query)
     query_item_page.query_is_hq.setChecked(item.hq)
+    cost_page.cost_tree.clear()
+    item.stuff = {}
 
 
 def query_sale_list():
@@ -241,12 +256,6 @@ def query_sale_list():
         show_price_page.sale_list.setRowCount(9)
     # 清空所有数据
     show_price_page.sale_list.clearContents()
-    # 设定表格样式
-    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
-    show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-    # HQ列
-    show_price_page.sale_list.setColumnWidth(1, 20)
     # 开始填充数据
     for i in price_list["listings"]:
         # 准备数据
@@ -295,10 +304,6 @@ def query_every_server(all_server_list):
     # 设置表格样式
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
-    show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-    show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
-    show_price_page.all_server.setColumnWidth(2, 20)
-    show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     # 准备数据
     t = 0
     for i in all_server_list:
@@ -332,7 +337,10 @@ def query_every_server(all_server_list):
 
 def click_history_query(selected):
     global query_history
-    if selected.row() != 0:
+    global first_query
+    if selected.row() == 0 and first_query is not True and ui.show_data_box.currentIndex() != 0:
+        pass
+    else:
         item_name = history_board.history_list.item(selected.row()).text()
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]
@@ -344,6 +352,7 @@ def click_history_query(selected):
                 item.id = i['itemID']
                 item.name = item_name
                 break
+        query_item_page.input_item_name.setText(item.name)
         queru_price()
 
 
@@ -351,7 +360,31 @@ def make_cost_tree():
     """
     # TODO： 成本树 ： 查询初始化 → 锁定成本按钮 → 查询价格 → 查询配方和材料单价 → 构建成本树 → 解锁成本按钮
     """
-    pass
+
+    def make_tree(material, father):
+        node = QtWidgets.QTreeWidgetItem(father)
+        node.setText(0, material['name'])
+        node.setText(1, str(material['amount']))
+        node.setText(2, str(material['pricePerUnit']))
+        if 'craft' in material:
+            for i in material['craft']:
+                make_tree(i, node)
+
+    if ui.show_data_box.currentIndex() == 3:
+        ui.show_data_box.setCurrentIndex(2)
+    elif ui.show_data_box.currentIndex() == 2 and len(cost_page.cost_tree.children()) > 7:
+        ui.show_data_box.setCurrentIndex(3)
+    elif len(cost_page.cost_tree.children()) <= 7:
+        if len(item.stuff) > 0:
+            ui.show_data_box.setCurrentIndex(3)
+        elif len(item.stuff) == 0:
+            item.show_item_cost()
+            for i in item.stuff:
+                make_tree(i, cost_page.cost_tree)
+            cost_page.d_cost.setText(str(item.d_cost))
+            cost_page.o_cost.setText(str(item.o_cost))
+            cost_page.cost_tree.expandAll()
+            ui.show_data_box.setCurrentIndex(3)
 
 
 def select_hq_ornot(status):
@@ -379,13 +412,11 @@ def get_item_icon():
     ui.item_icon.show()
 
 
-
 def back_to_index():
     ui.item_icon.hide()
     ui.jump_to_wiki.hide()
     ui.show_cost.hide()
     ui.back_query.hide()
-    ui.query_history.hide()
     ui.show_data_box.setCurrentIndex(0)
 
 
@@ -411,9 +442,14 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
+try:
+    with open(resource_path(os.path.join(os.getenv('TEMP'), "Paissa_query_history.txt")), 'r', encoding='utf-8') as his:
+        query_history = loads(his.read().replace("'", '"'))['history']
+except:
+    query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
 query_server = '猫小胖'
 item = Queryer(query_server)
-query_history = [{"itemID": None, "itemName": None, "HQ": False, "server": "猫小胖"}]
+first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
 
@@ -421,7 +457,7 @@ server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
 主程序开始
 """
 app = QtWidgets.QApplication(sys.argv)
-widget = QtWidgets.QMainWindow()
+widget = RQMainWindow()
 ui = MainWindow()
 ui.setupUi(widget)
 ui.setupMenu()
@@ -430,10 +466,11 @@ ui.item_icon.hide()
 ui.jump_to_wiki.hide()
 ui.show_cost.hide()
 ui.back_query.hide()
-ui.query_history.hide()
+ui.query_history.show()
 ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
 ui.query_history.clicked.connect(hidden_history_board)
+ui.show_cost.clicked.connect(make_cost_tree)
 widget.show()
 
 """
@@ -460,12 +497,24 @@ select_item_page.select_this.clicked.connect(lambda: select_item(select_item_pag
 """
 show_price_page = ShowPrice()
 show_price_page.setupUi(ui.show_price)
-
+# 设定在售表格样式
+show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+# HQ列
+show_price_page.sale_list.setColumnWidth(1, 20)
+# 设定比价表格样式
+show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
+# HQ列
+show_price_page.all_server.setColumnWidth(2, 20)
+show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 """
 材料成本树
 """
 cost_page = CostPage()
 cost_page.setupUi(ui.show_craft)
+cost_page.cost_tree.setColumnWidth(0, 500)
 
 """
 loading界面
@@ -480,5 +529,10 @@ widget2 = QtWidgets.QMainWindow()
 history_board = HistoryPage()
 history_board.setupUi(widget2)
 history_board.history_list.clicked.connect(click_history_query)
+for i in query_history:
+    if i['HQ'] is not True:
+        history_board.history_list.insertItem(0, i["itemName"])
+    elif i['HQ'] is True:
+        history_board.history_list.insertItem(0, i["itemName"] + 'HQ')
 
 sys.exit(app.exec_())

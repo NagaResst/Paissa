@@ -3,6 +3,7 @@ Date:2021/4/21 14:49
 Author :四翼妄为
 """
 import sys
+import os
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel,
@@ -91,7 +92,8 @@ class MainWindow(QWidget):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    sys.exit(app.exec_())
+    # app = QApplication(sys.argv)
+    # window = MainWindow()
+    # sys.exit(app.exec_())
+    print(os.getenv('TEMP'))
 

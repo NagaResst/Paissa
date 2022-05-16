@@ -37,7 +37,7 @@ class Queryer(object):
                 result = loads(result.text)
                 break
             except:
-                print('资源请求失败' + url)
+                pass
         return result
 
     @staticmethod
@@ -166,7 +166,7 @@ class Queryer(object):
         if x < 300:
             unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
         else:
-            unit['pricePerUnit'] = query_result['averagePrice']
+            unit['pricePerUnit'] = int(query_result['averagePrice'])
         if 'vendors' in result:
             unit['priceFromNpc'] = result['price']
         if 'craft' in result:
@@ -227,6 +227,8 @@ class Queryer(object):
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
                 price = stuff['pricePerUnit'] * n_count
+            stuff['amount'] = n_count
+            stuff['pricePerUnit'] = price
             d_cost = d_cost + price
             if 'yield' in stuff and 'craft' in stuff:
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
@@ -246,17 +248,15 @@ class Queryer(object):
         """
         显示物品的制作成本的外壳
         """
+        self.stuff = {}
         self.query_item_craft()
-        if self.stuff is not None:
+        if len(self.stuff) > 0:
             self.d_cost = 0
             self.o_cost = 0
             self.d_cost = self.query_item_cost(self.stuff)
-            if self.d_cost == self.o_cost:
-                print('\n材料总价合计 %d' % self.d_cost)
-            else:
-                print('\n直接材料总价合计 %d, \t 原始材料价格总价合计 %d' % (self.d_cost, self.o_cost))
+            return self.d_cost, self.o_cost
         else:
-            print('\n猴面雀发现你要查询的物品不能制作！')
+            return None, None
 
 
 if __name__ == '__main__':

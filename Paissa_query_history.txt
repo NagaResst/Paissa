@@ -1,0 +1,1 @@
+{'history': [{'itemID': 35563, 'itemName': '群星壁挂', 'HQ': false, 'server': '猫小胖'}]}

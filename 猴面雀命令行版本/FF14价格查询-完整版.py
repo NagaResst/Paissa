@@ -1,8 +1,9 @@
 # -*- coding:UTF-8 -*-
 
+import threading
 from json import loads
 from math import ceil
-from time import localtime, strftime, sleep
+from time import localtime, strftime
 
 from requests import get
 
@@ -46,14 +47,11 @@ class ItemQuerier(object):
         """
         while True:
             try:
-                result = get(url, timeout=10)
+                result = get(url, timeout=5)
+                result = loads(result.text)
                 break
             except:
                 print('\n猴面雀发现网络有点问题，正准备再试一次')
-                sleep(3)
-        # 当属性的值为null的时候，无法转换成字典，将其替换为None
-        # result = result.text.replace('null', '"None"')
-        result = loads(result.text)
         return result
 
     @staticmethod
@@ -105,14 +103,13 @@ class ItemQuerier(object):
         """
         query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + self.name
         print('\n猴面雀正在为您查找需要的数据，请稍候... ')
-        result = self.init_query_result(query_url)
-        itemde = result["Results"]
+        result = (self.init_query_result(query_url))["Results"]
         try:
-            if len(itemde) == 1:
-                self.id = itemde[0]['ID']
-                self.name = itemde[0]['Name']
-            elif len(itemde) > 1:
-                self.select_itemid(itemde)
+            if len(result) == 1:
+                self.id = result[0]['ID']
+                self.name = result[0]['Name']
+            elif len(result) > 1:
+                self.select_itemid(result)
             if self.id is not None:
                 print('猴面雀已经为您查找到物品 %s ID：%d' % (self.name, self.id))
         except:
@@ -262,29 +259,35 @@ class ItemQuerier(object):
         except ConnectionError:
             print("\n猴面雀发现网络有点问题，找不到想要的资料了")
 
+    def make_child_item_craft(self, unit):
+        print('.', end='')
+        result = self.query_item_detial(unit['id'])
+        unit['name'] = result['name']
+        query_result = self.query_item_cost_min(self.server, unit['id'], count=1)
+        x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
+        if x < 300:
+            unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
+        else:
+            unit['pricePerUnit'] = query_result['averagePrice']
+        if 'vendors' in result:
+            unit['priceFromNpc'] = result['price']
+        if 'craft' in result:
+            unit['craft'] = result['craft'][0]['ingredients']
+            if 'yield' in result['craft'][0]:
+                unit['yield'] = result['craft'][0]['yield']
+            self.make_item_craft(unit['craft'])
+
     def make_item_craft(self, stuff_list):
         """
         统计物品的制作材料
         """
-        i = 0
+        threads = []
         for unit in stuff_list:
-            print('.', end='')
-            result = self.query_item_detial(unit['id'])
-            stuff_list[i]['name'] = result['name']
-            query_result = self.query_item_cost_min(self.server, unit['id'], count=1)
-            x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
-            if x < 300:
-                stuff_list[i]['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
-            else:
-                stuff_list[i]['pricePerUnit'] = query_result['averagePrice']
-            if 'vendors' in result:
-                stuff_list[i]['priceFromNpc'] = result['price']
-            if 'craft' in result:
-                stuff_list[i]['craft'] = result['craft'][0]['ingredients']
-                if 'yield' in result['craft'][0]:
-                    stuff_list[i]['yield'] = result['craft'][0]['yield']
-                self.make_item_craft(stuff_list[i]['craft'])
-            i += 1
+            thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
+            thread_make_child_craft.start()
+            threads.append(thread_make_child_craft)
+        for i in threads:
+            i.join()
 
     def query_item_craft(self):
         """
@@ -451,7 +454,7 @@ def logo():
 =@@@@@@@@....................................................=@@@O@@@O@O@
 ========   欢迎使用猴面雀价格查询小工具    夕山菀@紫水栈桥   ============
 ========     老婆！ 是老婆啊！！    琉森@紫水栈桥 专用版     ============
-                                                    Ver 1.2.8
+                                                    Ver 1.3.0
 """)
 
 

@@ -1,9 +1,10 @@
 import threading
 import time
 from json import loads
+from math import ceil
 
 from requests import get
-from math import ceil
+
 from marketable import marketable
 
 
@@ -149,34 +150,42 @@ class Queryer(object):
         """
         查询物品的制作材料
         """
-        self.stuff = self.query_item_detial(self.id)
-        if 'craft' in self.stuff:
-            self.stuff = self.stuff['craft'][0]['ingredients']
-            self.make_item_craft(self.stuff)
+        if len(self.stuff) == 0:
+            self.stuff = self.query_item_detial(self.id)
+            if 'craft' in self.stuff:
+                self.stuff = self.stuff['craft'][0]['ingredients']
+                self.make_item_craft(self.stuff)
+            else:
+                self.stuff = {}
+
+    def make_child_item_craft(self, unit):
+        result = self.query_item_detial(unit['id'])
+        unit['name'] = result['name']
+        query_result = self.query_item_cost_min(unit['id'])
+        x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
+        if x < 300:
+            unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
+        else:
+            unit['pricePerUnit'] = query_result['averagePrice']
+        if 'vendors' in result:
+            unit['priceFromNpc'] = result['price']
+        if 'craft' in result:
+            unit['craft'] = result['craft'][0]['ingredients']
+            if 'yield' in result['craft'][0]:
+                unit['yield'] = result['craft'][0]['yield']
+            self.make_item_craft(unit['craft'])
 
     def make_item_craft(self, stuff_list):
         """
         统计物品的制作材料
         """
-        i = 0
-        print('开始统计材料')
+        threads = []
         for unit in stuff_list:
-            result = self.query_item_detial(unit['id'])
-            stuff_list[i]['name'] = result['name']
-            query_result = self.query_item_cost_min(unit['id'])
-            x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
-            if x < 300:
-                stuff_list[i]['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
-            else:
-                stuff_list[i]['pricePerUnit'] = query_result['averagePrice']
-            if 'vendors' in result:
-                stuff_list[i]['priceFromNpc'] = result['price']
-            if 'craft' in result:
-                stuff_list[i]['craft'] = result['craft'][0]['ingredients']
-                if 'yield' in result['craft'][0]:
-                    stuff_list[i]['yield'] = result['craft'][0]['yield']
-                self.make_item_craft(stuff_list[i]['craft'])
-            i += 1
+            thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
+            thread_make_child_craft.start()
+            threads.append(thread_make_child_craft)
+        for i in threads:
+            i.join()
 
     def query_item_detial(self, itemid):
         """
@@ -237,6 +246,7 @@ class Queryer(object):
         """
         显示物品的制作成本的外壳
         """
+        self.query_item_craft()
         if self.stuff is not None:
             self.d_cost = 0
             self.o_cost = 0
@@ -265,7 +275,6 @@ if __name__ == '__main__':
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
     # print(itemObj.every_server)
-    itemObj.query_item_craft()
-    print(itemObj.stuff)
-    # itemObj.show_item_cost()
-
+    # itemObj.query_item_craft()
+    # print(itemObj.stuff)
+    itemObj.show_item_cost()

@@ -29,7 +29,8 @@ class RQMainWindow(QtWidgets.QMainWindow):
             if i['itemName'] is None:
                 query_history.remove(i)
         history = {"history": query_history}
-        with open(resource_path(os.path.join(os.getenv('TEMP'), "Paissa_query_history.txt")), 'w', encoding='utf-8') as his:
+        with open(resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt")), 'w',
+                  encoding='utf-8') as his:
             his.write(str(history).replace('None', 'null').replace('False', 'false').replace('True', 'true'))
         event.accept()
         sys.exit(0)  # 退出程序
@@ -106,33 +107,6 @@ class CostPage(Ui_cost_page):
 class HistoryPage(Ui_history_Window):
     def __int__(self):
         super().__init__()
-
-
-def hidden_history_board():
-    if widget2.isVisible():
-        widget2.hide()
-    elif widget2.isHidden():
-        widget2.show()
-
-
-def create_widget2_page():
-    widget2 = QtWidgets.QMainWindow()
-    history_board = HistoryPage()
-    history_board.setupUi(widget2)
-
-
-def click_select_server(server):
-    """
-    菜单栏选择服务器重新查询的事件
-    """
-    global query_server
-    query_server = server
-    # 修改界面上显示的当前服务器
-    ui.show_server.setText(server)
-    item.server = server
-    # 立刻刷新价格显示的界面
-    if item.name is not None and ui.show_data_box.currentIndex() != 0:
-        queru_price()
 
 
 def query_item():
@@ -335,27 +309,6 @@ def query_every_server(all_server_list):
     show_price_page.all_server.repaint()
 
 
-def click_history_query(selected):
-    global query_history
-    global first_query
-    if selected.row() == 0 and first_query is not True and ui.show_data_box.currentIndex() != 0:
-        pass
-    else:
-        item_name = history_board.history_list.item(selected.row()).text()
-        if item_name[-2:] == 'HQ':
-            item_name = item_name[0:-2]
-            item.hq = True
-        else:
-            item.hq = False
-        for i in query_history:
-            if i["itemName"] == item_name:
-                item.id = i['itemID']
-                item.name = item_name
-                break
-        query_item_page.input_item_name.setText(item.name)
-        queru_price()
-
-
 def make_cost_tree():
     """
     # TODO： 成本树 ： 查询初始化 → 锁定成本按钮 → 查询价格 → 查询配方和材料单价 → 构建成本树 → 解锁成本按钮
@@ -385,6 +338,46 @@ def make_cost_tree():
             cost_page.o_cost.setText(str(item.o_cost))
             cost_page.cost_tree.expandAll()
             ui.show_data_box.setCurrentIndex(3)
+
+
+def click_history_query(selected):
+    global query_history
+    global first_query
+    if selected.row() == 0 and first_query is not True and ui.show_data_box.currentIndex() != 0:
+        pass
+    else:
+        item_name = history_board.history_list.item(selected.row()).text()
+        if item_name[-2:] == 'HQ':
+            item_name = item_name[0:-2]
+            item.hq = True
+        else:
+            item.hq = False
+        for i in query_history:
+            if i["itemName"] == item_name:
+                item.id = i['itemID']
+                item.name = item_name
+                break
+        query_item_page.input_item_name.setText(item.name)
+        queru_price()
+
+
+def click_select_server(server):
+    """
+    菜单栏选择服务器重新查询的事件
+    """
+    global query_server
+    query_server = server
+    # 修改界面上显示的当前服务器
+    ui.show_server.setText(server)
+    item.server = server
+    # 立刻刷新价格显示的界面
+    if item.name is not None and ui.show_data_box.currentIndex() != 0:
+        queru_price()
+
+
+def click_copy_item_name(selected):
+    clipboard = QtWidgets.QApplication.clipboard()
+    clipboard.setText(selected.text(0))
 
 
 def select_hq_ornot(status):
@@ -428,6 +421,19 @@ def show_message():
     QtWidgets.QMessageBox.warning(ui.query_item, "物品名称错误", "查询不到任何物品")
 
 
+def hidden_history_board():
+    if widget2.isVisible():
+        widget2.hide()
+    elif widget2.isHidden():
+        widget2.show()
+
+
+def create_widget2_page():
+    widget2 = QtWidgets.QMainWindow()
+    history_board = HistoryPage()
+    history_board.setupUi(widget2)
+
+
 def resource_path(relative_path):
     """
     静态资源打包功能，在spec文件的datas中写入目录名
@@ -443,7 +449,8 @@ def resource_path(relative_path):
 公共数据部分
 """
 try:
-    with open(resource_path(os.path.join(os.getenv('TEMP'), "Paissa_query_history.txt")), 'r', encoding='utf-8') as his:
+    with open(resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt")), 'r',
+              encoding='utf-8') as his:
         query_history = loads(his.read().replace("'", '"'))['history']
 except:
     query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
@@ -514,7 +521,9 @@ show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHead
 """
 cost_page = CostPage()
 cost_page.setupUi(ui.show_craft)
+cost_page.cost_tree.horizontalOffset()
 cost_page.cost_tree.setColumnWidth(0, 500)
+cost_page.cost_tree.itemClicked.connect(click_copy_item_name)
 
 """
 loading界面

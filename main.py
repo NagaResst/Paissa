@@ -1,6 +1,6 @@
 import os
 import sys
-from json import loads
+import json
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
@@ -29,9 +29,8 @@ class RQMainWindow(QtWidgets.QMainWindow):
             if i['itemName'] is None:
                 query_history.remove(i)
         history = {"history": query_history}
-        with open(resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt")), 'w',
-                  encoding='utf-8') as his:
-            his.write(str(history).replace('None', 'null').replace('False', 'false').replace('True', 'true'))
+        with open(history_file, 'w', encoding='utf-8') as his:
+            his.write(json.dumps(history))
         event.accept()
         sys.exit(0)  # 退出程序
 
@@ -448,10 +447,13 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
+if os.name == 'nt':
+    history_file = resource_path(os.path.join(os.getenv('HOMEPATH'), ".Paissa_query_history.txt"))
+else:
+    history_file = resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt"))
 try:
-    with open(resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt")), 'r',
-              encoding='utf-8') as his:
-        query_history = loads(his.read().replace("'", '"'))['history']
+    with open(history_file, 'r', encoding='utf-8') as his:
+        query_history = json.load(his)['history']
 except:
     query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
 query_server = '猫小胖'

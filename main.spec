@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('Images', 'Paissa_query_history')],
+    datas=[('Images', 'Images')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

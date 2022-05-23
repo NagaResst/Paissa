@@ -28,7 +28,7 @@ class RQMainWindow(QtWidgets.QMainWindow):
         for i in query_history:
             if i['itemName'] is None:
                 query_history.remove(i)
-        history = {"history": query_history}
+        history = {"server": item.server, "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
         event.accept()
@@ -266,6 +266,7 @@ def query_sale_list():
     ui.show_cost.show()
     ui.back_query.show()
     ui.query_history.show()
+    ui.show_cost.setText('成本计算')
     ui.show_data_box.setCurrentIndex(2)
 
 
@@ -323,11 +324,14 @@ def make_cost_tree():
                 make_tree(i, node)
 
     if ui.show_data_box.currentIndex() == 3:
+        ui.show_cost.setText('成本计算')
         ui.show_data_box.setCurrentIndex(2)
     elif ui.show_data_box.currentIndex() == 2 and len(cost_page.cost_tree.children()) > 7:
+        ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
     elif len(cost_page.cost_tree.children()) <= 7:
         if len(item.stuff) > 0:
+            ui.show_cost.setText('市场价格')
             ui.show_data_box.setCurrentIndex(3)
         elif len(item.stuff) == 0:
             item.show_item_cost()
@@ -335,7 +339,9 @@ def make_cost_tree():
                 make_tree(i, cost_page.cost_tree)
             cost_page.d_cost.setText(str(item.d_cost))
             cost_page.o_cost.setText(str(item.o_cost))
-            cost_page.cost_tree.expandAll()
+            if len(item.stuff) < 9:
+                cost_page.cost_tree.expandAll()
+            ui.show_cost.setText('市场价格')
             ui.show_data_box.setCurrentIndex(3)
 
 
@@ -364,8 +370,6 @@ def click_select_server(server):
     """
     菜单栏选择服务器重新查询的事件
     """
-    global query_server
-    query_server = server
     # 修改界面上显示的当前服务器
     ui.show_server.setText(server)
     item.server = server
@@ -453,11 +457,12 @@ else:
     history_file = resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt"))
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
-        query_history = json.load(his)['history']
+        history_json = json.load(his)
+        query_history = history_json['history']
+        item = Queryer(history_json['server'])
 except:
-    query_history = [{"itemName": None, "HQ": None, "server": "猫小胖"}]
-query_server = '猫小胖'
-item = Queryer(query_server)
+    query_history = [{"itemName": None, "HQ": None, "server": None}]
+    item = Queryer('猫小胖')
 first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
@@ -471,6 +476,7 @@ ui = MainWindow()
 ui.setupUi(widget)
 ui.setupMenu()
 ui.jump_to_wiki.setOpenExternalLinks(True)
+ui.show_server.setText(item.server)
 ui.item_icon.hide()
 ui.jump_to_wiki.hide()
 ui.show_cost.hide()

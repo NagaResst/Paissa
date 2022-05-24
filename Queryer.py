@@ -18,6 +18,10 @@ class Queryer(object):
         self.item_list = []
         self.id = item_id
         self.stuff = {}
+        self.avgp = 0
+        self.yields = 1
+        self.nqs = 0
+        self.hqs = 0
         self.d_cost = 0
         self.o_cost = 0
         self.server = query_server
@@ -114,6 +118,14 @@ class Queryer(object):
             self.hq = False
             query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url)
+        if result['nqSaleVelocity'] == 0:
+            self.avgp = int(result['averagePriceHQ'])
+        elif result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
+            self.avgp = int(result['averagePriceHQ'])
+        else:
+            self.avgp = int(result['averagePriceNQ'])
+        self.nqs = result['nqSaleVelocity']
+        self.hqs = result['hqSaleVelocity']
         return result
 
     def query_every_server(self, server_list):
@@ -153,6 +165,8 @@ class Queryer(object):
         if len(self.stuff) == 0:
             self.stuff = self.query_item_detial(self.id)
             if 'craft' in self.stuff:
+                if 'yield' in self.stuff['craft'][0]:
+                    self.yields = self.stuff['craft'][0]['yield']
                 self.stuff = self.stuff['craft'][0]['ingredients']
                 self.make_item_craft(self.stuff)
             else:

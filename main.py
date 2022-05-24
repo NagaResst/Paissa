@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
@@ -220,6 +220,21 @@ def query_sale_list():
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
+    if item.hqs == 0 and item.nqs == 0.14285715:
+        sv = '这个东西很难卖出去'
+    elif item.nqs <= 0.14285715 and item.hqs > 8.88:
+        sv = '大家都在买HQ，几乎不买NQ'
+    elif item.nqs <= 0.14285715 and item.hqs < 2:
+        sv = '大家只买HQ，并且不太好卖'
+    elif item.hqs == 0 and item.nqs > 12:
+        sv = '这个东西很受欢迎'
+    elif item.hqs == 0 and 2 <= item.nqs <= 12:
+        sv = '这个东西一定卖得出去'
+    elif item.hqs == 0 and item.nqs == 0:
+        sv = '看不出来销量好不好，感觉不太行'
+    else:
+        sv = "HQ走货量指数为: %.2f ,  NQ走货量指数为: %.2f" % (item.hqs, item.nqs)
+    show_price_page.sale_velocity.setText(sv)
     # 开始设置正在售出表格
     r = 0
     # 设定表格行数
@@ -341,6 +356,12 @@ def make_cost_tree():
             cost_page.o_cost.setText(str(item.o_cost))
             if len(item.stuff) < 9:
                 cost_page.cost_tree.expandAll()
+            if item.yields > 1:
+                p = item.avgp * item.yields - item.d_cost
+                cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
+            else:
+                p = item.avgp - item.d_cost
+                cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
             ui.show_cost.setText('市场价格')
             ui.show_data_box.setCurrentIndex(3)
 
@@ -529,7 +550,6 @@ show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHead
 """
 cost_page = CostPage()
 cost_page.setupUi(ui.show_craft)
-cost_page.cost_tree.horizontalOffset()
 cost_page.cost_tree.setColumnWidth(0, 500)
 cost_page.cost_tree.itemClicked.connect(click_copy_item_name)
 

@@ -28,7 +28,7 @@ with open('GilShopInfo.csv', 'r', encoding='utf8') as item_shop_info:
     for key, item in item_out_list.items():
         print(item['ID'])
         for i in temp:
-            if i['key'] == item['ID']:
+            if i['\ufeffkey'] == item['ID']:
                 if i['0'] == '2' or i['0'] == '1':
                     updd = {'canBuy': True}
                 else:
@@ -76,5 +76,7 @@ with open('Recipe.csv', 'r', encoding='utf8') as item_craft_info:
 数据写入磁盘
 """
 print(item_out_list)
+version = {'data-version': '6.05'}
+version.update(item_out_list)
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
-    json.dump(item_out_list, item_data)
+    json.dump(version, item_data)

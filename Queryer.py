@@ -27,6 +27,7 @@ class Queryer(object):
         self.server = query_server
         self.every_server = []
         self.icon = None
+        self.item_data = []
 
     @staticmethod
     def init_query_result(url):
@@ -173,6 +174,9 @@ class Queryer(object):
                 self.stuff = {}
 
     def make_child_item_craft(self, unit):
+        """
+        材料树递归查询的线程函数
+        """
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
         query_result = self.query_item_cost_min(unit['id'])
@@ -291,4 +295,9 @@ if __name__ == '__main__':
     # print(itemObj.every_server)
     # itemObj.query_item_craft()
     # print(itemObj.stuff)
-    itemObj.show_item_cost()
+    # itemObj.show_item_cost()
+    with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
+        item_str = item_list.read()
+        item_data = eval(item_str)
+        print(type(item_data))
+        print(len(item_data))

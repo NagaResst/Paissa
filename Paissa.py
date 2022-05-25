@@ -1,14 +1,15 @@
 import json
 import os
+import re
 import sys
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from main_window import Ui_mainWindow
 from Queryer import Queryer
 from cost_page import Ui_cost_page
 from history_page import Ui_history_Window
 from loading_page import Ui_load_page
+from main_window import Ui_mainWindow
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
@@ -127,7 +128,7 @@ def query_item():
         ui.show_data_box.setCurrentIndex(2)
     else:
         first_query = False
-        item.query_item_id(input_name)
+        item.item_list = query_item_id(input_name)
         if len(item.item_list) > 1:
             r = 0
             select_item_page.items_list_widget.clearContents()
@@ -399,6 +400,18 @@ def click_select_server(server):
         queru_price()
 
 
+def query_item_id(name):
+    """
+    从本地静态资源查找物品
+    """
+    global item_list_data
+    item_list = []
+    for item in item_list_data:
+        if re.search(name, item['Name']) is not None:
+            item_list.append(item)
+    return item_list
+
+
 def click_copy_item_name(selected):
     clipboard = QtWidgets.QApplication.clipboard()
     clipboard.setText(selected.text(0))
@@ -419,11 +432,11 @@ def get_item_icon():
     if len(item.item_list) > 1:
         for i in item.item_list:
             if str(i['ID']) == str(item.id):
-                item.get_icon("https://cafemaker.wakingsands.com" + i['Icon'])
+                item.get_icon("https://garlandtools.cn/files/icons/item/" + i['Icon'] + '.png')
                 break
     else:
-        item.query_item_id(item.name)
-        item.get_icon("https://cafemaker.wakingsands.com" + item.item_list[0]['Icon'])
+        item.item_list = query_item_id(item.name)
+        item.get_icon("https://garlandtools.cn/files/icons/item/" + item.item_list[0]['Icon'] + '.png')
     ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
     ui.item_icon.setScaledContents(True)
     ui.item_icon.show()
@@ -472,6 +485,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
+# 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
@@ -483,6 +497,10 @@ try:
 except:
     query_history = [{"itemName": None, "HQ": None, "server": None}]
     item = Queryer('猫小胖')
+# 加载本地静态文件
+with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
+    item_str = item_list.read()
+    item_list_data = eval(item_str)
 first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']

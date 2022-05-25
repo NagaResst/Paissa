@@ -31,7 +31,9 @@ with open('GilShopInfo.csv', 'r', encoding='utf8') as item_shop_info:
             if i['key'] == item['ID']:
                 if i['0'] == '2' or i['0'] == '1':
                     updd = {'canBuy': True}
-                    item_out_list[key].update(updd)
+                else:
+                    updd = {'canBuy': False}
+                item_out_list[key].update(updd)
                 break
 
 """
@@ -46,7 +48,7 @@ with open('Recipe.csv', 'r', encoding='utf8') as item_craft_info:
         print(item['ID'])
         for i in temp:
             if i['3'] == item['ID']:
-                count = {'Amount': i['4'], 'craft': [{'ID': i['5'], 'Amount': int(i['6'])}]}
+                count = {'yield': i['4'], 'craft': [{'ID': i['5'], 'Amount': int(i['6'])}]}
                 if int(i['8']) > 0:
                     c1 = {'ID': i['7'], 'Amount': int(i['8'])}
                     count['craft'].append(c1)

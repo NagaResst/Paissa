@@ -15,7 +15,7 @@ class Queryer(object):
         """
         self.name = None
         self.hq = False
-        self.item_list = []
+        self.item_list = {}
         self.id = item_id
         self.stuff = {}
         self.avgp = 0

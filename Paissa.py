@@ -406,7 +406,7 @@ def query_item_id(name):
     """
     global item_list_data
     item_list = []
-    for item in item_list_data:
+    for item in item_list_data.values():
         if re.search(name, item['Name']) is not None:
             item_list.append(item)
     return item_list
@@ -499,8 +499,7 @@ except:
     item = Queryer('猫小胖')
 # 加载本地静态文件
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
-    item_str = item_list.read()
-    item_list_data = eval(item_str)
+    item_list_data = json.load(item_list)
 first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']

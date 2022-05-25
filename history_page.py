@@ -17,7 +17,7 @@ class Ui_history_Window(object):
         history_Window.setWindowModality(QtCore.Qt.NonModal)
         history_Window.resize(200, 600)
         history_Window.setMinimumSize(QtCore.QSize(200, 600))
-        history_Window.setMaximumSize(QtCore.QSize(200, 600))
+        history_Window.setMaximumSize(QtCore.QSize(400, 900))
         history_Window.setIconSize(QtCore.QSize(0, 0))
         history_Window.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.centralwidget = QtWidgets.QWidget(history_Window)

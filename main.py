@@ -214,7 +214,7 @@ def query_sale_list():
     正在售出列表填充
     """
     global query_history
-    hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
+    hq_icon = QtGui.QIcon(resource_path(os.path.join("Data", "hq.png")))
     # 查询正在售出的记录
     price_list = item.query_item_price()
     # 更新界面的部分数据
@@ -289,7 +289,7 @@ def query_every_server(all_server_list):
     """
     全服比价列表填充
     """
-    hq_icon = QtGui.QIcon(resource_path(os.path.join("Images", "hq.png")))
+    hq_icon = QtGui.QIcon(resource_path(os.path.join("Data", "hq.png")))
     # 设置表格样式
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
@@ -472,14 +472,13 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-if os.name == 'nt':
-    history_file = resource_path(os.path.join(os.getenv('HOMEPATH'), ".Paissa_query_history.txt"))
-else:
-    history_file = resource_path(os.path.join(os.getenv('HOME'), ".Paissa_query_history.txt"))
+history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
         query_history = history_json['history']
+        if len(query_history) == 0:
+            query_history = [{"itemName": None, "HQ": None, "server": None}]
         item = Queryer(history_json['server'])
 except:
     query_history = [{"itemName": None, "HQ": None, "server": None}]

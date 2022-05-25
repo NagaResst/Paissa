@@ -202,7 +202,7 @@ root = style.master
 root.geometry('1000x700+400+150')
 root.minsize(600, 360)
 root.title('猴面雀 - FF14市场查询小工具')
-root.wm_iconbitmap("Images/ico.ico")
+root.wm_iconbitmap("Data/ico.ico")
 
 """
 定义公共数据

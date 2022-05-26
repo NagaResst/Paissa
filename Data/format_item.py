@@ -9,9 +9,10 @@ with open('item.csv', 'r', encoding='utf8') as item_file:
     item_out_list = {}
     for i in item_in_list:
         # print(i)
-        if i['16'] != '0' and i['0'] != '':
-            item_out_list[i['\ufeffkey']] = {'ID': i['\ufeffkey'], 'Name': i['0'], 'Icon': i['10'],
-                                             'priceFromNpc': i['25']}
+        if i['\ufeffkey'] != '#' and i['\ufeffkey'] != 'int32':
+            if i['16'] != '0' and i['0'] != '':
+                item_out_list[i['\ufeffkey']] = {'id': i['\ufeffkey'], 'name': i['0'], 'icon': i['10'],
+                                                 'priceFromNpc': int(i['25'])}
 if '#' in item_out_list:
     del item_out_list['#']
 if 'int32' in item_out_list:
@@ -26,9 +27,9 @@ with open('GilShopInfo.csv', 'r', encoding='utf8') as item_shop_info:
     for i in item_can_buy:
         temp.append(i)
     for key, item in item_out_list.items():
-        print(item['ID'])
+        print(item['id'])
         for i in temp:
-            if i['\ufeffkey'] == item['ID']:
+            if i['key'] == item['id']:
                 if i['0'] == '2' or i['0'] == '1':
                     updd = {'canBuy': True}
                 else:
@@ -45,29 +46,29 @@ with open('Recipe.csv', 'r', encoding='utf8') as item_craft_info:
     for i in item_craft:
         temp.append(i)
     for key, item in item_out_list.items():
-        print(item['ID'])
+        print(item['id'])
         for i in temp:
-            if i['3'] == item['ID']:
-                count = {'yield': i['4'], 'craft': [{'ID': i['5'], 'Amount': int(i['6'])}]}
+            if i['3'] == item['id']:
+                count = {'yield': int(i['4']), 'craft': [{'id': i['5'], 'amount': int(i['6'])}]}
                 if int(i['8']) > 0:
-                    c1 = {'ID': i['7'], 'Amount': int(i['8'])}
+                    c1 = {'id': i['7'], 'amount': int(i['8'])}
                     count['craft'].append(c1)
                     if int(i['10']) > 0:
-                        c2 = {'ID': i['9'], 'Amount': int(i['10'])}
+                        c2 = {'id': i['9'], 'amount': int(i['10'])}
                         count['craft'].append(c2)
                         if int(i['12']) > 0:
-                            c3 = {'ID': i['11'], 'Amount': int(i['12'])}
+                            c3 = {'id': i['11'], 'amount': int(i['12'])}
                             count['craft'].append(c3)
                             if int(i['14']) > 0:
-                                c4 = {'ID': i['13'], 'Amount': int(i['14'])}
+                                c4 = {'id': i['13'], 'amount': int(i['14'])}
                                 count['craft'].append(c4)
                                 if int(i['16']) > 0:
-                                    c5 = {'ID': i['15'], 'Amount': int(i['16'])}
+                                    c5 = {'id': i['15'], 'amount': int(i['16'])}
                                     count['craft'].append(c5)
-                c6 = {'ID': i['21'], 'Amount': i['22']}
+                c6 = {'id': i['21'], 'amount': i['22']}
                 count['craft'].append(c6)
                 if int(i['24']) > 0:
-                    c7 = {'ID': i['23'], 'Amount': i['24']}
+                    c7 = {'id': i['23'], 'amount': i['24']}
                     count['craft'].append(c7)
                 item_out_list[key].update(count)
                 break

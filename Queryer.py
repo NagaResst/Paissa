@@ -2,7 +2,7 @@ import threading
 import time
 from json import loads
 from math import ceil
-
+import re
 from requests import get
 
 from marketable import marketable
@@ -15,7 +15,7 @@ class Queryer(object):
         """
         self.name = None
         self.hq = False
-        self.item_list = {}
+        self.item_list = []
         self.id = item_id
         self.stuff = {}
         self.avgp = 0
@@ -27,7 +27,8 @@ class Queryer(object):
         self.server = query_server
         self.every_server = []
         self.icon = None
-        self.item_data = []
+        self.item_data = {}
+        self.static = True
 
     @staticmethod
     def init_query_result(url):
@@ -37,8 +38,6 @@ class Queryer(object):
         while True:
             try:
                 result = get(url, timeout=5)
-                # 当属性的值为null的时候，无法转换成字典，将其替换为None
-                # result = result.text.replace('null', '"None"')
                 result = loads(result.text)
                 break
             except:
@@ -56,14 +55,25 @@ class Queryer(object):
         result = time.strftime("%Y-%m-%d %H:%M:%S", timearray)
         return result
 
-    def get_icon(self, url):
-        while True:
-            try:
-                result = get(url)
-                break
-            except:
-                print('图标获取失败')
-        self.icon = result.content
+    def get_icon(self, icon_url=None):
+        self.icon = None
+        if len(self.item_list) == 0:
+            self.query_item_id(self.name)
+        if len(self.item_list) > 1 and self.static is False:
+            for i in self.item_list:
+                if str(i['ID']) == str(self.id):
+                    icon_url = "https://cafemaker.wakingsands.com" + i['Icon']
+        elif len(self.item_list) > 1 and self.static is True:
+            icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['Icon'] + '.png'
+        elif len(self.item_list) == 1 and self.static is False:
+            icon_url = "https://cafemaker.wakingsands.com" + self.item_list[0]['Icon']
+        elif len(self.item_list) == 1 and self.static is True:
+            icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['Icon'] + '.png'
+        try:
+            result = get(icon_url, timeout=3)
+            self.icon = result.content
+        except:
+            print('图标获取失败')
 
     def server_list(self):
         """
@@ -92,15 +102,23 @@ class Queryer(object):
         """
         查询官方的物品ID，为后面的查询提供支持
         """
-        query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
-        result = self.init_query_result(query_url)
-        all_list = result["Results"]
-        item_list = []
-        # 过滤掉不可在市场上交易的物品
-        for item in all_list:
-            if item['ID'] in marketable:
-                item_list.append(item)
-        self.item_list = sorted(item_list, key=lambda e: e.__getitem__('ID'), reverse=False)
+        self.item_list = []
+        if self.static is False:
+            query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
+            result = self.init_query_result(query_url)
+            all_list = result["Results"]
+            # 过滤掉不可在市场上交易的物品
+            for item in all_list:
+                if item['ID'] in marketable:
+                    self.item_list.append(item)
+            self.item_list = sorted(self.item_list, key=lambda e: e.__getitem__('ID'), reverse=False)
+        elif self.static is True:
+            for item in self.item_data.values():
+                try:
+                    if re.search(name, item['Name']) is not None:
+                        self.item_list.append(item)
+                except:
+                    pass
 
     def query_item_price(self):
         """
@@ -164,34 +182,61 @@ class Queryer(object):
         查询物品的制作材料
         """
         if len(self.stuff) == 0:
-            self.stuff = self.query_item_detial(self.id)
-            if 'craft' in self.stuff:
-                if 'yield' in self.stuff['craft'][0]:
-                    self.yields = self.stuff['craft'][0]['yield']
-                self.stuff = self.stuff['craft'][0]['ingredients']
-                self.make_item_craft(self.stuff)
-            else:
-                self.stuff = {}
+            if self.static is False:
+                self.stuff = self.query_item_detial(self.id)
+                if 'craft' in self.stuff:
+                    if 'yield' in self.stuff['craft'][0]:
+                        self.yields = self.stuff['craft'][0]['yield']
+                    self.stuff = self.stuff['craft'][0]['ingredients']
+                    self.make_item_craft(self.stuff)
+                else:
+                    self.stuff = {}
+            elif self.static is True:
+                self.stuff = self.query_item_detial(self.id)
+                if 'craft' in self.stuff:
+                    if 'yield' in self.stuff:
+                        self.yields = self.stuff['yield']
+                    self.stuff = self.stuff['craft']
+                    self.make_item_craft(self.stuff)
+                else:
+                    self.stuff = {}
 
     def make_child_item_craft(self, unit):
         """
         材料树递归查询的线程函数
         """
-        result = self.query_item_detial(unit['id'])
-        unit['name'] = result['name']
-        query_result = self.query_item_cost_min(unit['id'])
-        x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
-        if x < 300:
-            unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
-        else:
-            unit['pricePerUnit'] = int(query_result['averagePrice'])
-        if 'vendors' in result:
-            unit['priceFromNpc'] = result['price']
-        if 'craft' in result:
-            unit['craft'] = result['craft'][0]['ingredients']
-            if 'yield' in result['craft'][0]:
-                unit['yield'] = result['craft'][0]['yield']
-            self.make_item_craft(unit['craft'])
+        if self.static is False:
+            result = self.query_item_detial(unit['id'])
+            unit['name'] = result['name']
+            query_result = self.query_item_cost_min(unit['id'])
+            x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
+            if x < 300:
+                unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
+            else:
+                unit['pricePerUnit'] = int(query_result['averagePrice'])
+            if 'vendors' in result:
+                unit['priceFromNpc'] = result['price']
+            if 'craft' in result:
+                unit['craft'] = result['craft'][0]['ingredients']
+                if 'yield' in result['craft'][0]:
+                    unit['yield'] = result['craft'][0]['yield']
+                self.make_item_craft(unit['craft'])
+        if self.static is True:
+            result = self.query_item_detial(unit['ID'])
+            unit['name'] = result['Name']
+            query_result = self.query_item_cost_min(unit['ID'])
+            x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
+            if x < 300:
+                unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
+            else:
+                unit['pricePerUnit'] = int(query_result['averagePrice'])
+            if 'vendors' in result:
+                unit['priceFromNpc'] = result['priceFromNpc']
+            if 'craft' in result:
+                unit['craft'] = result['craft']
+                if 'yield' in result:
+                    unit['yield'] = result['yield']
+                self.make_item_craft(unit['craft'])
 
     def make_item_craft(self, stuff_list):
         """
@@ -209,9 +254,12 @@ class Queryer(object):
         """
         查询物品的详细信息，查询制作配方和统计成本的前置方法
         """
-        query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-        result = self.init_query_result(query_url)
-        return result['item']
+        if self.static is False:
+            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+            result = self.init_query_result(query_url)
+            return result['item']
+        elif self.static is True:
+            return self.item_data[str(self.id)]
 
     def query_item_cost_min(self, itemid):
         """
@@ -296,8 +344,8 @@ if __name__ == '__main__':
     # itemObj.query_item_craft()
     # print(itemObj.stuff)
     # itemObj.show_item_cost()
-    with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
-        item_str = item_list.read()
-        item_data = eval(item_str)
-        print(type(item_data))
-        print(len(item_data))
+    # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
+    #     item_str = item_list.read()
+    #     item_data = eval(item_str)
+    #     print(type(item_data))
+    #     print(len(item_data))

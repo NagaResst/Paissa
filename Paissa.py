@@ -1,6 +1,6 @@
 import json
 import os
-import re
+
 import sys
 
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -40,7 +40,7 @@ class MainWindow(Ui_mainWindow):
     def __int__(self):
         super().__init__()
 
-    def setupMenu(self):
+    def setup_menu(self):
         """
         选择服务器菜单栏行为
         """
@@ -128,7 +128,7 @@ def query_item():
         ui.show_data_box.setCurrentIndex(2)
     else:
         first_query = False
-        item.item_list = query_item_id(input_name)
+        item.query_item_id(input_name)
         if len(item.item_list) > 1:
             r = 0
             select_item_page.items_list_widget.clearContents()
@@ -196,9 +196,12 @@ def queru_price():
         item_name = item.name
         if this_query['HQ'] is True:
             item_name = item.name + 'HQ'
-        history_item = history_board.history_list.findItems(item_name, QtCore.Qt.MatchExactly)
-        if len(history_item) > 0:
-            history_board.history_list.takeItem(history_board.history_list.row(history_item[0]))
+        while True:
+            history_item = history_board.history_list.findItems(item_name, QtCore.Qt.MatchExactly)
+            if len(history_item) > 0:
+                history_board.history_list.takeItem(history_board.history_list.row(history_item[0]))
+            else:
+                break
         query_history.remove(this_query)
     if item.hq is not True:
         history_board.history_list.insertItem(0, item.name)
@@ -385,6 +388,7 @@ def click_history_query(selected):
                 item.name = item_name
                 break
         query_item_page.input_item_name.setText(item.name)
+        item.item_list = []
         queru_price()
 
 
@@ -398,18 +402,6 @@ def click_select_server(server):
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
         queru_price()
-
-
-def query_item_id(name):
-    """
-    从本地静态资源查找物品
-    """
-    global item_list_data
-    item_list = []
-    for item in item_list_data.values():
-        if re.search(name, item['Name']) is not None:
-            item_list.append(item)
-    return item_list
 
 
 def click_copy_item_name(selected):
@@ -429,14 +421,7 @@ def get_item_icon():
     """
     物品图标的地址在查询item_list中包含了
     """
-    if len(item.item_list) > 1:
-        for i in item.item_list:
-            if str(i['ID']) == str(item.id):
-                item.get_icon("https://garlandtools.cn/files/icons/item/" + i['Icon'] + '.png')
-                break
-    else:
-        item.item_list = query_item_id(item.name)
-        item.get_icon("https://garlandtools.cn/files/icons/item/" + item.item_list[0]['Icon'] + '.png')
+    item.get_icon()
     ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
     ui.item_icon.setScaledContents(True)
     ui.item_icon.show()
@@ -498,8 +483,8 @@ except:
     query_history = [{"itemName": None, "HQ": None, "server": None}]
     item = Queryer('猫小胖')
 # 加载本地静态文件
-with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
-    item_list_data = json.load(item_list)
+with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
+    item.item_data = json.load(item_list_file)
 first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
@@ -511,7 +496,7 @@ app = QtWidgets.QApplication(sys.argv)
 widget = RQMainWindow()
 ui = MainWindow()
 ui.setupUi(widget)
-ui.setupMenu()
+ui.setup_menu()
 ui.jump_to_wiki.setOpenExternalLinks(True)
 ui.show_server.setText(item.server)
 ui.item_icon.hide()

@@ -137,9 +137,9 @@ def query_item():
             select_item_page.items_list_widget.setColumnWidth(0, 120)
             select_item_page.items_list_widget.setRowCount(len(item.item_list))
             for i in item.item_list:
-                item_id = QtWidgets.QTableWidgetItem(str(i['ID']))
+                item_id = QtWidgets.QTableWidgetItem(str(i['id']))
                 item_id.setTextAlignment(4 | 128)
-                item_name = QtWidgets.QTableWidgetItem(i['Name'])
+                item_name = QtWidgets.QTableWidgetItem(i['name'])
                 item_name.setTextAlignment(4 | 128)
                 select_item_page.items_list_widget.setItem(r, 0, item_id)
                 select_item_page.items_list_widget.setItem(r, 1, item_name)
@@ -147,8 +147,8 @@ def query_item():
             select_item_page.items_list_widget.repaint()
             ui.show_data_box.setCurrentIndex(1)
         elif len(item.item_list) == 1:
-            item.id = item.item_list[0]['ID']
-            item.name = item.item_list[0]['Name']
+            item.id = item.item_list[0]['id']
+            item.name = item.item_list[0]['name']
             queru_price()
         else:
             show_message()

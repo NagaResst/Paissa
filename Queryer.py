@@ -29,7 +29,7 @@ class Queryer(object):
         self.every_server = []
         self.icon = None
         self.item_data = {}
-        self.static = True
+        self.static = False
 
     @staticmethod
     def init_query_result(url):
@@ -63,11 +63,11 @@ class Queryer(object):
         if len(self.item_list) > 1 and self.static is False:
             for i in self.item_list:
                 if str(i['id']) == str(self.id):
-                    icon_url = "https://cafemaker.wakingsands.com" + i['Icon']
+                    icon_url = "https://cafemaker.wakingsands.com" + i['icon']
         elif len(self.item_list) > 1 and self.static is True:
             icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
         elif len(self.item_list) == 1 and self.static is False:
-            icon_url = "https://cafemaker.wakingsands.com" + self.item_list[0]['Icon']
+            icon_url = "https://cafemaker.wakingsands.com" + self.item_list[0]['icon']
         elif len(self.item_list) == 1 and self.static is True:
             icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
         try:
@@ -110,8 +110,9 @@ class Queryer(object):
             all_list = result["Results"]
             # 过滤掉不可在市场上交易的物品
             for item in all_list:
-                if item['id'] in marketable:
-                    self.item_list.append(item)
+                if item['ID'] in marketable:
+                    this_item = {'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
+                    self.item_list.append(this_item)
             self.item_list = sorted(self.item_list, key=lambda e: e.__getitem__('id'), reverse=False)
         elif self.static is True:
             for item in self.item_data.values():

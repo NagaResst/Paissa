@@ -1,5 +1,8 @@
 import csv
 import json
+from concurrent.futures import ThreadPoolExecutor
+
+import requests
 
 """
 转换物品列表
@@ -10,68 +13,44 @@ with open('item.csv', 'r', encoding='utf8') as item_file:
     for i in item_in_list:
         # print(i)
         if i['\ufeffkey'] != '#' and i['\ufeffkey'] != 'int32':
-            if i['16'] != '0' and i['0'] != '':
-                item_out_list[i['\ufeffkey']] = {'id': i['\ufeffkey'], 'name': i['0'], 'icon': i['10'],
-                                                 'priceFromNpc': int(i['25'])}
+            if i['0'] != '':
+                item_out_list[i['\ufeffkey']] = {'id': i['\ufeffkey'], 'name': i['0'], 'icon': i['10']}
 if '#' in item_out_list:
     del item_out_list['#']
 if 'int32' in item_out_list:
     del item_out_list['int32']
 
 """
-查询是否可在商店购买
+花环万岁！
 """
-with open('GilShopInfo.csv', 'r', encoding='utf8') as item_shop_info:
-    item_can_buy = csv.DictReader(item_shop_info)
-    temp = []
-    for i in item_can_buy:
-        temp.append(i)
-    for key, item in item_out_list.items():
-        print(item['id'])
-        for i in temp:
-            if i['key'] == item['id']:
-                if i['0'] == '2' or i['0'] == '1':
-                    updd = {'canBuy': True}
-                else:
-                    updd = {'canBuy': False}
-                item_out_list[key].update(updd)
-                break
 
-"""
-配方查询
-"""
-with open('Recipe.csv', 'r', encoding='utf8') as item_craft_info:
-    item_craft = csv.DictReader(item_craft_info)
-    temp = []
-    for i in item_craft:
-        temp.append(i)
-    for key, item in item_out_list.items():
-        print(item['id'])
-        for i in temp:
-            if i['3'] == item['id']:
-                count = {'yield': int(i['4']), 'craft': [{'id': i['5'], 'amount': int(i['6'])}]}
-                if int(i['8']) > 0:
-                    c1 = {'id': i['7'], 'amount': int(i['8'])}
-                    count['craft'].append(c1)
-                    if int(i['10']) > 0:
-                        c2 = {'id': i['9'], 'amount': int(i['10'])}
-                        count['craft'].append(c2)
-                        if int(i['12']) > 0:
-                            c3 = {'id': i['11'], 'amount': int(i['12'])}
-                            count['craft'].append(c3)
-                            if int(i['14']) > 0:
-                                c4 = {'id': i['13'], 'amount': int(i['14'])}
-                                count['craft'].append(c4)
-                                if int(i['16']) > 0:
-                                    c5 = {'id': i['15'], 'amount': int(i['16'])}
-                                    count['craft'].append(c5)
-                c6 = {'id': i['21'], 'amount': i['22']}
-                count['craft'].append(c6)
-                if int(i['24']) > 0:
-                    c7 = {'id': i['23'], 'amount': i['24']}
-                    count['craft'].append(c7)
-                item_out_list[key].update(count)
+
+def get_item_details(item_id):
+    url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(item_id)
+    while True:
+        try:
+            result = requests.get(url, timeout=5)
+            if result.status_code == 200:
+                result = json.loads(result.text)['item']
+                print(result['id'], end='\n')
+                if 'vendors' in result:
+                    item_out_list[item_id]['priceFromNpc'] = result['price']
+                if 'craft' in result:
+                    item_out_list[item_id]['craft'] = result['craft'][0]['ingredients']
+                    if 'yield' in result['craft'][0]:
+                        item_out_list[item_id]['yield'] = result['craft'][0]['yield']
+                    else:
+                        item_out_list[item_id]['yield'] = 1
                 break
+            else:
+                break
+        except:
+            print(item_id, '查询失败，重试')
+
+
+tpool = ThreadPoolExecutor(max_workers=30)
+tpool.map(get_item_details, item_out_list)
+tpool.shutdown(wait=True)
 
 """
 数据写入磁盘

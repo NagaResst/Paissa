@@ -183,15 +183,25 @@ class Queryer(object):
         查询物品的制作材料
         """
         if len(self.stuff) == 0:
-            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id)
-            self.stuff = self.init_query_result(query_url)['item']
-            if 'craft' in self.stuff:
-                if 'yield' in self.stuff['craft'][0]:
-                    self.yields = self.stuff['craft'][0]['yield']
-                self.stuff = self.stuff['craft'][0]['ingredients']
-                self.make_item_craft(self.stuff)
-            else:
-                self.stuff = {}
+            if self.static is False:
+                query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id)
+                self.stuff = self.init_query_result(query_url)['item']
+                if 'craft' in self.stuff:
+                    if 'yield' in self.stuff['craft'][0]:
+                        self.yields = self.stuff['craft'][0]['yield']
+                    self.stuff = self.stuff['craft'][0]['ingredients']
+                    self.make_item_craft(self.stuff)
+                else:
+                    self.stuff = {}
+            elif self.static is True:
+                self.stuff = self.item_data[str(self.id)]
+                if 'craft' in self.stuff:
+                    if 'yield' in self.stuff:
+                        self.yields = self.stuff['yield']
+                    self.stuff = self.stuff['craft']
+                    self.make_item_craft(self.stuff)
+                else:
+                    self.stuff = {}
 
     def make_child_item_craft(self, unit):
         """
@@ -206,13 +216,20 @@ class Queryer(object):
             unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
         else:
             unit['pricePerUnit'] = int(query_result['averagePrice'])
-        if 'vendors' in result:
-            unit['priceFromNpc'] = result['price']
-        if 'craft' in result:
-            unit['craft'] = result['craft'][0]['ingredients']
-            if 'yield' in result['craft'][0]:
-                unit['yield'] = result['craft'][0]['yield']
-            self.make_item_craft(unit['craft'])
+        if self.static is False:
+            if 'vendors' in result:
+                unit['priceFromNpc'] = result['price']
+            if 'craft' in result:
+                unit['craft'] = result['craft'][0]['ingredients']
+                if 'yield' in result['craft'][0]:
+                    unit['yield'] = result['craft'][0]['yield']
+                self.make_item_craft(unit['craft'])
+        elif self.static is True:
+            if 'craft' in result:
+                unit['craft'] = result['craft']
+                if 'yield' in result:
+                    unit['yield'] = result['yield']
+                self.make_item_craft(unit['craft'])
 
     def make_item_craft(self, stuff_list):
         """
@@ -231,9 +248,12 @@ class Queryer(object):
         """
         查询物品的详细信息，查询制作配方和统计成本的前置方法
         """
-        query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-        result = self.init_query_result(query_url)
-        return result['item']
+        if self.static is False:
+            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+            result = self.init_query_result(query_url)
+            return result['item']
+        elif self.static is True:
+            return self.item_data[str(itemid)]
 
     def query_item_cost_min(self, itemid):
         """

@@ -289,7 +289,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <property name="font">
@@ -380,6 +380,8 @@
     <property name="title">
      <string>其他</string>
     </property>
+    <addaction name="use_static_file"/>
+    <addaction name="check_update"/>
    </widget>
    <addaction name="server"/>
    <addaction name="about"/>
@@ -766,6 +768,22 @@
      <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
+   </property>
+  </action>
+  <action name="use_static_file">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>使用静态资源加速</string>
+   </property>
+  </action>
+  <action name="check_update">
+   <property name="text">
+    <string>关于</string>
    </property>
   </action>
  </widget>

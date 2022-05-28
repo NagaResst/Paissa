@@ -13,6 +13,7 @@ from main_window import Ui_mainWindow
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
+from check_update import Ui_check_update
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -77,6 +78,8 @@ class MainWindow(Ui_mainWindow):
         self.select_server_moguli.triggered.connect(lambda: click_select_server("莫古力"))
         self.select_server_maoxiaopang.triggered.connect(lambda: click_select_server("猫小胖"))
         self.select_server_doudouchai.triggered.connect(lambda: click_select_server("豆豆柴"))
+        self.use_static_file.triggered.connect(use_static_file_or_not)
+        self.check_update.triggered.connect(show_check_update_window)
 
 
 class QueryItemId(Ui_query_item_id):
@@ -105,6 +108,11 @@ class CostPage(Ui_cost_page):
 
 
 class HistoryPage(Ui_history_Window):
+    def __int__(self):
+        super().__init__()
+
+
+class CheckUpdate(Ui_check_update):
     def __int__(self):
         super().__init__()
 
@@ -413,8 +421,14 @@ def select_hq_ornot(status):
     """
     查询HQ的CheckButton
     """
-    global query_history
     item.hq = status
+
+
+def use_static_file_or_not(status):
+    """
+    查询HQ的CheckButton
+    """
+    item.static = status
 
 
 def get_item_icon():
@@ -450,10 +464,25 @@ def hidden_history_board():
         widget2.show()
 
 
-def create_widget2_page():
-    widget2 = QtWidgets.QMainWindow()
-    history_board = HistoryPage()
-    history_board.setupUi(widget2)
+def show_check_update_window():
+    if check_update_window.latest_program_version.text() == 'N/A':
+        version_online = item.get_online_version()
+        check_update_window.latest_program_version.setText(version_online['program'])
+        check_update_window.latest_data_version.setText(version_online['data'])
+    c_p_v = check_update_window.current_program_version.text()
+    c_d_v = check_update_window.current_data_verison.text()
+    l_p_v = check_update_window.latest_program_version.text()
+    l_d_v = check_update_window.latest_data_version.text()
+    if c_p_v == l_p_v and c_d_v == l_d_v:
+        check_update_window.update_text.hide()
+    elif c_p_v == l_p_v and c_d_v != l_d_v:
+        check_update_window.update_text.setText('数据文件需要更新')
+    else:
+        check_update_window.update_text.setText('请前往github下载最新版本')
+    if widget3.isVisible():
+        widget3.hide()
+    elif widget3.isHidden():
+        widget3.show()
 
 
 def resource_path(relative_path):
@@ -470,6 +499,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
+program_version = '0.6.0'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
@@ -485,6 +515,7 @@ except:
 # 加载本地静态文件
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
     item.item_data = json.load(item_list_file)
+date_version = item.item_data['data-version']
 first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
@@ -573,4 +604,12 @@ for i in query_history:
     elif i['HQ'] is True:
         history_board.history_list.insertItem(0, i["itemName"] + 'HQ')
 
+"""
+check update
+"""
+widget3 = QtWidgets.QMainWindow()
+check_update_window = CheckUpdate()
+check_update_window.setupUi(widget3)
+check_update_window.current_program_version.setText(program_version)
+check_update_window.current_data_verison.setText(date_version)
 sys.exit(app.exec_())

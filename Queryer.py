@@ -29,7 +29,7 @@ class Queryer(object):
         self.every_server = []
         self.icon = None
         self.item_data = {}
-        self.static = False
+        self.static = True
 
     @staticmethod
     def init_query_result(url):
@@ -319,6 +319,12 @@ class Queryer(object):
         else:
             return None, None
 
+    @staticmethod
+    def get_online_version():
+        url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+        result = get(url, timeout=8)
+        return loads(result.text)
+
 
 if __name__ == '__main__':
     # 初始化测试数据
@@ -340,10 +346,12 @@ if __name__ == '__main__':
     # print(itemObj.every_server)
     # itemObj.query_item_craft()
     # print(itemObj.stuff)
-    itemObj.show_item_cost()
-    print(itemObj.stuff)
+    # itemObj.show_item_cost()
+    # print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()
     #     item_data = eval(item_str)
     #     print(type(item_data))
     #     print(len(item_data))
+    version = itemObj.get_online_version()
+    print(version)

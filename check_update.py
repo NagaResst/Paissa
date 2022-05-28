@@ -73,10 +73,11 @@ class Ui_check_update(object):
         self.label_7.setObjectName("label_7")
         self.verticalLayout_3.addWidget(self.label_7)
         self.gridLayout_2.addLayout(self.verticalLayout_3, 0, 0, 1, 1)
-        self.gridLayout_2.setRowStretch(0, 2)
+        self.gridLayout_2.setRowStretch(0, 3)
+        self.gridLayout_2.setRowStretch(2, 1)
         self.gridLayout_2.setRowStretch(3, 3)
-        self.gridLayout_2.setRowStretch(4, 1)
-        self.gridLayout_2.setRowStretch(5, 2)
+        self.gridLayout_2.setRowStretch(4, 2)
+        self.gridLayout_2.setRowStretch(5, 3)
         check_update.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(check_update)
@@ -86,7 +87,7 @@ class Ui_check_update(object):
         _translate = QtCore.QCoreApplication.translate
         check_update.setWindowTitle(_translate("check_update", "关于 - 猴面雀"))
         self.update_text.setText(_translate("check_update", "TextLabel"))
-        self.label_8.setText(_translate("check_update", "<html><head/><body><p align=\"center\">本程序源码使用LGPL 2.1 协议开源发布在<a href=\"https://github.com/NagaResst/Paissa\"><span style=\" text-decoration: underline; color:#0000ff;\">github</span></a>，任何人都可以免费使用。</p><p align=\"center\">如您购买获得本工具，请举报并退款。如果您觉得猴面雀很好用，请分享给其他人。</p></body></html>"))
+        self.label_8.setText(_translate("check_update", "<html><head/><body><p align=\"center\">本程序源码使用LGPL 2.1 协议开源发布在 <a href=\"https://github.com/NagaResst/Paissa\"><span style=\" text-decoration: underline; color:#0000ff;\">Github</span></a> ， 任何人都可以免费使用。</p><p align=\"center\">如您购买获得本工具，请举报并退款。如果您觉得猴面雀很好用，请分享给其他人。</p></body></html>"))
         self.label_2.setText(_translate("check_update", "主程序版本"))
         self.current_data_verison.setText(_translate("check_update", "TextLabel"))
         self.label_6.setText(_translate("check_update", "当前版本"))

@@ -12,9 +12,9 @@ with open('item.csv', 'r', encoding='utf8') as item_file:
     item_out_list = {}
     for i in item_in_list:
         # print(i)
-        if i['\ufeffkey'] != '#' and i['\ufeffkey'] != 'int32':
+        if i['key'] != '#' and i['key'] != 'int32':
             if i['0'] != '':
-                item_out_list[i['\ufeffkey']] = {'id': i['\ufeffkey'], 'name': i['0'], 'icon': i['10']}
+                item_out_list[i['key']] = {'id': i['key'], 'name': i['0'], 'icon': i['10']}
 if '#' in item_out_list:
     del item_out_list['#']
 if 'int32' in item_out_list:
@@ -39,8 +39,6 @@ def get_item_details(item_id):
                     item_out_list[item_id]['craft'] = result['craft'][0]['ingredients']
                     if 'yield' in result['craft'][0]:
                         item_out_list[item_id]['yield'] = result['craft'][0]['yield']
-                    else:
-                        item_out_list[item_id]['yield'] = 1
                 break
             else:
                 break
@@ -48,7 +46,7 @@ def get_item_details(item_id):
             print(item_id, '查询失败，重试')
 
 
-tpool = ThreadPoolExecutor(max_workers=30)
+tpool = ThreadPoolExecutor(max_workers=50)
 tpool.map(get_item_details, item_out_list)
 tpool.shutdown(wait=True)
 

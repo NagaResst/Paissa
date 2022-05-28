@@ -518,6 +518,8 @@ except:
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
     item.item_data = json.load(item_list_file)
 date_version = item.item_data['data-version']
+if 'use_static' not in history_json:
+    history_json['use_static'] = True
 item.static = history_json['use_static']
 first_query = True
 server_list = []

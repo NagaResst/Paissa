@@ -499,7 +499,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.6.0'
+program_version = '0.6.1'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

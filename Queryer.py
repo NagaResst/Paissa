@@ -213,10 +213,12 @@ class Queryer(object):
         unit['name'] = result['name']
         query_result = self.query_item_cost_min(unit['id'])
         x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
-        if x < 300:
+        if unit['id'] < 20:
             unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
-        else:
+        elif x > 300:
             unit['pricePerUnit'] = int(query_result['averagePrice'])
+        else:
+            unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
         if self.static is False:
             if 'vendors' in result:
                 unit['priceFromNpc'] = result['price']

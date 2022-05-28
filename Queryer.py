@@ -3,7 +3,7 @@ import threading
 import time
 from json import loads, load
 from math import ceil
-
+import copy
 from requests import get
 
 from marketable import marketable
@@ -38,7 +38,7 @@ class Queryer(object):
         """
         while True:
             try:
-                result = get(url, timeout=5)
+                result = get(url, timeout=4)
                 result = loads(result.text)
                 break
             except:
@@ -256,7 +256,7 @@ class Queryer(object):
             result = self.init_query_result(query_url)
             return result['item']
         elif self.static is True:
-            return self.item_data[str(itemid)]
+            return copy.deepcopy(self.item_data[str(itemid)])
 
     def query_item_cost_min(self, itemid):
         """
@@ -277,15 +277,19 @@ class Queryer(object):
         result = self.init_query_result(query_url)
         return result
 
-    def query_item_cost(self, stuff_list, count=1, tab=''):
+    def query_item_cost(self, stuff_list, count=1):
         """
         查询物品的制作成本的计算器
         """
         d_cost = 0
-        self.query_item_craft()
         for stuff in stuff_list:
+            print(stuff)
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
+            """
+            # TODO: 子材料计算异常，导致原始材料成本飙升
+            """
+            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
             if 'priceFromNpc' in stuff:
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
@@ -293,6 +297,8 @@ class Queryer(object):
             stuff['amount'] = n_count
             stuff['pricePerUnit'] = price
             d_cost = d_cost + price
+            print(self.item_data['36196'])
+            print(self.item_data['36190'])
             if 'yield' in stuff and 'craft' in stuff:
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
                 c_count = 0
@@ -300,9 +306,9 @@ class Queryer(object):
                     c_count = ceil(n_count / stuff['yield'])
                 elif n_count <= stuff['yield']:
                     c_count = 1
-                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count, tab=tab + '\t')
+                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count)
             elif 'craft' in stuff and 'yield' not in stuff:
-                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count, tab=tab + '\t')
+                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count)
             else:
                 self.o_cost = self.o_cost + price
         return d_cost
@@ -339,7 +345,7 @@ if __name__ == '__main__':
     # itemObj.query_item_id(item)
     # print(itemObj.item_list)
     # 价格查询
-    itemObj.id = '36115'
+    itemObj.id = '35814'
     itemObj.hq = True
     # price_list = itemObj.query_item_price()
     # print(price_list)
@@ -348,12 +354,13 @@ if __name__ == '__main__':
     # print(itemObj.every_server)
     # itemObj.query_item_craft()
     # print(itemObj.stuff)
-    # itemObj.show_item_cost()
-    # print(itemObj.stuff)
+    # itemObj.query_item_craft()
+    itemObj.show_item_cost()
+    print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()
     #     item_data = eval(item_str)
     #     print(type(item_data))
     #     print(len(item_data))
-    version = itemObj.get_online_version()
-    print(version)
+    # version = itemObj.get_online_version()
+    # print(version)

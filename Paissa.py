@@ -30,7 +30,7 @@ class RQMainWindow(QtWidgets.QMainWindow):
         for i in query_history:
             if i['itemName'] is None:
                 query_history.remove(i)
-        history = {"server": item.server, "history": query_history}
+        history = {"server": item.server, 'use_static': True, "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
         event.accept()
@@ -499,7 +499,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.6.1'
+program_version = '0.6.2'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
@@ -516,6 +516,7 @@ except:
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
     item.item_data = json.load(item_list_file)
 date_version = item.item_data['data-version']
+item.static = history_json['use_static']
 first_query = True
 server_list = []
 server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
@@ -539,6 +540,7 @@ ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
 ui.query_history.clicked.connect(hidden_history_board)
 ui.show_cost.clicked.connect(make_cost_tree)
+ui.use_static_file.setChecked(history_json['use_static'])
 widget.show()
 
 """
@@ -612,4 +614,5 @@ check_update_window = CheckUpdate()
 check_update_window.setupUi(widget3)
 check_update_window.current_program_version.setText(program_version)
 check_update_window.current_data_verison.setText(date_version)
+
 sys.exit(app.exec_())

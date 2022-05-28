@@ -480,6 +480,7 @@ def show_check_update_window():
     else:
         check_update_window.update_text.setText(
             '请点击前往 <a href=\"https://github.com/NagaResst/Paissa/releases\"><span style=\" text-decoration: underline; color:#0000ff;\">Github</span></a> 下载最新版本')
+        check_update_window.update_text.setOpenExternalLinks(True)
     if widget3.isVisible():
         widget3.hide()
     elif widget3.isHidden():

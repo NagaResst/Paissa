@@ -228,6 +228,8 @@ class Queryer(object):
                     unit['yield'] = result['craft'][0]['yield']
                 self.make_item_craft(unit['craft'])
         elif self.static is True:
+            if 'priceFromNpc' in result:
+                unit['priceFromNpc'] = result['priceFromNpc']
             if 'craft' in result:
                 unit['craft'] = result['craft']
                 if 'yield' in result:
@@ -345,7 +347,7 @@ if __name__ == '__main__':
     # itemObj.query_item_id(item)
     # print(itemObj.item_list)
     # 价格查询
-    itemObj.id = '35814'
+    itemObj.id = '33283'
     itemObj.hq = True
     # price_list = itemObj.query_item_price()
     # print(price_list)
@@ -354,8 +356,8 @@ if __name__ == '__main__':
     # print(itemObj.every_server)
     # itemObj.query_item_craft()
     # print(itemObj.stuff)
-    # itemObj.query_item_craft()
-    itemObj.show_item_cost()
+    itemObj.query_item_craft()
+    # itemObj.show_item_cost()
     print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()

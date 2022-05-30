@@ -1,11 +1,11 @@
 import json
 import os
-
 import sys
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from Queryer import Queryer
+from check_update import Ui_check_update
 from cost_page import Ui_cost_page
 from history_page import Ui_history_Window
 from loading_page import Ui_load_page
@@ -13,7 +13,6 @@ from main_window import Ui_mainWindow
 from query_item_id import Ui_query_item_id
 from select_item_list import Ui_select_item_list
 from show_price import Ui_show_price
-from check_update import Ui_check_update
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -235,13 +234,13 @@ def query_sale_list():
     if item.hqs == 0 and item.nqs == 0.14285715:
         sv = '这个东西很难卖出去'
     elif item.nqs <= 0.14285715 and item.hqs > 8.88:
-        sv = '大家都在买HQ，几乎不买NQ'
+        sv = '大家都在买HQ，几乎不买NQ (销量指数：%d)' % item.hqs
     elif item.nqs <= 0.14285715 and item.hqs < 2:
-        sv = '大家只买HQ，并且不太好卖'
+        sv = '大家只买HQ，并且不太好卖 (销量指数：%d)' % item.hqs
     elif item.hqs == 0 and item.nqs > 12:
-        sv = '这个东西很受欢迎'
+        sv = '这个东西很受欢迎 (销量指数：%d)' % item.nqs
     elif item.hqs == 0 and 2 <= item.nqs <= 12:
-        sv = '这个东西一定卖得出去'
+        sv = '这个东西一定卖得出去 (销量指数：%d)' % item.nqs
     elif item.hqs == 0 and item.nqs == 0:
         sv = '看不出来销量好不好，感觉不太行'
     else:
@@ -501,7 +500,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.6.2'
+program_version = '0.6.3'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

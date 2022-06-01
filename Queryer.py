@@ -16,6 +16,7 @@ class Queryer(object):
         """
         self.name = None
         self.hq = False
+        # item_list 代表本次查询的结果集
         self.item_list = []
         self.id = item_id
         self.stuff = {}
@@ -57,6 +58,9 @@ class Queryer(object):
         return result
 
     def get_icon(self, icon_url=None):
+        """
+        获取图标的方法，数据源不一致，获取图标的地址也不同
+        """
         self.icon = None
         if len(self.item_list) == 0:
             self.query_item_id(self.name)
@@ -90,13 +94,13 @@ class Queryer(object):
         server_list = select_server_mao
         # 根据服务器所在大区选择比价的服务器
         if self.server in select_server_mao:
-            server_list = ['紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
+            server_list = select_server_mao[1:-1]
         elif self.server in select_server_niao:
-            server_list = ['红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座']
+            server_list = select_server_niao[1:-1]
         elif self.server in select_server_zhu:
-            server_list = ['白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿', '梦羽宝境']
+            server_list = select_server_zhu[1:-1]
         elif self.server in select_server_gou:
-            server_list = ['水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
+            server_list = select_server_gou[1:-1]
         return server_list
 
     def query_item_id(self, name):
@@ -124,7 +128,7 @@ class Queryer(object):
 
     def query_item_price(self):
         """
-        查询市场价格，根据传入的HQ参数选择查询方法
+        查询市场价格，根据HQ参数选择查询方法
         """
         if self.hq is True:
             query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
@@ -158,6 +162,7 @@ class Queryer(object):
         def query_single_server(server, item_id):
             query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, item_id)
             result = self.init_query_result(query_url)
+            # 重新组织比价用的数据
             if len(result['listings']) != 0:
                 server_sale = {
                     'server': server,
@@ -212,8 +217,10 @@ class Queryer(object):
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
         query_result = self.query_item_cost_min(unit['id'])
+        # 用于抵抗异于市场价格规律出售的记录对材料成本计算的影响
         x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
         if unit['id'] < 20:
+            # 碎晶，水晶，晶簇
             unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
         elif x > 300:
             unit['pricePerUnit'] = int(query_result['averagePrice'])
@@ -258,6 +265,7 @@ class Queryer(object):
             result = self.init_query_result(query_url)
             return result['item']
         elif self.static is True:
+            # 重要： 采用深复制来避免成本树的计算波及到保存在内存中的静态原始数据
             return copy.deepcopy(self.item_data[str(itemid)])
 
     def query_item_cost_min(self, itemid):
@@ -288,10 +296,7 @@ class Queryer(object):
             print(stuff)
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
-            """
-            # TODO: 子材料计算异常，导致原始材料成本飙升
-            """
-            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
+#            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
             if 'priceFromNpc' in stuff:
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
@@ -331,6 +336,9 @@ class Queryer(object):
 
     @staticmethod
     def get_online_version():
+        """
+        通过github拉取程序版本
+        """
         url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
         result = get(url, timeout=8)
         return loads(result.text)

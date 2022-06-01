@@ -21,14 +21,20 @@ from show_price import Ui_show_price
 
 
 class RQMainWindow(QtWidgets.QMainWindow):
+    """
+    重写窗口关闭的事件用来保存查询历史记录
+    """
+
     def __init__(self, parent=None):
         super(RQMainWindow, self).__init__(parent)
 
     def closeEvent(self, event):
         global query_history
+        # 移除空查询
         for i in query_history:
             if i['itemName'] is None:
                 query_history.remove(i)
+        # 查询服务器，是否使用静态资源加速，查询历史
         history = {"server": item.server, 'use_static': True, "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
@@ -42,7 +48,7 @@ class MainWindow(Ui_mainWindow):
 
     def setup_menu(self):
         """
-        选择服务器菜单栏行为
+        菜单栏行为
         """
         self.select_server_luxingniao.triggered.connect(lambda: click_select_server('陆行鸟'))
         self.select_server_hongyuhai.triggered.connect(lambda: click_select_server("红玉海"))
@@ -79,6 +85,11 @@ class MainWindow(Ui_mainWindow):
         self.select_server_doudouchai.triggered.connect(lambda: click_select_server("豆豆柴"))
         self.use_static_file.triggered.connect(use_static_file_or_not)
         self.check_update.triggered.connect(show_check_update_window)
+
+
+"""
+为将来重写类型方法预留，可删除
+"""
 
 
 class QueryItemId(Ui_query_item_id):
@@ -134,15 +145,21 @@ def query_item():
         ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
     else:
+        # 首次查询
         first_query = False
         item.query_item_id(input_name)
+        # 查询到的道具数量大于1
         if len(item.item_list) > 1:
+            # 绘制表格，让玩家选择道具
             r = 0
+            # 绘制前 清空上次查询结果
             select_item_page.items_list_widget.clearContents()
+            # 设置表格样式
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
             select_item_page.items_list_widget.setColumnWidth(0, 120)
             select_item_page.items_list_widget.setRowCount(len(item.item_list))
+            # 表格填充数据
             for i in item.item_list:
                 item_id = QtWidgets.QTableWidgetItem(str(i['id']))
                 item_id.setTextAlignment(4 | 128)
@@ -152,11 +169,14 @@ def query_item():
                 select_item_page.items_list_widget.setItem(r, 1, item_name)
                 r += 1
             select_item_page.items_list_widget.repaint()
+            # 切换到选择物品的界面
             ui.show_data_box.setCurrentIndex(1)
+        # 只查询到一个道具
         elif len(item.item_list) == 1:
             item.id = item.item_list[0]['id']
             item.name = item.item_list[0]['name']
             queru_price()
+        # 查询不到道具
         else:
             show_message()
 
@@ -164,11 +184,12 @@ def query_item():
 def select_item(selectd):
     """
     模糊搜索如果返回多个结果，选择其中一个
+    判断传入对象的类型，兼容双击条目和点击按钮
     """
-    global item
     if type(selectd) is list and len(selectd) > 0:
         item.id = selectd[0].text()
         item.name = selectd[1].text()
+    # 如果使用者没有选择条目就点击了查询按钮，默认查询第一个
     elif type(selectd) is list and len(selectd) == 0:
         item.id = select_item_page.items_list_widget.item(0, 0).text()
         item.name = select_item_page.items_list_widget.item(0, 1).text()
@@ -197,7 +218,7 @@ def queru_price():
         # 查询全服比价的数据
         item.query_every_server(server_list)
         query_every_server(item.every_server)
-    # 查询完成之后将查询记录加入历史记录
+    # 查询完成之后将查询记录加入历史记录。如果已经存在，删除旧的纪录，新的纪录添加到末尾
     this_query = {"itemID": item.id, "itemName": item.name, "HQ": item.hq, "server": item.server}
     if this_query in query_history:
         item_name = item.name
@@ -210,6 +231,7 @@ def queru_price():
             else:
                 break
         query_history.remove(this_query)
+    # 在历史面板顶端插入新的查询记录
     if item.hq is not True:
         history_board.history_list.insertItem(0, item.name)
     elif item.hq is True:
@@ -337,10 +359,13 @@ def query_every_server(all_server_list):
 
 def make_cost_tree():
     """
-    # TODO： 成本树 ： 查询初始化 → 锁定成本按钮 → 查询价格 → 查询配方和材料单价 → 构建成本树 → 解锁成本按钮
+    成本树，显示这个物品的制作材料和成本
     """
 
     def make_tree(material, father):
+        """
+        材料树的绘制方法
+        """
         node = QtWidgets.QTreeWidgetItem(father)
         node.setText(0, material['name'])
         node.setText(1, str(material['amount']))
@@ -355,18 +380,22 @@ def make_cost_tree():
     elif ui.show_data_box.currentIndex() == 2 and len(cost_page.cost_tree.children()) > 7:
         ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
+    # 如果材料树的子对象数量<=7 说明材料树是空的
     elif len(cost_page.cost_tree.children()) <= 7:
         if len(item.stuff) > 0:
             ui.show_cost.setText('市场价格')
             ui.show_data_box.setCurrentIndex(3)
+        # 开始计算材料成本
         elif len(item.stuff) == 0:
             item.show_item_cost()
             for i in item.stuff:
                 make_tree(i, cost_page.cost_tree)
             cost_page.d_cost.setText(str(item.d_cost))
             cost_page.o_cost.setText(str(item.o_cost))
+            # 1级子材料数量不超过9个的时候展开材料树
             if len(item.stuff) < 9:
                 cost_page.cost_tree.expandAll()
+            # 如果这个道具一次生产制作多个的利润算法兼容
             if item.yields > 1:
                 p = item.avgp * item.yields - item.d_cost
                 cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
@@ -378,11 +407,16 @@ def make_cost_tree():
 
 
 def click_history_query(selected):
+    """
+    通过点击历史面板查询物品
+    """
     global query_history
     global first_query
+    # 最顶端的记录为本次查询的结果，do nothing
     if selected.row() == 0 and first_query is not True and ui.show_data_box.currentIndex() != 0:
         pass
     else:
+        # 重新查询
         item_name = history_board.history_list.item(selected.row()).text()
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]
@@ -412,6 +446,7 @@ def click_select_server(server):
 
 
 def click_copy_item_name(selected):
+    # 点击材料树的条目将道具名复制到剪贴板
     clipboard = QtWidgets.QApplication.clipboard()
     clipboard.setText(selected.text(0))
 
@@ -425,14 +460,14 @@ def select_hq_ornot(status):
 
 def use_static_file_or_not(status):
     """
-    查询HQ的CheckButton
+    是否启用静态资源加速
     """
     item.static = status
 
 
 def get_item_icon():
     """
-    物品图标的地址在查询item_list中包含了
+    绘制物品图标的方法
     """
     item.get_icon()
     ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
@@ -441,6 +476,9 @@ def get_item_icon():
 
 
 def back_to_index():
+    """
+    返回首页的按钮事件
+    """
     ui.item_icon.hide()
     ui.jump_to_wiki.hide()
     ui.show_cost.hide()
@@ -457,6 +495,9 @@ def show_message():
 
 
 def hidden_history_board():
+    """
+    显示或者隐藏查询历史面板
+    """
     if widget2.isVisible():
         widget2.hide()
     elif widget2.isHidden():
@@ -464,6 +505,10 @@ def hidden_history_board():
 
 
 def show_check_update_window():
+    """
+    显示或者隐藏关于面板，包含检查更新的事件
+    """
+    # 如果没有查询过版本，就开始一次版本检查
     if check_update_window.latest_program_version.text() == 'N/A':
         version_online = item.get_online_version()
         check_update_window.latest_program_version.setText(version_online['program'])
@@ -472,6 +517,7 @@ def show_check_update_window():
     c_d_v = check_update_window.current_data_verison.text()
     l_p_v = check_update_window.latest_program_version.text()
     l_d_v = check_update_window.latest_data_version.text()
+    # 数据文件可以单独更新
     if c_p_v == l_p_v and c_d_v == l_d_v:
         check_update_window.update_text.hide()
     elif c_p_v == l_p_v and c_d_v != l_d_v:
@@ -480,6 +526,7 @@ def show_check_update_window():
         check_update_window.update_text.setText(
             '请点击前往 <a href=\"https://github.com/NagaResst/Paissa/releases\"><span style=\" text-decoration: underline; color:#0000ff;\">Github</span></a> 下载最新版本')
         check_update_window.update_text.setOpenExternalLinks(True)
+    # 面板隐藏或者显示
     if widget3.isVisible():
         widget3.hide()
     elif widget3.isHidden():
@@ -507,7 +554,9 @@ try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
         query_history = history_json['history']
+        # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
         if len(query_history) == 0:
+            # 加入None条目，后面的切换界面判断方法就不用判空了
             query_history = [{"itemName": None, "HQ": None, "server": None}]
         item = Queryer(history_json['server'])
 except:
@@ -522,7 +571,6 @@ if 'use_static' not in history_json:
 item.static = history_json['use_static']
 first_query = True
 server_list = []
-server_area = ['陆行鸟', '猫小胖', '莫古力', '豆豆柴']
 
 """
 主程序开始
@@ -615,6 +663,7 @@ check update
 widget3 = QtWidgets.QMainWindow()
 check_update_window = CheckUpdate()
 check_update_window.setupUi(widget3)
+# 关于面板的超链接激活
 check_update_window.label_8.setOpenExternalLinks(True)
 check_update_window.current_program_version.setText(program_version)
 check_update_window.current_data_verison.setText(date_version)

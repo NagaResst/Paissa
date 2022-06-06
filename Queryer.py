@@ -94,13 +94,13 @@ class Queryer(object):
         server_list = select_server_mao
         # 根据服务器所在大区选择比价的服务器
         if self.server in select_server_mao:
-            server_list = select_server_mao[1:-1]
+            server_list = select_server_mao[1:]
         elif self.server in select_server_niao:
-            server_list = select_server_niao[1:-1]
+            server_list = select_server_niao[1:]
         elif self.server in select_server_zhu:
-            server_list = select_server_zhu[1:-1]
+            server_list = select_server_zhu[1:]
         elif self.server in select_server_gou:
-            server_list = select_server_gou[1:-1]
+            server_list = select_server_gou[1:]
         return server_list
 
     def query_item_id(self, name):

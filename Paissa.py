@@ -35,7 +35,7 @@ class RQMainWindow(QtWidgets.QMainWindow):
             if i['itemName'] is None:
                 query_history.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
-        history = {"server": item.server, 'use_static': True, "history": query_history}
+        history = {"server": item.server, 'use_static': item.static, "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
         event.accept()
@@ -547,7 +547,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.6.3'
+program_version = '0.6.4'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
@@ -650,7 +650,7 @@ loading_page.setupUi(ui.loading_ui)
 widget2 = QtWidgets.QMainWindow()
 history_board = HistoryPage()
 history_board.setupUi(widget2)
-history_board.history_list.clicked.connect(click_history_query)
+history_board.history_list.doubleClicked.connect(click_history_query)
 for i in query_history:
     if i['HQ'] is not True:
         history_board.history_list.insertItem(0, i["itemName"])

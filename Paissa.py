@@ -560,6 +560,7 @@ try:
             query_history = [{"itemName": None, "HQ": None, "server": None}]
         item = Queryer(history_json['server'])
 except:
+    history_json = {"server": '猫小胖', 'use_static': True, "history": []}
     query_history = [{"itemName": None, "HQ": None, "server": None}]
     item = Queryer('猫小胖')
 # 加载本地静态文件

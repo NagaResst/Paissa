@@ -20,6 +20,8 @@ class ItemQuerier(object):
         self.o_cost = 0
         self.server = query_server
         self.result = None
+        self.static = True
+        self.proxy = False
         self.hq = str(self.name)[-2:]
         if self.hq in ["HQ", "NQ", "hq", "nq"]:
             self.name = str(self.name)[0:-2]
@@ -40,18 +42,21 @@ class ItemQuerier(object):
             server_list = ['水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
         return server_list
 
-    @staticmethod
-    def init_query_result(url):
+    def init_query_result(self, url, site=None):
         """
         查询结果序列化成字典
         """
+        if site == 'universalis' and self.proxy is True:
+            url = 'http://43.142.142.18/universalis' + url
+        else:
+            url = 'https://universalis.app' + url
         while True:
             try:
-                result = get(url, timeout=5)
+                result = get(url, timeout=4)
                 result = loads(result.text)
                 break
             except:
-                print('\n猴面雀发现网络有点问题，正准备再试一次')
+                print(url, '查询失败，重试')
         return result
 
     @staticmethod
@@ -142,14 +147,14 @@ class ItemQuerier(object):
         self.query_item_id()
         if self.id is not None:
             if self.hq == "HQ" or self.hq == "hq":
-                query_url = 'https://universalis.app/api/v2/%s/%s?listings=15&hq=true&noGst=true' % (
+                query_url = '/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
                     self.server, self.id)
             elif self.hq == "NQ" or self.hq == "nq":
-                query_url = 'https://universalis.app/api/v2/%s/%s?listings=15&hq=false&noGst=true' % (
+                query_url = '/api/v2/%s/%s?listings=50&hq=false&noGst=true' % (
                     self.server, self.id)
             else:
-                query_url = 'https://universalis.app/api/%s/%s?listings=15&noGst=true' % (self.server, self.id)
-            self.result = self.init_query_result(query_url)
+                query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+            self.result = self.init_query_result(query_url, 'universalis')
             if len(self.result['listings']) > 0:
                 lastUploadTime = self.timestamp_to_time(self.result['lastUploadTime'])
                 print('\n猴面雀为您查找到 ' + self.name + ' 的最新在售信息。\t\t更新时间： ' + lastUploadTime)

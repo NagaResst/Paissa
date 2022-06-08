@@ -31,12 +31,16 @@ class Queryer(object):
         self.icon = None
         self.item_data = {}
         self.static = True
+        self.proxy = False
 
-    @staticmethod
-    def init_query_result(url):
+    def init_query_result(self, url, site=None):
         """
         查询结果序列化成字典
         """
+        if site == 'universalis' and self.proxy is True:
+            url = 'http://43.142.142.18/universalis' + url
+        else:
+            url = 'https://universalis.app' + url
         while True:
             try:
                 result = get(url, timeout=4)
@@ -131,18 +135,15 @@ class Queryer(object):
         查询市场价格，根据HQ参数选择查询方法
         """
         if self.hq is True:
-            query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
+            query_url = '/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
                 self.server, self.id)
-        # elif hq is False:
-        #     query_url = 'https://universalis.app/api/v2/%s/%s?listings=50&hq=false&noGst=true' % (
-        #         self.server, self.id)
         else:
-            query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+            query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
         result = self.init_query_result(query_url)
         if self.hq is True and len(result['listings']) == 0:
             self.hq = False
-            query_url = 'https://universalis.app/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-            result = self.init_query_result(query_url)
+            query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+            result = self.init_query_result(query_url, 'universalis')
         if result['nqSaleVelocity'] == 0:
             self.avgp = int(result['averagePriceHQ'])
         elif result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
@@ -160,8 +161,8 @@ class Queryer(object):
         self.every_server = []
 
         def query_single_server(server, item_id):
-            query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, item_id)
-            result = self.init_query_result(query_url)
+            query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item_id)
+            result = self.init_query_result(query_url, 'universalis')
             # 重新组织比价用的数据
             if len(result['listings']) != 0:
                 server_sale = {
@@ -283,8 +284,8 @@ class Queryer(object):
             server = '豆豆柴'
         else:
             server = '猫小胖'
-        query_url = 'https://universalis.app/api/%s/%s?listings=1&noGst=true' % (server, itemid)
-        result = self.init_query_result(query_url)
+        query_url = '/api/%s/%s?listings=1&noGst=true' % (server, itemid)
+        result = self.init_query_result(query_url, 'universalis')
         return result
 
     def query_item_cost(self, stuff_list, count=1):
@@ -357,6 +358,9 @@ if __name__ == '__main__':
     # 价格查询
     itemObj.id = '33283'
     itemObj.hq = True
+    # https://universalis.app/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
+    # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
+
     # price_list = itemObj.query_item_price()
     # print(price_list)
     # server_list = itemObj.server_list()

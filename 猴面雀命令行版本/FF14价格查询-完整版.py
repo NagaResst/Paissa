@@ -48,7 +48,7 @@ class ItemQuerier(object):
         """
         if site == 'universalis' and self.proxy is True:
             url = 'http://43.142.142.18/universalis' + url
-        else:
+        elif site == 'universalis' and self.proxy is False:
             url = 'https://universalis.app' + url
         while True:
             try:
@@ -56,7 +56,7 @@ class ItemQuerier(object):
                 result = loads(result.text)
                 break
             except:
-                print(url, '查询失败，重试')
+                pass
         return result
 
     @staticmethod

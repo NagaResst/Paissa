@@ -45,7 +45,8 @@ class Queryer(object):
             url = 'https://universalis.app' + url
         while True:
             try:
-                result = get(url, timeout=4)
+                header = {'User-Agent': 'Paissa 0.6.5'}
+                result = get(url, timeout=5, headers=header)
                 result = loads(result.text)
                 break
             except:
@@ -129,11 +130,11 @@ class Queryer(object):
             self.item_list = sorted(self.item_list, key=lambda e: e.__getitem__('id'), reverse=False)
         elif self.static is True:
             for item in self.item_data.values():
-                if 'id' in item and re.search(name, item['name']) is not None:
-                    if self.filter_item is True and int(item['id']) in marketable:
-                        self.item_list.append(item)
-                    elif self.filter_item is False:
-                        self.item_list.append(item)
+                if re.search(name, item['name']) is not None and self.filter_item is True and int(
+                        item['id']) in marketable:
+                    self.item_list.append(item)
+                elif re.search(name, item['name']) is not None and self.filter_item is False:
+                    self.item_list.append(item)
 
     def query_item_price(self):
         """
@@ -300,7 +301,7 @@ class Queryer(object):
         """
         d_cost = 0
         for stuff in stuff_list:
-            print(stuff)
+            # print(stuff)
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
             #            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
@@ -311,8 +312,6 @@ class Queryer(object):
             stuff['amount'] = n_count
             stuff['pricePerUnit'] = price
             d_cost = d_cost + price
-            print(self.item_data['36196'])
-            print(self.item_data['36190'])
             if 'yield' in stuff and 'craft' in stuff:
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
                 c_count = 0

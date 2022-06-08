@@ -289,7 +289,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="font">
@@ -381,6 +381,8 @@
      <string>其他</string>
     </property>
     <addaction name="use_static_file"/>
+    <addaction name="use_proxy_universalis"/>
+    <addaction name="filter_item"/>
     <addaction name="check_update"/>
    </widget>
    <addaction name="server"/>
@@ -777,6 +779,9 @@
    <property name="checked">
     <bool>true</bool>
    </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>使用静态资源加速</string>
    </property>
@@ -784,6 +789,28 @@
   <action name="check_update">
    <property name="text">
     <string>关于</string>
+   </property>
+  </action>
+  <action name="use_proxy_universalis">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>使用反向代理查询价格</string>
+   </property>
+  </action>
+  <action name="filter_item">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>过滤不可在市场出售的物品</string>
    </property>
   </action>
  </widget>

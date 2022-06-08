@@ -85,6 +85,8 @@ class MainWindow(Ui_mainWindow):
         self.select_server_doudouchai.triggered.connect(lambda: click_select_server("豆豆柴"))
         self.use_static_file.triggered.connect(use_static_file_or_not)
         self.check_update.triggered.connect(show_check_update_window)
+        self.use_proxy_universalis.triggered.connect(use_proxy_or_not)
+        self.filter_item.triggered.connect(filter_item_or_not)
 
 
 """
@@ -409,7 +411,8 @@ def make_cost_tree():
 def click_history_query(selected):
     """
     通过点击历史面板查询物品
-    """
+    # """
+    # print(selected, isinstance(selected, QtCore.QModelIndex))
     global query_history
     global first_query
     # 最顶端的记录为本次查询的结果，do nothing
@@ -445,10 +448,17 @@ def click_select_server(server):
         queru_price()
 
 
-def click_copy_item_name(selected):
+def click_query_item_name(selected):
     # 点击材料树的条目将道具名复制到剪贴板
     clipboard = QtWidgets.QApplication.clipboard()
     clipboard.setText(selected.text(0))
+    item.name = selected.text(0)
+    for i in item.item_data.values():
+        if i['name'] == item.name:
+            item.id = i['id']
+    query_item_page.input_item_name.setText(item.name)
+    item.item_list = []
+    queru_price()
 
 
 def select_hq_ornot(status):
@@ -463,6 +473,20 @@ def use_static_file_or_not(status):
     是否启用静态资源加速
     """
     item.static = status
+
+
+def use_proxy_or_not(status):
+    """
+    是否启用静态资源加速
+    """
+    item.proxy = status
+
+
+def filter_item_or_not(status):
+    """
+    是否启用静态资源加速
+    """
+    item.filter_item = status
 
 
 def get_item_icon():
@@ -547,7 +571,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.6.4'
+program_version = '0.6.5'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
@@ -570,6 +594,7 @@ date_version = item.item_data['data-version']
 if 'use_static' not in history_json:
     history_json['use_static'] = True
 item.static = history_json['use_static']
+item.item_data.pop('data-version')
 first_query = True
 server_list = []
 
@@ -637,7 +662,7 @@ show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHead
 cost_page = CostPage()
 cost_page.setupUi(ui.show_craft)
 cost_page.cost_tree.setColumnWidth(0, 500)
-cost_page.cost_tree.itemClicked.connect(click_copy_item_name)
+cost_page.cost_tree.itemClicked.connect(click_query_item_name)
 
 """
 loading界面

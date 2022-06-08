@@ -1,9 +1,10 @@
+import copy
 import re
 import threading
 import time
 from json import loads, load
 from math import ceil
-import copy
+
 from requests import get
 
 from marketable import marketable
@@ -32,6 +33,7 @@ class Queryer(object):
         self.item_data = {}
         self.static = True
         self.proxy = False
+        self.filter_item = False
 
     def init_query_result(self, url, site=None):
         """
@@ -39,7 +41,7 @@ class Queryer(object):
         """
         if site == 'universalis' and self.proxy is True:
             url = 'http://43.142.142.18/universalis' + url
-        else:
+        elif site == 'universalis' and self.proxy is False:
             url = 'https://universalis.app' + url
         while True:
             try:
@@ -116,19 +118,22 @@ class Queryer(object):
             query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
             result = self.init_query_result(query_url)
             all_list = result["Results"]
-            # 过滤掉不可在市场上交易的物品
             for item in all_list:
-                if item['ID'] in marketable:
+                # 过滤掉不可在市场上交易的物品
+                if self.filter_item is True and item['ID'] in marketable:
+                    this_item = {'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
+                    self.item_list.append(this_item)
+                elif self.filter_item is False:
                     this_item = {'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
                     self.item_list.append(this_item)
             self.item_list = sorted(self.item_list, key=lambda e: e.__getitem__('id'), reverse=False)
         elif self.static is True:
             for item in self.item_data.values():
-                try:
-                    if re.search(name, item['name']) is not None:
+                if 'id' in item and re.search(name, item['name']) is not None:
+                    if self.filter_item is True and int(item['id']) in marketable:
                         self.item_list.append(item)
-                except:
-                    pass
+                    elif self.filter_item is False:
+                        self.item_list.append(item)
 
     def query_item_price(self):
         """
@@ -139,7 +144,8 @@ class Queryer(object):
                 self.server, self.id)
         else:
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-        result = self.init_query_result(query_url)
+        result = self.init_query_result(query_url, 'universalis')
+        # 如果查询不到物品，强制重查一次NQ
         if self.hq is True and len(result['listings']) == 0:
             self.hq = False
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
@@ -297,7 +303,7 @@ class Queryer(object):
             print(stuff)
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
-#            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
+            #            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
             if 'priceFromNpc' in stuff:
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:

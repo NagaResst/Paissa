@@ -2,6 +2,7 @@ import copy
 import re
 import threading
 import time
+# from concurrent.futures import ThreadPoolExecutor
 from json import loads, load
 from math import ceil
 
@@ -33,7 +34,8 @@ class Queryer(object):
         self.item_data = {}
         self.static = True
         self.proxy = False
-        self.filter_item = False
+        self.filter_item = True
+        self.header = {'User-Agent': 'Paissa 0.6.5'}
 
     def init_query_result(self, url, site=None):
         """
@@ -45,12 +47,11 @@ class Queryer(object):
             url = 'https://universalis.app' + url
         while True:
             try:
-                header = {'User-Agent': 'Paissa 0.6.5'}
-                result = get(url, timeout=5, headers=header)
+                result = get(url, timeout=3, headers=self.header)
                 result = loads(result.text)
                 break
             except:
-                print(url, '查询失败，重试')
+                pass
         return result
 
     @staticmethod
@@ -82,7 +83,7 @@ class Queryer(object):
         elif len(self.item_list) == 1 and self.static is True:
             icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
         try:
-            result = get(icon_url, timeout=3)
+            result = get(icon_url, timeout=3, headers=self.header)
             self.icon = result.content
         except:
             print('图标获取失败')
@@ -263,6 +264,10 @@ class Queryer(object):
             threads.append(thread_make_child_craft)
         for i in threads:
             i.join()
+        # 就算是10线程查询，universalis依然会返回429，并没有提速，索性暴力查询
+        # tpool = ThreadPoolExecutor(max_workers=20)
+        # tpool.map(self.make_child_item_craft, stuff_list)
+        # tpool.shutdown(wait=True)
 
     def query_item_detial(self, itemid):
         """
@@ -330,23 +335,29 @@ class Queryer(object):
         """
         显示物品的制作成本的外壳
         """
+        start = time.time()
         self.stuff = {}
         self.query_item_craft()
         if len(self.stuff) > 0:
             self.d_cost = 0
             self.o_cost = 0
             self.d_cost = self.query_item_cost(self.stuff)
+            end = time.time()
+            print('材料树计算用时', end - start)
             return self.d_cost, self.o_cost
         else:
             return None, None
 
-    @staticmethod
-    def get_online_version():
+    def get_online_version(self):
         """
         通过github拉取程序版本
         """
-        url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
-        result = get(url, timeout=8)
+        try:
+            url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+            result = get(url, timeout=5, headers=self.header)
+        except:
+            url = 'http://43.142.142.18/version'
+            result = get(url, timeout=3, headers=self.header)
         return loads(result.text)
 
 

@@ -46,6 +46,7 @@ class ItemQuerier(object):
         """
         查询结果序列化成字典
         """
+        # 反向代理选择
         if site == 'universalis' and self.proxy is True:
             url = 'http://43.142.142.18/universalis' + url
         elif site == 'universalis' and self.proxy is False:
@@ -92,12 +93,14 @@ class ItemQuerier(object):
             x += 1
         print('请输入要查询的物品编号，输入物品名重新查询，输入 b 返回选择服务器')
         user_select = input()
+        # 如果输入的是数字就选择查询出来的项目
         if user_select.isdigit():
             user_select = (int(user_select)) - 1
             self.id = itemlist[user_select]['ID']
             self.name = itemlist[user_select]['Name']
         elif user_select == 'b' or user_select == 'B':
             self.id = None
+        # 如果直接输入物品名称就重新查询
         else:
             self.__init__(user_select, self.server)
             self.query_item_id()
@@ -113,6 +116,7 @@ class ItemQuerier(object):
             if len(result) == 1:
                 self.id = result[0]['ID']
                 self.name = result[0]['Name']
+            # 如果模糊查询出来多个项目就让玩家选择
             elif len(result) > 1:
                 self.select_itemid(result)
             if self.id is not None:
@@ -141,8 +145,9 @@ class ItemQuerier(object):
     def query_item_price(self):
         """
         在线查询物品的售价，因为数据源来源于玩家上报，有一定的迟滞性。
-        universalis在进行HQ过滤查询的时候，无法指定查询的数量。
-        所以listings和hq两个查询参数不能同时使用，如果同时使用，hq过滤条件就会失效。
+        universalis在进行HQ过滤查询的时候，无法指定查询的数量。所以listings和hq两个查询参数不能同时使用，如果同时使用，hq过滤条件就会失效。
+        v2的接口可以同时使用listings和hq两个参数  hq=true/false   hq=nq/hq应该是错误参数 会被忽略
+        noGst=true  去税  不然universalis会一直在total上减去5%的税金
         """
         self.query_item_id()
         if self.id is not None:
@@ -241,7 +246,7 @@ class ItemQuerier(object):
         """
         展示物品的制作配方
         """
-        if self.stuff is not None:
+        if len(self.stuff) > 0:
             for stuff in stuff_list:
                 if 'priceFromNpc' in stuff:
                     print('%s%-8s\t数量：%d\t价格：%-6d\t%d(npc)' % (
@@ -265,7 +270,10 @@ class ItemQuerier(object):
             print("\n猴面雀发现网络有点问题，找不到想要的资料了")
 
     def make_child_item_craft(self, unit):
-        print('.', end='')
+        """
+        查询单个材料价格的子线程
+        """
+        print('-', end='')
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
         query_result = self.query_item_cost_min(self.server, unit['id'], count=1)
@@ -287,10 +295,12 @@ class ItemQuerier(object):
         统计物品的制作材料
         """
         threads = []
+        # 多线程查询
         for unit in stuff_list:
             thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
             thread_make_child_craft.start()
             threads.append(thread_make_child_craft)
+        # 阻塞主线程，等待子线程的数据回流
         for i in threads:
             i.join()
 
@@ -315,13 +325,16 @@ class ItemQuerier(object):
         d_cost = 0
         self.query_item_craft()
         for stuff in stuff_list:
+            # 需要数量 = 制作单次需要数量 * 制作次数
             n_count = (stuff['amount'] * count)
             if 'priceFromNpc' in stuff:
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
                 price = stuff['pricePerUnit'] * n_count
+            # 单次制作的材料成本
             print('%s%-8s\t数量%2d\t价格：%-6d' % (tab, stuff['name'], n_count, price))
             d_cost = d_cost + price
+            # 如果这个材料一次产出多个，根据需要的材料个数计算需要制作的次数
             if 'yield' in stuff and 'craft' in stuff:
                 c_count = 0
                 if n_count > stuff['yield']:
@@ -329,6 +342,7 @@ class ItemQuerier(object):
                 elif n_count <= stuff['yield']:
                     c_count = 1
                 self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count, tab=tab + '\t')
+            # 材料制作一次产出一个  直接使用n_count作为制作次数
             elif 'craft' in stuff and 'yield' not in stuff:
                 self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count, tab=tab + '\t')
             else:
@@ -458,7 +472,6 @@ def logo():
 @@@@@@@@@^.....................[O@/............[/`..........=@@OOOOOOOOO@
 =@@@@@@@@....................................................=@@@O@@@O@O@
 ========   欢迎使用猴面雀价格查询小工具    夕山菀@紫水栈桥   ============
-========     老婆！ 是老婆啊！！    琉森@紫水栈桥 专用版     ============
                                                     Ver 1.3.0
 """)
 

@@ -332,7 +332,7 @@ class ItemQuerier(object):
             else:
                 price = stuff['pricePerUnit'] * n_count
             # 单次制作的材料成本
-            print('%s%-8s\t数量%2d\t价格：%-6d' % (tab, stuff['name'], n_count, price))
+            print('%s%-8s\t数量：%2d\t价格：%-6d' % (tab, stuff['name'], n_count, price))
             d_cost = d_cost + price
             # 如果这个材料一次产出多个，根据需要的材料个数计算需要制作的次数
             if 'yield' in stuff and 'craft' in stuff:

@@ -125,6 +125,19 @@
        </property>
       </widget>
      </item>
+     <item alignment="Qt::AlignRight">
+      <widget class="QPushButton" name="click_c">
+       <property name="font">
+        <font>
+         <family>Arial</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>复制</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

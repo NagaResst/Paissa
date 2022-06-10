@@ -71,6 +71,13 @@ class Ui_cost_page(object):
         self.o_cost.setFont(font)
         self.o_cost.setObjectName("o_cost")
         self.horizontalLayout.addWidget(self.o_cost)
+        self.click_c = QtWidgets.QPushButton(cost_page)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        self.click_c.setFont(font)
+        self.click_c.setObjectName("click_c")
+        self.horizontalLayout.addWidget(self.click_c, 0, QtCore.Qt.AlignRight)
         self.gridLayout.addLayout(self.horizontalLayout, 0, 0, 1, 1)
 
         self.retranslateUi(cost_page)
@@ -87,3 +94,4 @@ class Ui_cost_page(object):
         self.d_cost.setText(_translate("cost_page", "N/A"))
         self.o_cost_text.setText(_translate("cost_page", "原始材料成本："))
         self.o_cost.setText(_translate("cost_page", "N/A"))
+        self.click_c.setText(_translate("cost_page", "复制"))

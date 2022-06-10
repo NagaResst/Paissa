@@ -461,6 +461,12 @@ def click_query_item_name(selected):
     queru_price()
 
 
+def click_copy_cost_tree():
+    # 点击材料树的条目将道具名复制到剪贴板
+    clipboard = QtWidgets.QApplication.clipboard()
+    clipboard.setText(item.clipboard)
+
+
 def select_hq_ornot(status):
     """
     查询HQ的CheckButton
@@ -571,7 +577,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.6.5'
+program_version = '0.7.0'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:
@@ -662,7 +668,8 @@ show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHead
 cost_page = CostPage()
 cost_page.setupUi(ui.show_craft)
 cost_page.cost_tree.setColumnWidth(0, 500)
-cost_page.cost_tree.itemClicked.connect(click_query_item_name)
+cost_page.cost_tree.itemDoubleClicked.connect(click_query_item_name)
+cost_page.click_c.clicked.connect(click_copy_cost_tree)
 
 """
 loading界面

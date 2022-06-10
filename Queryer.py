@@ -35,6 +35,7 @@ class Queryer(object):
         self.static = True
         self.proxy = False
         self.filter_item = True
+        self.clipboard = ''
         self.header = {'User-Agent': 'Paissa 0.6.5'}
 
     def init_query_result(self, url, site=None):
@@ -300,7 +301,7 @@ class Queryer(object):
         result = self.init_query_result(query_url, 'universalis')
         return result
 
-    def query_item_cost(self, stuff_list, count=1):
+    def query_item_cost(self, stuff_list, count=1, tab=0):
         """
         查询物品的制作成本的计算器
         """
@@ -316,6 +317,23 @@ class Queryer(object):
                 price = stuff['pricePerUnit'] * n_count
             stuff['amount'] = n_count
             stuff['pricePerUnit'] = price
+
+            def c_tab(c_str='', tab=0):
+                i = 0
+                f_str = c_str
+                m_str = '\t\t\t\t'
+                while i < 5:
+                    if i == tab:
+                        break
+                    else:
+                        f_str = f_str + '\t'
+                        # m_str = m_str[:-1]
+                        m_str = m_str + '\t'
+                        i += 1
+                return f_str, m_str
+
+            f_str, m_str = c_tab(tab=tab)
+            self.clipboard = self.clipboard + '%s%s%s%d\t%d' % (f_str, stuff['name'], m_str, n_count, price) + '\n'
             d_cost = d_cost + price
             if 'yield' in stuff and 'craft' in stuff:
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
@@ -324,9 +342,9 @@ class Queryer(object):
                     c_count = ceil(n_count / stuff['yield'])
                 elif n_count <= stuff['yield']:
                     c_count = 1
-                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count)
+                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
             elif 'craft' in stuff and 'yield' not in stuff:
-                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count)
+                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
             else:
                 self.o_cost = self.o_cost + price
         return d_cost
@@ -335,6 +353,7 @@ class Queryer(object):
         """
         显示物品的制作成本的外壳
         """
+        self.clipboard = '直接材料\t二级材料\t三级材料\t四级材料\t直接材料数量\t直接材料价值\t二级材料数量\t二级材料价值\t三级材料数量\t三级材料价值\t四级材料数量\t四级材料价值\n'
         start = time.time()
         self.stuff = {}
         self.query_item_craft()
@@ -344,6 +363,8 @@ class Queryer(object):
             self.d_cost = self.query_item_cost(self.stuff)
             end = time.time()
             print('材料树计算用时', end - start)
+            self.clipboard = '%s\t\t直接材料成本\t%d\t\t原始材料成本\t%d\t\t更新时间\t%s\n\n' % (
+                self.name, self.d_cost, self.o_cost, self.timestamp_to_time(time.time())) + self.clipboard
             return self.d_cost, self.o_cost
         else:
             return None, None

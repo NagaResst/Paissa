@@ -233,7 +233,6 @@ def queru_price():
             else:
                 break
         query_history.remove(this_query)
-    # 在历史面板顶端插入新的查询记录
     if item.hq is not True:
         history_board.history_list.insertItem(0, item.name)
     elif item.hq is True:
@@ -577,7 +576,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.7.1'
+program_version = '0.7.0'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

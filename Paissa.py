@@ -554,7 +554,7 @@ def show_check_update_window():
         check_update_window.update_text.setText('数据文件需要更新')
     else:
         check_update_window.update_text.setText(
-            '请点击前往 <a href=\"https://github.com/NagaResst/Paissa/releases\"><span style=\" text-decoration: underline; color:#0000ff;\">Github</span></a> 下载最新版本')
+            '请点击 <a href=\"http://43.142.142.18/Paissa.zip\"><span style=\" text-decoration: underline; color:#0000ff;\">这里</span></a> 下载最新版本')
         check_update_window.update_text.setOpenExternalLinks(True)
     # 面板隐藏或者显示
     if widget3.isVisible():
@@ -577,7 +577,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.7.0'
+program_version = '0.7.1'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

@@ -389,12 +389,12 @@ def make_cost_tree():
         # 开始计算材料成本
         elif len(item.stuff) == 0:
             item.show_item_cost()
-            for i in item.stuff:
+            for i in item.stuff['craft']:
                 make_tree(i, cost_page.cost_tree)
             cost_page.d_cost.setText(str(item.d_cost))
             cost_page.o_cost.setText(str(item.o_cost))
             # 1级子材料数量不超过9个的时候展开材料树
-            if len(item.stuff) < 9:
+            if len(item.stuff['craft']) < 9:
                 cost_page.cost_tree.expandAll()
             # 如果这个道具一次生产制作多个的利润算法兼容
             if item.yields > 1:
@@ -576,7 +576,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.7.0'
+program_version = '0.8.0'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

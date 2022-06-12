@@ -36,7 +36,8 @@ class Queryer(object):
         self.proxy = False
         self.filter_item = True
         self.clipboard = ''
-        self.header = {'User-Agent': 'Paissa 0.6.5'}
+        self.header = {'User-Agent': 'Paissa 0.8.0'}
+        self.price_cache = {}
 
     def init_query_result(self, url, site=None):
         """
@@ -48,11 +49,14 @@ class Queryer(object):
             url = 'https://universalis.app' + url
         while True:
             try:
-                result = get(url, timeout=3, headers=self.header)
-                result = loads(result.text)
-                break
+                result = get(url, timeout=5, headers=self.header)
+                if result.status_code == 200:
+                    result = loads(result.text)
+                    break
+                else:
+                    print(url, result.status_code)
             except:
-                pass
+                print(url, 'failed')
         return result
 
     @staticmethod
@@ -187,7 +191,6 @@ class Queryer(object):
 
         threads = []
         for server in server_list:
-            # query_single_server(server, self.id)
             thread = threading.Thread(target=query_single_server, args=(server, self.id))
             thread.start()
             threads.append(thread)
@@ -205,8 +208,9 @@ class Queryer(object):
                 if 'craft' in self.stuff:
                     if 'yield' in self.stuff['craft'][0]:
                         self.yields = self.stuff['craft'][0]['yield']
-                    self.stuff = self.stuff['craft'][0]['ingredients']
-                    self.make_item_craft(self.stuff)
+                        self.stuff['yield'] = self.stuff['craft'][0]['yield']
+                    self.stuff['craft'] = self.stuff['craft'][0]['ingredients']
+                    self.make_item_craft(self.stuff['craft'])
                 else:
                     self.stuff = {}
             elif self.static is True:
@@ -214,8 +218,7 @@ class Queryer(object):
                 if 'craft' in self.stuff:
                     if 'yield' in self.stuff:
                         self.yields = self.stuff['yield']
-                    self.stuff = self.stuff['craft']
-                    self.make_item_craft(self.stuff)
+                    self.make_item_craft(self.stuff['craft'])
                 else:
                     self.stuff = {}
 
@@ -223,26 +226,18 @@ class Queryer(object):
         """
         材料树递归查询的线程函数
         """
+        print('old', unit['id'])
         # print('查询材料\n', unit)
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
-        query_result = self.query_item_cost_min(unit['id'])
-        # 用于抵抗异于市场价格规律出售的记录对材料成本计算的影响
-        x = abs(query_result['averagePrice'] - query_result['listings'][0]['pricePerUnit'])
-        if unit['id'] < 20:
-            # 碎晶，水晶，晶簇
-            unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
-        elif x > 300:
-            unit['pricePerUnit'] = int(query_result['averagePrice'])
-        else:
-            unit['pricePerUnit'] = query_result['listings'][0]['pricePerUnit']
+        self.query_item_cost_min(unit)
         if self.static is False:
             if 'vendors' in result:
                 unit['priceFromNpc'] = result['price']
             if 'craft' in result:
-                unit['craft'] = result['craft'][0]['ingredients']
-                if 'yield' in result['craft'][0]:
-                    unit['yield'] = result['craft'][0]['yield']
+                unit['craft'] = result['craft']
+                if 'yield' in result:
+                    unit['yield'] = result['yield']
                 self.make_item_craft(unit['craft'])
         elif self.static is True:
             if 'priceFromNpc' in result:
@@ -253,22 +248,54 @@ class Queryer(object):
                     unit['yield'] = result['yield']
                 self.make_item_craft(unit['craft'])
 
+    def make_child_item_craft_new(self, unit):
+        result = self.query_item_detial(unit['id'])
+        unit['name'] = result['name']
+        items = []
+        if 'pricePerUnit' not in unit:
+            self.query_item_cost_min(unit)
+        if self.static is False:
+            if 'vendors' in result:
+                unit['priceFromNpc'] = result['price']
+        elif self.static is True:
+            if 'priceFromNpc' in result:
+                unit['priceFromNpc'] = result['priceFromNpc']
+        if 'craft' in result:
+            unit['craft'] = result['craft']
+            for i in unit['craft']:
+                items.append(i)
+                r = self.query_item_detial(i['id'])
+                i['name'] = r['name']
+                if 'craft' in r:
+                    i['craft'] = r['craft']
+                    if 'yield' in r:
+                        i['yield'] = r['yield']
+            print('new', items)
+            self.query_item_cost_min(items)
+            self.make_item_craft(unit['craft'])
+
     def make_item_craft(self, stuff_list):
         """
         统计物品的制作材料
+        新旧两种查询方法在大量查询的时候都会产生返回429的现象，导致查询速度慢，但新的查询方法在查询复杂配方的时候速度提升明显。
         """
-        # print('查询配方 \n', stuff_list)
         threads = []
-        for unit in stuff_list:
-            thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
-            thread_make_child_craft.start()
-            threads.append(thread_make_child_craft)
+        if len(stuff_list) > 5:
+            for unit in stuff_list:
+                thread_make_child_craft = threading.Thread(target=self.make_child_item_craft_new, args=[unit])
+                thread_make_child_craft.start()
+                threads.append(thread_make_child_craft)
+                # debug
+                # thread_make_child_craft.join()
+        else:
+            for unit in stuff_list:
+                thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
+                thread_make_child_craft.start()
+                threads.append(thread_make_child_craft)
+                # debug
+                # thread_make_child_craft.join()
         for i in threads:
             i.join()
-        # 就算是10线程查询，universalis依然会返回429，并没有提速，索性暴力查询
-        # tpool = ThreadPoolExecutor(max_workers=20)
-        # tpool.map(self.make_child_item_craft, stuff_list)
-        # tpool.shutdown(wait=True)
 
     def query_item_detial(self, itemid):
         """
@@ -276,13 +303,17 @@ class Queryer(object):
         """
         if self.static is False:
             query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-            result = self.init_query_result(query_url)
-            return result['item']
+            result = self.init_query_result(query_url)['item']
+            if 'craft' in result:
+                if 'yield' in result['craft'][0]:
+                    result['yield'] = result['craft'][0]['yield']
+                result['craft'] = result['craft'][0]['ingredients']
+            return result
         elif self.static is True:
             # 重要： 采用深复制来避免成本树的计算波及到保存在内存中的静态原始数据
             return copy.deepcopy(self.item_data[str(itemid)])
 
-    def query_item_cost_min(self, itemid):
+    def query_item_cost_min(self, item):
         """
         查询单项物品的板子价格
         """
@@ -297,56 +328,100 @@ class Queryer(object):
             server = '豆豆柴'
         else:
             server = '猫小胖'
-        query_url = '/api/%s/%s?listings=1&noGst=true' % (server, itemid)
-        result = self.init_query_result(query_url, 'universalis')
-        return result
+        if type(item) is not list:
+            if item['id'] not in self.price_cache:
+                query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item['id'])
+                result = self.init_query_result(query_url, 'universalis')
+                x = abs(result['averagePrice'] - result['listings'][0]['pricePerUnit'])
+                if int(item['id']) < 20:
+                    # 碎晶，水晶，晶簇
+                    item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
+                elif x > 300:
+                    item['pricePerUnit'] = int(result['averagePrice'])
+                else:
+                    item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
+                self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
+            else:
+                item['pricePerUnit'] = self.price_cache[item['id']]
+        elif type(item) is list:
+            ids = []
+            for i in item:
+                if i['id'] not in self.price_cache:
+                    ids.append(str(i['id']))
+                else:
+                    i['pricePerUnit'] = self.price_cache[i['id']]
+            idss = ','.join(ids)
+            if len(ids) > 1:
+                query_url = '/api/%s/%s?listings=1&noGst=true' % (server, idss)
+                result = self.init_query_result(query_url, 'universalis')['items']
+            elif len(ids) == 1:
+                query_url = '/api/%s/%s?listings=1&noGst=true' % (server, idss)
+                result = [self.init_query_result(query_url, 'universalis')]
+            for i in item:
+                if i['id'] not in self.price_cache:
+                    for r in result:
+                        if str(r['itemID']) == str(i['id']):
+                            x = abs(r['averagePrice'] - r['listings'][0]['pricePerUnit'])
+                            if int(i['id']) < 20:
+                                # 碎晶，水晶，晶簇
+                                i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
+                            elif x > 300:
+                                i['pricePerUnit'] = int(r['averagePrice'])
+                            else:
+                                i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
+                            self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])
 
     def query_item_cost(self, stuff_list, count=1, tab=0):
         """
         查询物品的制作成本的计算器
         """
+
+        def c_tab(c_str='', tab=0):
+            i = 0
+            f_str = c_str
+            m_str = '\t\t\t\t'
+            while i < 5:
+                if i == tab:
+                    break
+                else:
+                    f_str = f_str + '\t'
+                    # m_str = m_str[:-1]
+                    m_str = m_str + '\t'
+                    i += 1
+            return f_str, m_str
+
         d_cost = 0
         for stuff in stuff_list:
             # print(stuff)
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
-            #            print('需要材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
+            # print('当前材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
             if 'priceFromNpc' in stuff:
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
                 price = stuff['pricePerUnit'] * n_count
             stuff['amount'] = n_count
             stuff['pricePerUnit'] = price
-
-            def c_tab(c_str='', tab=0):
-                i = 0
-                f_str = c_str
-                m_str = '\t\t\t\t'
-                while i < 5:
-                    if i == tab:
-                        break
-                    else:
-                        f_str = f_str + '\t'
-                        # m_str = m_str[:-1]
-                        m_str = m_str + '\t'
-                        i += 1
-                return f_str, m_str
+            d_cost += price
 
             f_str, m_str = c_tab(tab=tab)
             self.clipboard = self.clipboard + '%s%s%s%d\t%d' % (f_str, stuff['name'], m_str, n_count, price) + '\n'
-            d_cost = d_cost + price
-            if 'yield' in stuff and 'craft' in stuff:
+            # 如果这个东西可以被制作
+            if 'craft' in stuff and 'yield' in stuff:
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
                 c_count = 0
                 if n_count > stuff['yield']:
+                    # ceil  向上取整
                     c_count = ceil(n_count / stuff['yield'])
                 elif n_count <= stuff['yield']:
                     c_count = 1
-                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
+                self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
+                # self.o_cost += self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
             elif 'craft' in stuff and 'yield' not in stuff:
-                self.o_cost = self.o_cost + self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
-            else:
-                self.o_cost = self.o_cost + price
+                self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
+                # self.o_cost += self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
+            elif 'craft' not in stuff:
+                self.o_cost += price
         return d_cost
 
     def show_item_cost(self):
@@ -357,10 +432,11 @@ class Queryer(object):
         start = time.time()
         self.stuff = {}
         self.query_item_craft()
+        self.sstuff = copy.deepcopy(self.stuff['craft'])
         if len(self.stuff) > 0:
             self.d_cost = 0
             self.o_cost = 0
-            self.d_cost = self.query_item_cost(self.stuff)
+            self.d_cost = self.query_item_cost(self.stuff['craft'])
             end = time.time()
             print('材料树计算用时', end - start)
             self.clipboard = '%s\t\t直接材料成本\t%d\t\t原始材料成本\t%d\t\t更新时间\t%s\n\n' % (
@@ -393,7 +469,8 @@ if __name__ == '__main__':
     # itemObj.query_item_id(item)
     # print(itemObj.item_list)
     # 价格查询
-    itemObj.id = '33283'
+    # itemObj.id = '35814'
+    itemObj.id = '22893'
     itemObj.hq = True
     # https://universalis.app/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
     # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
@@ -405,8 +482,8 @@ if __name__ == '__main__':
     # print(itemObj.every_server)
     # itemObj.query_item_craft()
     # print(itemObj.stuff)
-    itemObj.query_item_craft()
-    # itemObj.show_item_cost()
+    # itemObj.query_item_craft()
+    itemObj.show_item_cost()
     print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()

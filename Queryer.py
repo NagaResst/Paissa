@@ -36,7 +36,7 @@ class Queryer(object):
         self.proxy = False
         self.filter_item = True
         self.clipboard = ''
-        self.header = {'User-Agent': 'Paissa 0.8.0'}
+        self.header = {'User-Agent': 'Paissa 0.8.1'}
         self.price_cache = {}
 
     def init_query_result(self, url, site=None):

@@ -214,7 +214,7 @@ class Queryer(object):
                 else:
                     self.stuff = {}
             elif self.static is True:
-                self.stuff = self.item_data[str(self.id)]
+                self.stuff = copy.deepcopy(self.item_data[str(self.id)])
                 if 'craft' in self.stuff:
                     if 'yield' in self.stuff:
                         self.yields = self.stuff['yield']
@@ -226,8 +226,6 @@ class Queryer(object):
         """
         材料树递归查询的线程函数
         """
-        print('old', unit['id'])
-        # print('查询材料\n', unit)
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
         self.query_item_cost_min(unit)
@@ -270,7 +268,6 @@ class Queryer(object):
                     i['craft'] = r['craft']
                     if 'yield' in r:
                         i['yield'] = r['yield']
-            print('new', items)
             self.query_item_cost_min(items)
             self.make_item_craft(unit['craft'])
 
@@ -392,10 +389,8 @@ class Queryer(object):
 
         d_cost = 0
         for stuff in stuff_list:
-            # print(stuff)
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
-            # print('当前材料', stuff['name'], '需要数量', n_count, '制作次数', count,'制作一次需要数量', stuff['amount'])
             if 'priceFromNpc' in stuff:
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
@@ -430,12 +425,12 @@ class Queryer(object):
         """
         self.clipboard = '直接材料\t二级材料\t三级材料\t四级材料\t直接材料数量\t直接材料价值\t二级材料数量\t二级材料价值\t三级材料数量\t三级材料价值\t四级材料数量\t四级材料价值\n'
         start = time.time()
+        # del self.stuff
         self.stuff = {}
+        self.d_cost = 0
+        self.o_cost = 0
         self.query_item_craft()
-        self.sstuff = copy.deepcopy(self.stuff['craft'])
         if len(self.stuff) > 0:
-            self.d_cost = 0
-            self.o_cost = 0
             self.d_cost = self.query_item_cost(self.stuff['craft'])
             end = time.time()
             print('材料树计算用时', end - start)

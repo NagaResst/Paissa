@@ -254,11 +254,11 @@ def query_sale_list():
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
-    if item.hqs == 0 and item.nqs == 0.14285715:
+    if item.hqs == 0 and item.nqs <= 0.3:
         sv = '这个东西很难卖出去'
     elif item.nqs <= 0.14285715 and item.hqs > 8.88:
         sv = '大家都在买HQ，几乎不买NQ (销量指数：%d)' % item.hqs
-    elif item.nqs <= 0.14285715 and item.hqs < 2:
+    elif item.nqs <= 0.14285715 and 0 < item.hqs < 2:
         sv = '大家只买HQ，并且不太好卖 (销量指数：%d)' % item.hqs
     elif item.hqs == 0 and item.nqs > 12:
         sv = '这个东西很受欢迎 (销量指数：%d)' % item.nqs
@@ -415,10 +415,11 @@ def click_history_query(selected):
     global query_history
     global first_query
     # 最顶端的记录为本次查询的结果，do nothing
-    if selected.row() == 0 and first_query is not True and ui.show_data_box.currentIndex() != 0:
+    if selected.row() == 0 and first_query is not True:
         pass
     else:
         # 重新查询
+        first_query = False
         item_name = history_board.history_list.item(selected.row()).text()
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]

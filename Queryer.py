@@ -438,6 +438,7 @@ class Queryer(object):
                 self.name, self.d_cost, self.o_cost, self.timestamp_to_time(time.time())) + self.clipboard
             return self.d_cost, self.o_cost
         else:
+            self.stuff['craft'] = [{'name': '该物品不能被制作', 'amount': '', 'pricePerUnit': ''}]
             return None, None
 
     def get_online_version(self):

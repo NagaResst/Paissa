@@ -450,15 +450,18 @@ def click_select_server(server):
 
 def click_query_item_name(selected):
     # 点击材料树的条目将道具名复制到剪贴板
-    clipboard = QtWidgets.QApplication.clipboard()
-    clipboard.setText(selected.text(0))
-    item.name = selected.text(0)
-    for i in item.item_data.values():
-        if i['name'] == item.name:
-            item.id = i['id']
-    query_item_page.input_item_name.setText(item.name)
-    item.item_list = []
-    queru_price()
+    if selected.text(0) != '该物品不能被制作':
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(selected.text(0))
+        item.name = selected.text(0)
+        for i in item.item_data.values():
+            if i['name'] == item.name:
+                item.id = i['id']
+        query_item_page.input_item_name.setText(item.name)
+        item.item_list = []
+        queru_price()
+    else:
+        back_to_index()
 
 
 def click_copy_cost_tree():

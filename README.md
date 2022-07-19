@@ -5,7 +5,7 @@ qt designer
 # **依赖**:  
 pyqt5   ≈   5.15  
 pyinstaller  ≈   5.1  
-requests  ≈   5.15  
+requests  ≈   2.28.1  
 
 理论上对版本没有要求,新版旧版一样可以跑起来,我只是写一下我这边的版本。
 

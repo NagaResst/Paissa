@@ -12,9 +12,15 @@ with open('item.csv', 'r', encoding='utf8') as item_file:
     item_out_list = {}
     for i in item_in_list:
         # print(i)
-        if i['key'] != '#' and i['key'] != 'int32':
-            if i['0'] != '':
-                item_out_list[i['key']] = {'id': i['key'], 'name': i['0'], 'icon': i['10']}
+        # 不确定为什么有的时候会出现 \ufeff
+        if '\ufeffkey' in i:
+            if i['\ufeffkey'] != '#' and i['\ufeffkey'] != 'int32':
+                if i['0'] != '':
+                    item_out_list[i['\ufeffkey']] = {'id': i['\ufeffkey'], 'name': i['0'], 'icon': i['10']}
+        else:
+            if i['key'] != '#' and i['key'] != 'int32':
+                if i['0'] != '':
+                    item_out_list[i['key']] = {'id': i['key'], 'name': i['0'], 'icon': i['10']}
 if '#' in item_out_list:
     del item_out_list['#']
 if 'int32' in item_out_list:
@@ -54,7 +60,7 @@ tpool.shutdown(wait=True)
 数据写入磁盘
 """
 print(item_out_list)
-version = {'data-version': '6.05'}
+version = {'data-version': '6.1'}
 version.update(item_out_list)
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
     json.dump(version, item_data)

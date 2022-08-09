@@ -36,7 +36,7 @@ class Queryer(object):
         self.proxy = False
         self.filter_item = True
         self.clipboard = ''
-        self.header = {'User-Agent': 'Paissa 0.8.1'}
+        self.header = {'User-Agent': 'Paissa 0.8.3'}
         self.price_cache = {}
 
     def init_query_result(self, url, site=None):
@@ -146,6 +146,9 @@ class Queryer(object):
         """
         查询市场价格，根据HQ参数选择查询方法
         """
+        # 初始化数据 清楚上次查询的结果对以后查询的影响
+        self.stuff = {}
+        self.yields = 1
         if self.hq is True:
             query_url = '/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
                 self.server, self.id)
@@ -157,9 +160,11 @@ class Queryer(object):
             self.hq = False
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url, 'universalis')
-        if result['nqSaleVelocity'] == 0:
+        if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
             self.avgp = int(result['averagePriceHQ'])
-        elif result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
+        elif result['hqSaleVelocity'] == 0 and result['nqSaleVelocity'] > 0:
+            self.avgp = int(result['averagePriceNQ'])
+        elif result['nqSaleVelocity'] > 0 and result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
             self.avgp = int(result['averagePriceHQ'])
         else:
             self.avgp = int(result['averagePriceNQ'])
@@ -329,6 +334,8 @@ class Queryer(object):
             if item['id'] not in self.price_cache:
                 query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item['id'])
                 result = self.init_query_result(query_url, 'universalis')
+                if len(result['listings']) == 0:
+                    result['listings'].append({'pricePerUnit': 0})
                 x = abs(result['averagePrice'] - result['listings'][0]['pricePerUnit'])
                 if int(item['id']) < 20:
                     # 碎晶，水晶，晶簇
@@ -358,6 +365,8 @@ class Queryer(object):
                 if i['id'] not in self.price_cache:
                     for r in result:
                         if str(r['itemID']) == str(i['id']):
+                            if len(r['listings']) == 0:
+                                r['listings'].append({'pricePerUnit': 0})
                             x = abs(r['averagePrice'] - r['listings'][0]['pricePerUnit'])
                             if int(i['id']) < 20:
                                 # 碎晶，水晶，晶簇

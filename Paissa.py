@@ -177,7 +177,7 @@ def query_item():
         elif len(item.item_list) == 1:
             item.id = item.item_list[0]['id']
             item.name = item.item_list[0]['name']
-            queru_price()
+            query_price()
         # 查询不到道具
         else:
             show_message()
@@ -199,10 +199,10 @@ def select_item(selectd):
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-    queru_price()
+    query_price()
 
 
-def queru_price():
+def query_price():
     """
     价格查询
     """
@@ -240,7 +240,6 @@ def queru_price():
     query_history.append(this_query)
     query_item_page.query_is_hq.setChecked(item.hq)
     cost_page.cost_tree.clear()
-    item.stuff = {}
 
 
 def query_sale_list():
@@ -433,7 +432,7 @@ def click_history_query(selected):
                 break
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
-        queru_price()
+        query_price()
 
 
 def click_select_server(server):
@@ -445,7 +444,7 @@ def click_select_server(server):
     item.server = server
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
-        queru_price()
+        query_price()
 
 
 def click_query_item_name(selected):
@@ -459,7 +458,7 @@ def click_query_item_name(selected):
                 item.id = i['id']
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
-        queru_price()
+        query_price()
     else:
         back_to_index()
 
@@ -580,7 +579,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.8.2'
+program_version = '0.8.3'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

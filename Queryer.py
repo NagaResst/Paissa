@@ -21,20 +21,33 @@ class Queryer(object):
         # item_list 代表本次查询的结果集
         self.item_list = []
         self.id = item_id
+        # 物品的制作配方
         self.stuff = {}
+        # 物品在市场上的平均售价
         self.avgp = 0
+        # 查询物品的单次制作产出数量
         self.yields = 1
+        # NQ和HQ销售指数
         self.nqs = 0
         self.hqs = 0
+        # 物品的直接材料制作成本
         self.d_cost = 0
+        # 物品的原始材料成本
         self.o_cost = 0
+        # 当前查询的服务器
         self.server = query_server
         self.every_server = []
+        # 物品图标
         self.icon = None
+        # 通过查询获得到的物品数据
         self.item_data = {}
+        # 静态资源加速
         self.static = True
+        # 反向代理
         self.proxy = False
+        # 是否过滤掉不可在市场上查询的物品
         self.filter_item = True
+        # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
         self.header = {'User-Agent': 'Paissa 0.8.3'}
         self.price_cache = {}
@@ -42,6 +55,9 @@ class Queryer(object):
     def init_query_result(self, url, site=None):
         """
         查询结果序列化成字典
+        :param url:要调用的接口path
+        :param site:是否启用反代加速决定调用API访问网站
+        :return dist：universalis返回的查询结果
         """
         if site == 'universalis' and self.proxy is True:
             url = 'http://43.142.142.18/universalis' + url
@@ -63,6 +79,8 @@ class Queryer(object):
     def timestamp_to_time(timestamp):
         """
         时间戳转换方法
+        :param timestamp: 时间戳
+        :return str:有格式的时间
         """
         if timestamp > 9999999999:
             timestamp = float(timestamp / 1000)
@@ -73,10 +91,13 @@ class Queryer(object):
     def get_icon(self, icon_url=None):
         """
         获取图标的方法，数据源不一致，获取图标的地址也不同
+        通过 item_list 的项目来获取物品ID可以保证在任何情况下都可以取到值
+        :return self.icon
         """
         self.icon = None
         if len(self.item_list) == 0:
             self.query_item_id(self.name)
+        # 静态加速的数据来源于garlandtools,在线查询的数据来源于cafemaker,所以取图标的API不同
         if len(self.item_list) > 1 and self.static is False:
             for i in self.item_list:
                 if str(i['id']) == str(self.id):
@@ -95,9 +116,10 @@ class Queryer(object):
 
     def server_list(self):
         """
-        为查询所有区服最低价提供支持
+        根据当前查询的大区或者服务器，为查询所有区服最低价提供支持
         https://ff.web.sdo.com/web8/index.html#/servers
         跨大区开放后 server_list 将返回所有区服的列表
+        :return list:包含多个服务器的str的列表，去掉了大区名称
         """
         select_server_mao = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
         select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿', '梦羽宝境']
@@ -119,11 +141,15 @@ class Queryer(object):
     def query_item_id(self, name):
         """
         查询官方的物品ID，为后面的查询提供支持
+        :param name:玩家输入的道具名称 可能仅为道具名的关键字
+        :return self.item_list
         """
         self.item_list = []
         if self.static is False:
+            # cafemaker可以正确的模糊查询
             query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
             result = self.init_query_result(query_url)
+            # 返回的数据是个json,将其中的结果列表取出
             all_list = result["Results"]
             for item in all_list:
                 # 过滤掉不可在市场上交易的物品
@@ -134,6 +160,7 @@ class Queryer(object):
                     this_item = {'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
                     self.item_list.append(this_item)
             self.item_list = sorted(self.item_list, key=lambda e: e.__getitem__('id'), reverse=False)
+        # 使用本地资源查询
         elif self.static is True:
             for item in self.item_data.values():
                 if re.search(name, item['name']) is not None and self.filter_item is True and int(
@@ -145,8 +172,9 @@ class Queryer(object):
     def query_item_price(self):
         """
         查询市场价格，根据HQ参数选择查询方法
+        :return dist：universalis返回的查询结果
         """
-        # 初始化数据 清楚上次查询的结果对以后查询的影响
+        # 初始化数据 清除上次查询的结果对以后查询的影响
         self.stuff = {}
         self.yields = 1
         if self.hq is True:
@@ -160,6 +188,7 @@ class Queryer(object):
             self.hq = False
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url, 'universalis')
+        # 将查询结果的销量指数和平均售价取出
         if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
             self.avgp = int(result['averagePriceHQ'])
         elif result['hqSaleVelocity'] == 0 and result['nqSaleVelocity'] > 0:
@@ -174,14 +203,18 @@ class Queryer(object):
 
     def query_every_server(self, server_list):
         """
-        大区内服务器比价
+        大区内服务器比价，
+        :param server_list: list 服务器列表
+        :return self.every_server
         """
+        # 清空全服差价的结果列表
         self.every_server = []
 
+        # 单个服务器查询最低价格的方法
         def query_single_server(server, item_id):
             query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item_id)
             result = self.init_query_result(query_url, 'universalis')
-            # 重新组织比价用的数据
+            # 重新组织比价用的数据，并加入全服查价的结果列表，如果不重新组织数据，某些区服查询出空集时，会报错
             if len(result['listings']) != 0:
                 server_sale = {
                     'server': server,
@@ -194,6 +227,7 @@ class Queryer(object):
                 }
                 self.every_server.append(server_sale)
 
+        # 多线程操作
         threads = []
         for server in server_list:
             thread = threading.Thread(target=query_single_server, args=(server, self.id))
@@ -319,8 +353,10 @@ class Queryer(object):
         """
         查询单项物品的板子价格
         """
-        select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿', '梦羽宝境']
-        select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座']
+        select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
+                             '梦羽宝境']
+        select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染',
+                              '晨曦王座']
         select_server_gou = ['豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
         if self.server in select_server_niao:
             server = '陆行鸟'

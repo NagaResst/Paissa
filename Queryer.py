@@ -382,7 +382,7 @@ class Queryer(object):
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
             if item['id'] not in self.price_cache:
-                query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item['id'])
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, item['id'])
                 result = self.init_query_result(query_url, 'universalis')
                 if len(result['listings']) == 0:
                     result['listings'].append({'pricePerUnit': 0})
@@ -391,8 +391,10 @@ class Queryer(object):
                 if int(item['id']) < 20:
                     # 碎晶，水晶，晶簇
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
-                elif x > 300:
+                elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
                     item['pricePerUnit'] = int(result['averagePrice'])
+                elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
+                    item['pricePerUnit'] = result['listings'][4]['pricePerUnit']
                 else:
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
                 # 更新缓存
@@ -413,10 +415,10 @@ class Queryer(object):
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
-                query_url = '/api/%s/%s?listings=1&noGst=true' % (server, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
                 result = self.init_query_result(query_url, 'universalis')['items']
             elif len(ids) == 1:
-                query_url = '/api/%s/%s?listings=1&noGst=true' % (server, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
                 result = [self.init_query_result(query_url, 'universalis')]
             for i in item:
                 # 把在线查询到的结果更新到缓存中
@@ -429,8 +431,10 @@ class Queryer(object):
                             if int(i['id']) < 20:
                                 # 碎晶，水晶，晶簇
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
-                            elif x > 300:
-                                i['pricePerUnit'] = int(r['averagePrice'])
+                            elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
+                                item['pricePerUnit'] = int(r['averagePrice'])
+                            elif x > 300 and r['listings'][0]['pricePerUnit'] > 666:
+                                item['pricePerUnit'] = r['listings'][4]['pricePerUnit']
                             else:
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
                             self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])

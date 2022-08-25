@@ -485,14 +485,14 @@ def use_static_file_or_not(status):
 
 def use_proxy_or_not(status):
     """
-    是否启用静态资源加速
+    是否启用反向代理查询
     """
     item.proxy = status
 
 
 def filter_item_or_not(status):
     """
-    是否启用静态资源加速
+    过滤不可在市场上交易的物品
     """
     item.filter_item = status
 

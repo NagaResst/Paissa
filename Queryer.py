@@ -432,9 +432,9 @@ class Queryer(object):
                                 # 碎晶，水晶，晶簇
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
                             elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
-                                item['pricePerUnit'] = int(r['averagePrice'])
+                                i['pricePerUnit'] = int(r['averagePrice'])
                             elif x > 300 and r['listings'][0]['pricePerUnit'] > 666:
-                                item['pricePerUnit'] = r['listings'][4]['pricePerUnit']
+                                i['pricePerUnit'] = r['listings'][4]['pricePerUnit']
                             else:
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
                             self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])

@@ -610,6 +610,7 @@ server_list = []
 主程序开始
 """
 app = QtWidgets.QApplication(sys.argv)
+app.setStyle("Fusion")
 widget = RQMainWindow()
 ui = MainWindow()
 ui.setupUi(widget)

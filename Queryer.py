@@ -8,7 +8,7 @@ from math import ceil
 
 from requests import get
 
-from marketable import marketable
+from Data.marketable import marketable
 
 
 class Queryer(object):

@@ -5,14 +5,14 @@ import sys
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from Queryer import Queryer
-from check_update import Ui_check_update
-from cost_page import Ui_cost_page
-from history_page import Ui_history_Window
-from loading_page import Ui_load_page
-from main_window import Ui_mainWindow
-from query_item_id import Ui_query_item_id
-from select_item_list import Ui_select_item_list
-from show_price import Ui_show_price
+from UI.check_update import Ui_check_update
+from UI.cost_page import Ui_cost_page
+from UI.history_page import Ui_history_Window
+from UI.loading_page import Ui_load_page
+from UI.main_window import Ui_mainWindow
+from UI.query_item_id import Ui_query_item_id
+from UI.select_item_list import Ui_select_item_list
+from UI.show_price import Ui_show_price
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 

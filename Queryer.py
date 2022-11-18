@@ -49,7 +49,7 @@ class Queryer(object):
         self.filter_item = True
         # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
-        self.header = {'User-Agent': 'Paissa 0.8.3'}
+        self.header = {'User-Agent': 'Paissa 0.8.4'}
         self.price_cache = {}
 
     def init_query_result(self, url, site=None):

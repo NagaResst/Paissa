@@ -60,7 +60,7 @@ tpool.shutdown(wait=True)
 数据写入磁盘
 """
 print(item_out_list)
-version = {'data-version': '6.1'}
+version = {'data-version': '6.18'}
 version.update(item_out_list)
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
     json.dump(version, item_data)

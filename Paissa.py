@@ -177,7 +177,7 @@ def query_item():
         elif len(item.item_list) == 1:
             item.id = item.item_list[0]['id']
             item.name = item.item_list[0]['name']
-            query_price()
+            test_network()
         # 查询不到道具
         else:
             show_message()
@@ -199,7 +199,7 @@ def select_item(selectd):
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-    query_price()
+    test_network()
 
 
 def query_price():
@@ -252,7 +252,8 @@ def query_sale_list():
     price_list = item.query_item_price()
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
-    show_price_page.seven_day.setText("当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
+    show_price_page.seven_day.setText(
+        "当前大区近七天平均售出价格： " + str("{:,.0f}".format(price_list["averagePrice"])))
     if item.hqs == 0 and item.nqs <= 0.3:
         sv = '这个东西很难卖出去'
     elif item.nqs <= 0.14285715 and item.hqs > 8.88:
@@ -432,7 +433,7 @@ def click_history_query(selected):
                 break
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
-        query_price()
+        test_network()
 
 
 def click_select_server(server):
@@ -565,6 +566,15 @@ def show_check_update_window():
         widget3.show()
 
 
+def test_network():
+    result = item.test_network()
+    print(result)
+    if result == "success":
+        query_price()
+    else:
+        QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
+
+
 def resource_path(relative_path):
     """
     静态资源打包功能，在spec文件的datas中写入目录名
@@ -579,7 +589,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-program_version = '0.8.4'
+program_version = '0.8.5'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
 try:

@@ -533,6 +533,24 @@ class Queryer(object):
             result = get(url, timeout=3, headers=self.header)
         return loads(result.text)
 
+    def test_network(self):
+        """网络测试方法"""
+        url = "https://universalis.app/api/maoxiaopang/5069?listings=1"
+        c = 0
+        while c < 3:
+            try:
+                result = get(url, timeout=5, headers=self.header)
+                if result.status_code == 200:
+                    return "success"
+                else:
+                    print(url, result.status_code)
+                    c += 1
+            except:
+                print(url, 'failed')
+                c += 1
+        if c >= 3:
+            return "failed"
+
 
 if __name__ == '__main__':
     # 初始化测试数据

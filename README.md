@@ -3,15 +3,12 @@ python 3.10
 qt designer  
 
 # **依赖**:  
-pyqt5   ≈   5.15  
-pyinstaller  ≈   5.1  
-requests  ≈   2.28.1  
+pyqt5
+requests 
 
-理论上对版本没有要求,新版旧版一样可以跑起来,我只是写一下我这边的版本。
 
 # **构建方法**：  
-首先确保可以使用 pyinstaller  
-直接在项目根目录用命令行执行 ```pyinstaller Paissa.spec``` 
+使用了[PyStand](https://github.com/skywind3000/PyStand )的启动器，将```Paissa.py```重命名为```Paissa.int```后，运行Paissa.exe启动。
 
 # **版本数据更新**：
 需要在 [ffxiv-datamining-cn](https://github.com/thewakingsands/ffxiv-datamining-cn) 下载从新版本游戏中解包出来的物品列表```item.csv```放入Data文件夹内，并替换同名文件。
@@ -53,6 +50,5 @@ requests  ≈   2.28.1
 
 # **关于二开**：  
 用 qt designer 直接打开```.ui```文件可以对界面设计进行可视化的编程。需要使用pyuic转化成```.py```文件。  
-```.ui```文件和对应的```.py```文件中只包含界面显示相关的代码，界面上行为的代码都在```paissa.py```中，后台数据查询的功能都封装在```Queryer.py```中。  
-虽然前后端行为进行了逻辑上的解耦，但是因为注释不足，数据类型调用复杂等，在debug上还是会有不少困扰。
+```.ui```文件和对应的```.py```文件中只包含界面显示相关的代码，界面上行为的代码都在```paissa.py```中，后台数据查询的功能都封装在```Queryer.py```中。
 

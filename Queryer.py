@@ -1,4 +1,5 @@
 import copy
+import logging
 import re
 import threading
 import time
@@ -9,6 +10,8 @@ from math import ceil
 from requests import get
 
 from Data.marketable import marketable
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Queryer(object):
@@ -49,8 +52,9 @@ class Queryer(object):
         self.filter_item = True
         # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
-        self.header = {'User-Agent': 'Paissa 0.8.4'}
+        self.header = {'User-Agent': 'Paissa 0.8.5'}
         self.price_cache = {}
+        logging.info("查询物品槽位初始化")
 
     def init_query_result(self, url, site=None):
         """
@@ -68,11 +72,12 @@ class Queryer(object):
                 result = get(url, timeout=5, headers=self.header)
                 if result.status_code == 200:
                     result = loads(result.text)
+                    logging.debug("{} success".format(url))
                     break
                 else:
-                    print(url, result.status_code)
+                    logging.warning(url + result.status_code)
             except:
-                print(url, 'failed')
+                logging.error('{} timeout'.format(url))
         return result
 
     @staticmethod
@@ -111,8 +116,9 @@ class Queryer(object):
         try:
             result = get(icon_url, timeout=3, headers=self.header)
             self.icon = result.content
+            logging.info('图标获取成功')
         except:
-            print('图标获取失败')
+            logging.info('图标获取失败')
 
     def server_list(self):
         """
@@ -138,6 +144,7 @@ class Queryer(object):
             server_list = select_server_zhu[1:]
         elif self.server in select_server_gou:
             server_list = select_server_gou[1:]
+        logging.info('服务器列表初始化为{}'.format(server_list))
         return server_list
 
     def query_item_id(self, name):
@@ -146,13 +153,17 @@ class Queryer(object):
         :param name:玩家输入的道具名称 可以仅为道具名的关键字
         :return self.item_list -> list
         """
+        logging.debug("物品查找阶段")
         self.item_list = []
+        logging.debug('静态资源加速 {}'.format(self.static))
         if self.static is False:
             # cafemaker可以正确的模糊查询
             query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
             result = self.init_query_result(query_url)
             # 返回的数据是个json,将其中的结果列表取出
             all_list = result["Results"]
+            logging.debug('物品列表已从远端取回')
+            logging.debug('物品过滤 {}'.format(self.filter_item))
             for item in all_list:
                 # 过滤掉不可在市场上交易的物品
                 if self.filter_item is True and item['ID'] in marketable:
@@ -177,28 +188,36 @@ class Queryer(object):
         :return dist：universalis返回的查询结果
         """
         # 初始化数据 清除上次查询的结果对以后查询的影响
+        logging.debug('价格查询阶段')
         self.stuff = {}
         self.yields = 1
         if self.hq is True:
+            logging.debug('锁定查询HQ')
             query_url = '/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
                 self.server, self.id)
         else:
+            logging.info("全品质查询")
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
         result = self.init_query_result(query_url, 'universalis')
         # 如果查询不到物品，强制重查一次NQ
         if self.hq is True and len(result['listings']) == 0:
+            logging.info("查询不到物品，强制重查一次NQ")
             self.hq = False
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url, 'universalis')
         # 将查询结果的销量指数和平均售价取出
         if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
             self.avgp = int(result['minPriceHQ'])
+            logging.debug('平均价格取出 minPriceHQ')
         elif result['hqSaleVelocity'] == 0 and result['nqSaleVelocity'] > 0:
             self.avgp = int(result['minPriceNQ'])
+            logging.debug('平均价格取出 minPriceNQ')
         elif result['nqSaleVelocity'] > 0 and result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
             self.avgp = int(result['minPriceHQ'])
+            logging.debug('平均价格取出 minPriceHQ')
         else:
             self.avgp = int(result['minPriceNQ'])
+            logging.debug('平均价格取出 minPriceNQ')
         self.nqs = result['nqSaleVelocity']
         self.hqs = result['hqSaleVelocity']
         return result
@@ -228,6 +247,7 @@ class Queryer(object):
                     'lastReviewTime': result['listings'][0]['lastReviewTime']
                 }
                 self.every_server.append(server_sale)
+                logging.info("{}的数据已加入池中".format(server))
 
         # 多线程操作
         threads = []
@@ -237,6 +257,7 @@ class Queryer(object):
             threads.append(thread)
         for t in threads:
             t.join()
+        logging.info("全部服务器查询完成，池中数据样本数 {}".format(len(self.every_server)))
 
     def query_item_craft(self):
         """
@@ -253,16 +274,20 @@ class Queryer(object):
                         self.stuff['yield'] = self.stuff['craft'][0]['yield']
                     self.stuff['craft'] = self.stuff['craft'][0]['ingredients']
                     self.make_item_craft(self.stuff['craft'])
+                    logging.info("物品制作配方已查询成功")
                 else:
                     self.stuff = {}
+                    logging.info("物品制作配方已查询失败，清空配方池")
             elif self.static is True:
                 self.stuff = copy.deepcopy(self.item_data[str(self.id)])
                 if 'craft' in self.stuff:
                     if 'yield' in self.stuff:
                         self.yields = self.stuff['yield']
                     self.make_item_craft(self.stuff['craft'])
+                    logging.info("物品制作配方已查询成功")
                 else:
                     self.stuff = {}
+                    logging.info("物品制作配方已查询失败，清空配方池")
 
     def make_child_item_craft(self, unit):
         """
@@ -348,6 +373,7 @@ class Queryer(object):
         :param itemid 需要初始化成字符串使用
         :return result -> dist 物品的数据
         """
+        logging.debug("材料递归查询，物品ID{} ".format(itemid))
         if self.static is False:
             query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
             result = self.init_query_result(query_url)['item']
@@ -381,6 +407,7 @@ class Queryer(object):
             server = '猫小胖'
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
+            logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
             if item['id'] not in self.price_cache:
                 query_url = '/api/%s/%s?listings=5&noGst=true' % (server, item['id'])
                 result = self.init_query_result(query_url, 'universalis')
@@ -388,16 +415,22 @@ class Queryer(object):
                     result['listings'].append({'pricePerUnit': 0})
                 # x参数  抗人为干扰
                 x = abs(result['averagePrice'] - result['listings'][0]['pricePerUnit'])
+                logging.debug("{}在市场上平均价格和最低价格的差价为{}".format(item['name'], x))
                 if int(item['id']) < 20:
                     # 碎晶，水晶，晶簇
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
+                    logging.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
                 elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
                     item['pricePerUnit'] = int(result['averagePrice'])
+                    logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
                 elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
                     item['pricePerUnit'] = result['listings'][4]['pricePerUnit']
+                    logging.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
                 else:
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
+                    logging.debug("{}差价较低，使用最低价格".format(item['name']))
                 # 更新缓存
+                logging.info("更新缓存 {}".format(item['name']))
                 self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
             # 缓存命中，直接读取数据。
             # 缓存没有超时时间，但是不会有人开一整天猴面雀吧
@@ -408,6 +441,7 @@ class Queryer(object):
             ids = []
             # 先提取出没有缓存的物品ID,有缓存直接用缓存
             for i in item:
+                logging.debug("{} 缓存命中，使用缓存".format(i['name']))
                 if i['id'] not in self.price_cache:
                     ids.append(str(i['id']))
                 else:
@@ -428,15 +462,22 @@ class Queryer(object):
                             if len(r['listings']) == 0:
                                 r['listings'].append({'pricePerUnit': 0})
                             x = abs(r['averagePrice'] - r['listings'][0]['pricePerUnit'])
+                            logging.debug("{}平均价格和最低价格的差价为{}".format(i['name'], x))
                             if int(i['id']) < 20:
                                 # 碎晶，水晶，晶簇
+                                logging.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
                             elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
+                                logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
                                 i['pricePerUnit'] = int(r['averagePrice'])
                             elif x > 300 and r['listings'][0]['pricePerUnit'] > 666:
+                                logging.debug(
+                                    "{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][4]['pricePerUnit']
                             else:
+                                logging.debug("{}差价较低，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
+                            logging.info("查询材料{}成功，更新缓存".format(i['name']))
                             self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])
 
     def query_item_cost(self, stuff_list, count=1, tab=0):
@@ -467,6 +508,7 @@ class Queryer(object):
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
             if 'priceFromNpc' in stuff:
+                logging.debug("{}NPC出售，使用比价，采用最低价".format(stuff['name']))
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
             else:
                 price = stuff['pricePerUnit'] * n_count
@@ -478,20 +520,25 @@ class Queryer(object):
             self.clipboard = self.clipboard + '%s%s%s%d\t%d' % (f_str, stuff['name'], m_str, n_count, price) + '\n'
             # 如果这个东西可以被制作
             if 'craft' in stuff and 'yield' in stuff:
+                logging.debug("{}每次可以生产的个数为{}".format(stuff['name'], stuff['yield']))
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
                 c_count = 0
                 if n_count > stuff['yield']:
                     # ceil  向上取整
                     c_count = ceil(n_count / stuff['yield'])
+                    logging.debug("{}需要多次生产，生产次数 {}".format(stuff['name'], c_count))
                 elif n_count <= stuff['yield']:
                     c_count = 1
+                    logging.debug("只生产一次")
                 self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
                 # self.o_cost += self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
             elif 'craft' in stuff and 'yield' not in stuff:
+                logging.debug("{}每次只生产一个".format(stuff['name']))
                 self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
                 # self.o_cost += self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
             elif 'craft' not in stuff:
                 self.o_cost += price
+                logging.debug("{} 这玩意不能制作".format(stuff["name"]))
         return d_cost
 
     def show_item_cost(self):
@@ -500,9 +547,11 @@ class Queryer(object):
         :return self.d_cost -> int 物品的直接材料制作成本
         :return self.o_cost -> int 物品的原始材料成本
         """
+        logging.info("开始查询物品的制作材料价格")
         self.clipboard = '直接材料\t二级材料\t三级材料\t四级材料\t直接材料数量\t直接材料价值\t二级材料数量\t二级材料价值\t三级材料数量\t三级材料价值\t四级材料数量\t四级材料价值\n'
         start = time.time()
         # del self.stuff
+        logging.info("材料树重置")
         self.stuff = {}
         self.d_cost = 0
         self.o_cost = 0
@@ -513,7 +562,7 @@ class Queryer(object):
             self.d_cost = self.query_item_cost(self.stuff['craft'])
             # debug 计算查询用时
             end = time.time()
-            print('材料树计算用时', end - start)
+            logging.info('材料树计算用时 {}'.format(end - start))
             self.clipboard = '%s\t\t直接材料成本\t%d\t\t原始材料成本\t%d\t\t更新时间\t%s\n\n' % (
                 self.name, self.d_cost, self.o_cost, self.timestamp_to_time(time.time())) + self.clipboard
             return self.d_cost, self.o_cost
@@ -528,14 +577,19 @@ class Queryer(object):
         try:
             url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
             result = get(url, timeout=5, headers=self.header)
+            logging.debug("{} success".format(url))
         except:
             url = 'http://43.142.142.18/version'
             result = get(url, timeout=3, headers=self.header)
+            logging.debug("{} success".format(url))
         return loads(result.text)
 
     def test_network(self):
         """网络测试方法"""
-        url = "https://universalis.app/api/maoxiaopang/5069?listings=1"
+        if self.proxy is False:
+            url = "https://universalis.app/api/maoxiaopang/5069?listings=1"
+        else:
+            url = 'http://43.142.142.18/universalis/api/maoxiaopang/5069?listings=1'
         c = 0
         while c < 3:
             try:
@@ -543,10 +597,10 @@ class Queryer(object):
                 if result.status_code == 200:
                     return "success"
                 else:
-                    print(url, result.status_code)
+                    logging.warning(url + str(result.status_code))
                     c += 1
             except:
-                print(url, 'failed')
+                logging.error('{} timeout'.format(url))
                 c += 1
         if c >= 3:
             return "failed"
@@ -561,7 +615,7 @@ if __name__ == '__main__':
         itemObj.item_data = load(item_list_file)
     # 物品选择器列表
     # itemObj.query_item_id(item)
-    # print(itemObj.item_list)
+    # logging.(itemObj.item_list)
     # 价格查询
     # itemObj.id = '35814'
     itemObj.id = '22893'
@@ -570,19 +624,19 @@ if __name__ == '__main__':
     # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
 
     # price_list = itemObj.query_item_price()
-    # print(price_list)
+    # logging.(price_list)
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
-    # print(itemObj.every_server)
+    # logging.(itemObj.every_server)
     # itemObj.query_item_craft()
-    # print(itemObj.stuff)
+    # logging.(itemObj.stuff)
     # itemObj.query_item_craft()
     itemObj.show_item_cost()
     print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()
     #     item_data = eval(item_str)
-    #     print(type(item_data))
-    #     print(len(item_data))
+    #     logging.(type(item_data))
+    #     logging.(len(item_data))
     # version = itemObj.get_online_version()
-    # print(version)
+    # logging.(version)

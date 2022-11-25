@@ -11,7 +11,10 @@ from requests import get
 
 from Data.marketable import marketable
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s : %(levelname)s  %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S'
+                    )
 
 
 class Queryer(object):
@@ -591,9 +594,9 @@ class Queryer(object):
     def test_network(self):
         """网络测试方法"""
         if self.proxy is False:
-            url = "https://universalis.app/api/maoxiaopang/5069?listings=1"
+            url = "https://universalis.app/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1"
         else:
-            url = 'http://43.142.142.18/universalis/api/maoxiaopang/5069?listings=1'
+            url = 'http://43.142.142.18/universalis/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1'
         c = 0
         while c < 3:
             try:

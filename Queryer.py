@@ -52,7 +52,7 @@ class Queryer(object):
         self.filter_item = True
         # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
-        self.header = {'User-Agent': 'Paissa 0.8.5'}
+        self.header = {'User-Agent': ''}
         self.price_cache = {}
         logging.info("查询物品槽位初始化")
 
@@ -206,6 +206,7 @@ class Queryer(object):
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url, 'universalis')
         # 将查询结果的销量指数和平均售价取出
+        logging.debug("nqSaleVelocity:{}, hqSaleVelocity:{}".format(result['nqSaleVelocity'], result['hqSaleVelocity']))
         if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
             self.avgp = int(result['minPriceHQ'])
             logging.debug('平均价格取出 minPriceHQ')
@@ -213,6 +214,9 @@ class Queryer(object):
             self.avgp = int(result['minPriceNQ'])
             logging.debug('平均价格取出 minPriceNQ')
         elif result['nqSaleVelocity'] > 0 and result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
+            self.avgp = int(result['minPriceHQ'])
+            logging.debug('平均价格取出 minPriceHQ')
+        elif result['hqSaleVelocity'] == 0 and result['nqSaleVelocity'] == 0 and result['minPriceNQ'] == 0:
             self.avgp = int(result['minPriceHQ'])
             logging.debug('平均价格取出 minPriceHQ')
         else:

@@ -224,6 +224,7 @@ def query_price():
     ui.jump_to_wiki.setText(
         '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
+    logging.info("开始查询{}的{}".format(item.server, item.name))
     query_sale_list()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
@@ -609,6 +610,7 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
+# 与 Data/version 文件中的版本对应
 program_version = '0.8.5'
 # 加载查询历史
 history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
@@ -631,7 +633,8 @@ except:
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
     item.item_data = json.load(item_list_file)
 date_version = item.item_data['data-version']
-logging.info("数据文件加载完毕，数据版本{}".format(date_version))
+item.header = {'User-Agent': 'Paissa {}'.format(program_version)}
+logging.info("数据文件加载完毕，程序版本{}，数据版本{}".format(program_version, date_version))
 if 'use_static' not in history_json:
     history_json['use_static'] = True
 item.static = history_json['use_static']

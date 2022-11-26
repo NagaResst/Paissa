@@ -79,7 +79,7 @@ class Queryer(object):
                     break
                 else:
                     logging.warning(url + result.status_code)
-            except:
+            except ConnectionError:
                 logging.error('{} timeout'.format(url))
         return result
 
@@ -120,7 +120,7 @@ class Queryer(object):
             result = get(icon_url, timeout=3, headers=self.header)
             self.icon = result.content
             logging.info('图标获取成功')
-        except:
+        except ConnectionError:
             logging.info('图标获取失败')
 
     def server_list(self):
@@ -585,7 +585,7 @@ class Queryer(object):
             url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
             result = get(url, timeout=5, headers=self.header)
             logging.debug("{} success".format(url))
-        except:
+        except ConnectionError:
             url = 'http://43.142.142.18/version'
             result = get(url, timeout=3, headers=self.header)
             logging.debug("{} success".format(url))
@@ -596,7 +596,7 @@ class Queryer(object):
         if self.proxy is False:
             url = "https://universalis.app/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1"
         else:
-            url = 'http://43.142.142.18/universalis/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1'
+            url = 'http://43.142.142.18/universalis/api/v2/extra/stats/least-recently-updated?world=hongyuhai&entries=1'
         c = 0
         while c < 3:
             try:
@@ -606,7 +606,7 @@ class Queryer(object):
                 else:
                     logging.warning(url + str(result.status_code))
                     c += 1
-            except:
+            except ConnectionError:
                 logging.error('{} timeout'.format(url))
                 c += 1
         if c >= 3:

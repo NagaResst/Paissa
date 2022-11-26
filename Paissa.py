@@ -627,7 +627,7 @@ try:
             query_history = [{"itemName": None, "HQ": None, "server": None}]
         item = Queryer(history_json['server'])
         logging.info("读取查询历史成功")
-except:
+except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
     query_history = [{"itemName": None, "HQ": None, "server": None}]
     item = Queryer('猫小胖')

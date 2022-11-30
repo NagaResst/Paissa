@@ -140,7 +140,6 @@ def query_item():
     模糊搜索查询物品
     """
     global query_history
-    global first_query
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
     if {"itemName": input_name} == query_history[-1]['itemName'] and len(item.item_list) > 1 and first_query is False:
@@ -155,8 +154,6 @@ def query_item():
         ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
     else:
-        # 首次查询
-        # first_query = False
         logging.info("开始查找道具")
         item.query_item_id(input_name)
         # 查询到的道具数量大于1
@@ -435,13 +432,11 @@ def click_history_query(selected):
     # """
     # print(selected, isinstance(selected, QtCore.QModelIndex))
     global query_history
-    global first_query
     # 最顶端的记录为本次查询的结果，do nothing
     if selected.row() == 0 and first_query is not True:
         pass
     else:
         # 重新查询
-        # first_query = False
         item_name = history_board.history_list.item(selected.row()).text()
         logging.info("通过点击材料树进行查询{}".format(item_name))
         if item_name[-2:] == 'HQ':
@@ -591,12 +586,16 @@ def show_check_update_window():
 
 
 def test_network():
-    result = item.test_network()
-    logging.info('网络测试结果，{}'.format(result))
-    if result == "success":
-        query_price()
+    global first_query
+    if first_query is False:
+        result = item.test_network()
+        logging.info('网络测试结果，{}'.format(result))
+        if result == "success":
+            query_price()
+        else:
+            QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
     else:
-        QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
+        query_price()
 
 
 def resource_path(relative_path):

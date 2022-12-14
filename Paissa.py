@@ -395,20 +395,15 @@ def make_cost_tree():
     if ui.show_data_box.currentIndex() == 3:
         ui.show_cost.setText('成本计算')
         ui.show_data_box.setCurrentIndex(2)
-    elif ui.show_data_box.currentIndex() == 2 and len(cost_page.cost_tree.children()) > 2:
-        logging.debug("材料树中内容大于2，判断已经查询过材料树，切换界面")
+    elif ui.show_data_box.currentIndex() == 2 and len(item.stuff) > 0:
+        logging.debug("材料树中有内容，判断已经查询过材料树，切换界面")
         ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
-    # 如果材料树的子对象数量<=7 说明材料树是空的
-    elif len(cost_page.cost_tree.children()) <= 2:
-        logging.debug("材料树中内容小于2，判断材料树是空的，开始查询")
-        # if len(item.stuff) > 0:
-        #     ui.show_cost.setText('市场价格')
-        #     ui.show_data_box.setCurrentIndex(3)
-        # # 开始计算材料成本
-        # elif len(item.stuff) == 0:
+    elif len(item.stuff) == 0:
+        logging.debug("材料树是空的，开始查询")
         item.show_item_cost()
         logging.info("开始绘制材料树")
+        cost_page.cost_tree.clear()
         for i in item.stuff['craft']:
             make_tree(i, cost_page.cost_tree)
         cost_page.d_cost.setText(str(item.d_cost))

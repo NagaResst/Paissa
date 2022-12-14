@@ -302,9 +302,8 @@ class Queryer(object):
         """
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
-        items = []
-        if 'pricePerUnit' not in unit:
-            self.query_item_cost_min(unit)
+        # if 'pricePerUnit' not in unit:
+        #     self.query_item_cost_min(unit)
         if self.static is False:
             if 'vendors' in result:
                 unit['priceFromNpc'] = result['price']
@@ -313,15 +312,16 @@ class Queryer(object):
                 unit['priceFromNpc'] = result['priceFromNpc']
         if 'craft' in result:
             unit['craft'] = result['craft']
-            for i in unit['craft']:
-                items.append(i)
-                r = self.query_item_detial(i['id'])
-                i['name'] = r['name']
-                if 'craft' in r:
-                    i['craft'] = r['craft']
-                    if 'yield' in r:
-                        i['yield'] = r['yield']
-            self.query_item_cost_min(items)
+            # for i in unit['craft']:
+            #     r = self.query_item_detial(i['id'])
+            #     i['name'] = r['name']
+            #     if 'craft' in r:
+            #         i['craft'] = r['craft']
+            #         if 'yield' in r:
+            #             i['yield'] = r['yield']
+            if 'yield' in result:
+                unit['yield'] = result['yield']
+            # self.query_item_cost_min(items)
             self.make_item_craft(unit['craft'])
 
     def make_item_craft(self, stuff_list):
@@ -344,7 +344,7 @@ class Queryer(object):
         :param itemid 需要初始化成字符串使用
         :return result -> dist 物品的数据
         """
-        logging.debug("材料递归查询，物品ID{} ".format(itemid))
+        logging.debug("材料递归查询，物品ID {} ".format(itemid))
         if self.static is False:
             query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
             result = self.init_query_result(query_url)['item']
@@ -378,8 +378,8 @@ class Queryer(object):
             server = '猫小胖'
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
-            logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
             if item['id'] not in self.price_cache:
+                logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
                 query_url = '/api/%s/%s?listings=5&noGst=true' % (server, item['id'])
                 result = self.init_query_result(query_url)
                 if len(result['listings']) == 0:
@@ -403,9 +403,8 @@ class Queryer(object):
                 # 更新缓存
                 logging.info("更新缓存 {}".format(item['name']))
                 self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
-            # 缓存命中，直接读取数据。
-            # 缓存没有超时时间，但是不会有人开一整天猴面雀吧
             else:
+                # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
                 item['pricePerUnit'] = self.price_cache[item['id']]
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
@@ -451,6 +450,34 @@ class Queryer(object):
                             logging.info("查询材料{}成功，更新缓存".format(i['name']))
                             self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])
 
+    def calibration_quantity(self, stuff_list, count=1):
+        """
+        材料树原材料数量校准
+        :param stuff_list -> list 材料列表，包含多个unit
+        :param count -> int 制作次数
+        """
+        for stuff in stuff_list:
+            # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
+            n_count = (stuff['amount'] * count)
+            stuff['amount'] = n_count
+            if 'craft' in stuff and 'yield' in stuff:
+                logging.debug("{}每次可以生产的个数为{}".format(stuff['name'], stuff['yield']))
+                # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
+                c_count = 0
+                if n_count > stuff['yield']:
+                    # ceil  向上取整
+                    c_count = ceil(n_count / stuff['yield'])
+                    logging.debug("{}需要多次生产，生产次数 {}".format(stuff['name'], c_count))
+                elif n_count <= stuff['yield']:
+                    c_count = 1
+                    logging.debug("只生产一次")
+                self.calibration_quantity(stuff['craft'], c_count)
+            elif 'craft' in stuff and 'yield' not in stuff:
+                logging.debug("{}每次只生产一个".format(stuff['name']))
+                self.calibration_quantity(stuff['craft'], n_count)
+            elif 'craft' not in stuff:
+                logging.debug("{} 这玩意不能制作".format(stuff["name"]))
+
     def query_item_cost(self, stuff_list, count=1, tab=0):
         """
         查询物品的制作成本的计算器
@@ -478,9 +505,11 @@ class Queryer(object):
         for stuff in stuff_list:
             # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
             n_count = (stuff['amount'] * count)
+            self.query_item_cost_min(stuff)
             if 'priceFromNpc' in stuff:
-                logging.debug("{}NPC出售，使用比价，采用最低价".format(stuff['name']))
                 price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
+                logging.debug("{}NPC出售，采用最低价 {}, NPC {} ，market {}".format(
+                    stuff['name'], price, stuff['priceFromNpc'], stuff['pricePerUnit']))
             else:
                 price = stuff['pricePerUnit'] * n_count
             stuff['amount'] = n_count
@@ -528,6 +557,7 @@ class Queryer(object):
         self.o_cost = 0
         # 查询配方
         self.query_item_craft()
+        self.calibration_quantity(self.stuff['craft'])
         # 确认到有配方
         if len(self.stuff) > 0:
             self.d_cost = self.query_item_cost(self.stuff['craft'])
@@ -587,8 +617,9 @@ if __name__ == '__main__':
     # 物品选择器列表
     # itemObj.query_item_id(item)
     # 价格查询
+    # 35814 大型咖啡馆外墙  29426 伊修加德新型御敌锁甲靴
     # itemObj.id = '35814'
-    itemObj.id = '22893'
+    itemObj.id = '29426'
     itemObj.hq = True
     # https://universalis.app/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
     # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
@@ -598,11 +629,10 @@ if __name__ == '__main__':
     # itemObj.query_every_server(server_list)
     # itemObj.query_item_craft()
     itemObj.query_item_craft()
+    itemObj.calibration_quantity(itemObj.stuff['craft'])
     # itemObj.show_item_cost()
     print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()
     #     item_data = eval(item_str)
-    #     logging.(type(item_data))
-    #     logging.(len(item_data))
     # version = itemObj.get_online_version()

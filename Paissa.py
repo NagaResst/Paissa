@@ -395,35 +395,36 @@ def make_cost_tree():
     if ui.show_data_box.currentIndex() == 3:
         ui.show_cost.setText('成本计算')
         ui.show_data_box.setCurrentIndex(2)
-    elif ui.show_data_box.currentIndex() == 2 and len(cost_page.cost_tree.children()) > 7:
+    elif ui.show_data_box.currentIndex() == 2 and len(cost_page.cost_tree.children()) > 2:
+        logging.debug("材料树中内容大于2，判断已经查询过材料树，切换界面")
         ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
     # 如果材料树的子对象数量<=7 说明材料树是空的
-    elif len(cost_page.cost_tree.children()) <= 7:
-        logging.debug("材料树中内容大于7，判断已经查询过材料树，切换界面")
-        if len(item.stuff) > 0:
-            ui.show_cost.setText('市场价格')
-            ui.show_data_box.setCurrentIndex(3)
-        # 开始计算材料成本
-        elif len(item.stuff) == 0:
-            item.show_item_cost()
-            logging.info("开始绘制材料树")
-            for i in item.stuff['craft']:
-                make_tree(i, cost_page.cost_tree)
-            cost_page.d_cost.setText(str(item.d_cost))
-            cost_page.o_cost.setText(str(item.o_cost))
-            # 1级子材料数量不超过9个的时候展开材料树
-            if len(item.stuff['craft']) < 9:
-                cost_page.cost_tree.expandAll()
-            # 如果这个道具一次生产制作多个的利润算法兼容
-            if item.yields > 1:
-                p = item.avgp * item.yields - item.d_cost
-                cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
-            else:
-                p = item.avgp - item.d_cost
-                cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
-            ui.show_cost.setText('市场价格')
-            ui.show_data_box.setCurrentIndex(3)
+    elif len(cost_page.cost_tree.children()) <= 2:
+        logging.debug("材料树中内容小于2，判断材料树是空的，开始查询")
+        # if len(item.stuff) > 0:
+        #     ui.show_cost.setText('市场价格')
+        #     ui.show_data_box.setCurrentIndex(3)
+        # # 开始计算材料成本
+        # elif len(item.stuff) == 0:
+        item.show_item_cost()
+        logging.info("开始绘制材料树")
+        for i in item.stuff['craft']:
+            make_tree(i, cost_page.cost_tree)
+        cost_page.d_cost.setText(str(item.d_cost))
+        cost_page.o_cost.setText(str(item.o_cost))
+        # 1级子材料数量不超过9个的时候展开材料树
+        if len(item.stuff['craft']) < 9:
+            cost_page.cost_tree.expandAll()
+        # 如果这个道具一次生产制作多个的利润算法兼容
+        if item.yields > 1:
+            p = item.avgp * item.yields - item.d_cost
+            cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
+        else:
+            p = item.avgp - item.d_cost
+            cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
+        ui.show_cost.setText('市场价格')
+        ui.show_data_box.setCurrentIndex(3)
 
 
 def click_history_query(selected):

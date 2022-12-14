@@ -59,16 +59,15 @@ class Queryer(object):
         self.price_cache = {}
         logging.info("查询物品槽位初始化")
 
-    def init_query_result(self, url, site=None):
+    def init_query_result(self, url):
         """
         查询结果序列化成字典
         :param url:要调用的接口path
-        :param site:是否启用反代加速决定调用API访问网站
         :return dist：universalis返回的查询结果
         """
-        if site == 'universalis' and self.proxy is True:
+        if self.proxy is True:
             url = 'http://43.142.142.18/universalis' + url
-        elif site == 'universalis' and self.proxy is False:
+        else:
             url = 'https://universalis.app' + url
         while True:
             try:
@@ -78,8 +77,8 @@ class Queryer(object):
                     logging.debug("{} success".format(url))
                     break
                 else:
-                    logging.warning(url + result.status_code)
-            except ConnectionError:
+                    logging.warning(url + str(result.status_code))
+            except:
                 logging.error('{} timeout'.format(url))
         return result
 
@@ -201,13 +200,13 @@ class Queryer(object):
         else:
             logging.info("全品质查询")
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-        result = self.init_query_result(query_url, 'universalis')
+        result = self.init_query_result(query_url)
         # 如果查询不到物品，强制重查一次NQ
         if self.hq is True and len(result['listings']) == 0:
             logging.info("查询不到物品，强制重查一次NQ")
             self.hq = False
             query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-            result = self.init_query_result(query_url, 'universalis')
+            result = self.init_query_result(query_url)
         # 将查询结果的销量指数和平均售价取出
         logging.debug("nqSaleVelocity:{}, hqSaleVelocity:{}".format(result['nqSaleVelocity'], result['hqSaleVelocity']))
         if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
@@ -241,7 +240,7 @@ class Queryer(object):
         # 单个服务器查询最低价格的方法
         def query_single_server(server, item_id):
             query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item_id)
-            result = self.init_query_result(query_url, 'universalis')
+            result = self.init_query_result(query_url)
             # 重新组织比价用的数据，并加入全服查价的结果列表，如果不重新组织数据，某些区服查询出空集时，会报错
             if len(result['listings']) != 0:
                 server_sale = {
@@ -298,31 +297,6 @@ class Queryer(object):
 
     def make_child_item_craft(self, unit):
         """
-        材料树递归查询的线程函数 这个方法会直接把价格更新到实例的stuff属性里
-        :param unit -> dist 道具的数据
-        """
-        result = self.query_item_detial(unit['id'])
-        unit['name'] = result['name']
-        self.query_item_cost_min(unit)
-        if self.static is False:
-            if 'vendors' in result:
-                unit['priceFromNpc'] = result['price']
-            if 'craft' in result:
-                unit['craft'] = result['craft']
-                if 'yield' in result:
-                    unit['yield'] = result['yield']
-                self.make_item_craft(unit['craft'])
-        elif self.static is True:
-            if 'priceFromNpc' in result:
-                unit['priceFromNpc'] = result['priceFromNpc']
-            if 'craft' in result:
-                unit['craft'] = result['craft']
-                if 'yield' in result:
-                    unit['yield'] = result['yield']
-                self.make_item_craft(unit['craft'])
-
-    def make_child_item_craft_new(self, unit):
-        """
         新的材料树递归查询的线程函数 这个方法会在一次接口请求中查询多个物品
         :param unit -> dist 道具的数据
         """
@@ -353,24 +327,14 @@ class Queryer(object):
     def make_item_craft(self, stuff_list):
         """
         统计物品的制作材料
-        新旧两种查询方法在大量查询的时候都会产生返回429的现象，导致查询速度慢，但新的查询方法在查询复杂配方的时候速度提升明显。
         :param stuff_list -> list 包含多个unit的列表
         """
         threads = []
-        if len(stuff_list) > 5:
-            for unit in stuff_list:
-                thread_make_child_craft = threading.Thread(target=self.make_child_item_craft_new, args=[unit])
-                thread_make_child_craft.start()
-                threads.append(thread_make_child_craft)
-                # debug
-                # thread_make_child_craft.join()
-        else:
-            for unit in stuff_list:
-                thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
-                thread_make_child_craft.start()
-                threads.append(thread_make_child_craft)
-                # debug
-                # thread_make_child_craft.join()
+        for unit in stuff_list:
+            thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
+            thread_make_child_craft.start()
+            threads.append(thread_make_child_craft)
+            # thread_make_child_craft.join()  # debug
         for i in threads:
             i.join()
 
@@ -417,7 +381,7 @@ class Queryer(object):
             logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
             if item['id'] not in self.price_cache:
                 query_url = '/api/%s/%s?listings=5&noGst=true' % (server, item['id'])
-                result = self.init_query_result(query_url, 'universalis')
+                result = self.init_query_result(query_url)
                 if len(result['listings']) == 0:
                     result['listings'].append({'pricePerUnit': 0})
                 # x参数  抗人为干扰
@@ -457,10 +421,10 @@ class Queryer(object):
             idss = ','.join(ids)
             if len(ids) > 1:
                 query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
-                result = self.init_query_result(query_url, 'universalis')['items']
+                result = self.init_query_result(query_url)['items']
             elif len(ids) == 1:
                 query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
-                result = [self.init_query_result(query_url, 'universalis')]
+                result = [self.init_query_result(query_url)]
             for i in item:
                 # 把在线查询到的结果更新到缓存中
                 if i['id'] not in self.price_cache:
@@ -622,7 +586,6 @@ if __name__ == '__main__':
         itemObj.item_data = load(item_list_file)
     # 物品选择器列表
     # itemObj.query_item_id(item)
-    # logging.(itemObj.item_list)
     # 价格查询
     # itemObj.id = '35814'
     itemObj.id = '22893'
@@ -631,14 +594,11 @@ if __name__ == '__main__':
     # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
 
     # price_list = itemObj.query_item_price()
-    # logging.(price_list)
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
-    # logging.(itemObj.every_server)
     # itemObj.query_item_craft()
-    # logging.(itemObj.stuff)
-    # itemObj.query_item_craft()
-    itemObj.show_item_cost()
+    itemObj.query_item_craft()
+    # itemObj.show_item_cost()
     print(itemObj.stuff)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()
@@ -646,4 +606,3 @@ if __name__ == '__main__':
     #     logging.(type(item_data))
     #     logging.(len(item_data))
     # version = itemObj.get_online_version()
-    # logging.(version)

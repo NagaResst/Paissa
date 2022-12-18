@@ -119,7 +119,7 @@ class Queryer(object):
             result = get(icon_url, timeout=3, headers=self.header)
             self.icon = result.content
             logging.info('图标获取成功')
-        except ConnectionError:
+        except:
             logging.info('图标获取失败')
 
     def server_list(self):
@@ -548,7 +548,7 @@ class Queryer(object):
             url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
             result = get(url, timeout=5, headers=self.header)
             logging.debug("{} success".format(url))
-        except ConnectionError:
+        except:
             url = 'http://43.142.142.18/version'
             result = get(url, timeout=3, headers=self.header)
             logging.debug("{} success".format(url))
@@ -569,7 +569,7 @@ class Queryer(object):
                 else:
                     logging.warning(url + str(result.status_code))
                     c += 1
-            except ConnectionError:
+            except:
                 logging.error('{} timeout'.format(url))
                 c += 1
         if c >= 3:

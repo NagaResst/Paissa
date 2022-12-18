@@ -405,7 +405,7 @@ class Queryer(object):
                 self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
             else:
                 # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
-                item['pricePerUnit'] = self.price_cache[item['id']]
+                item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']])
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
             ids = []
@@ -503,11 +503,14 @@ class Queryer(object):
         d_cost = 0
         self.query_item_cost_min(stuff_list)
         for stuff in stuff_list:
-            d_cost += stuff['pricePerUnit'] * stuff['amount']
+            if 'pricePerUnit' not in stuff:
+                self.query_item_cost_min(stuff)
+            stuff['pricePerUnit'] = stuff['pricePerUnit'] * stuff['amount']
+            d_cost += stuff['pricePerUnit']
             if 'craft' in stuff:
                 self.query_item_cost(stuff['craft'])
-            else:
-                self.o_cost += stuff['pricePerUnit'] * stuff['amount']
+            elif 'pricePerUnit' in stuff:
+                self.o_cost += stuff['pricePerUnit']
         return d_cost
 
     def show_item_cost(self):
@@ -588,7 +591,7 @@ if __name__ == '__main__':
     # 价格查询
     # 35814 大型咖啡馆外墙  29426 伊修加德新型御敌锁甲靴
     # itemObj.id = '35814'
-    itemObj.id = '29426'
+    itemObj.id = '35814'
     itemObj.hq = True
     # https://universalis.app/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
     # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true

@@ -478,11 +478,10 @@ class Queryer(object):
             elif 'craft' not in stuff:
                 logging.debug("{} 这玩意不能制作".format(stuff["name"]))
 
-    def query_item_cost(self, stuff_list, count=1, tab=0):
+    def query_item_cost(self, stuff_list, tab=0):
         """
         查询物品的制作成本的计算器
         :param stuff_list -> list 材料列表，包含多个unit
-        :param count -> int 制作次数
         :param tab -> str 文本输出格式控制
         """
 
@@ -502,43 +501,13 @@ class Queryer(object):
             return f_str, m_str
 
         d_cost = 0
+        self.query_item_cost_min(stuff_list)
         for stuff in stuff_list:
-            # n_count 每次生产产出材料为1个时 直接用所需数量 * 产出
-            n_count = (stuff['amount'] * count)
-            self.query_item_cost_min(stuff)
-            if 'priceFromNpc' in stuff:
-                price = min(stuff['priceFromNpc'], stuff['pricePerUnit']) * n_count
-                logging.debug("{}NPC出售，采用最低价 {}, NPC {} ，market {}".format(
-                    stuff['name'], price, stuff['priceFromNpc'], stuff['pricePerUnit']))
+            d_cost += stuff['pricePerUnit'] * stuff['amount']
+            if 'craft' in stuff:
+                self.query_item_cost(stuff['craft'])
             else:
-                price = stuff['pricePerUnit'] * n_count
-            stuff['amount'] = n_count
-            stuff['pricePerUnit'] = price
-            d_cost += price
-            # 准备复制到剪贴板
-            f_str, m_str = c_tab(tab=tab)
-            self.clipboard = self.clipboard + '%s%s%s%d\t%d' % (f_str, stuff['name'], m_str, n_count, price) + '\n'
-            # 如果这个东西可以被制作
-            if 'craft' in stuff and 'yield' in stuff:
-                logging.debug("{}每次可以生产的个数为{}".format(stuff['name'], stuff['yield']))
-                # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
-                c_count = 0
-                if n_count > stuff['yield']:
-                    # ceil  向上取整
-                    c_count = ceil(n_count / stuff['yield'])
-                    logging.debug("{}需要多次生产，生产次数 {}".format(stuff['name'], c_count))
-                elif n_count <= stuff['yield']:
-                    c_count = 1
-                    logging.debug("只生产一次")
-                self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
-                # self.o_cost += self.query_item_cost(stuff['craft'], c_count, tab=tab + 1)
-            elif 'craft' in stuff and 'yield' not in stuff:
-                logging.debug("{}每次只生产一个".format(stuff['name']))
-                self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
-                # self.o_cost += self.query_item_cost(stuff['craft'], n_count, tab=tab + 1)
-            elif 'craft' not in stuff:
-                self.o_cost += price
-                logging.debug("{} 这玩意不能制作".format(stuff["name"]))
+                self.o_cost += stuff['pricePerUnit'] * stuff['amount']
         return d_cost
 
     def show_item_cost(self):
@@ -630,8 +599,10 @@ if __name__ == '__main__':
     # itemObj.query_item_craft()
     itemObj.query_item_craft()
     itemObj.calibration_quantity(itemObj.stuff['craft'])
-    # itemObj.show_item_cost()
+    itemObj.show_item_cost()
     print(itemObj.stuff)
+    print('直接材料成本{}，原始材料成本{}'.format(itemObj.d_cost, itemObj.o_cost))
+    print(itemObj.clipboard)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()
     #     item_data = eval(item_str)

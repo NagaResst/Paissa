@@ -507,8 +507,11 @@ class Queryer(object):
                 self.query_item_cost_min(stuff)
             stuff['pricePerUnit'] = stuff['pricePerUnit'] * stuff['amount']
             d_cost += stuff['pricePerUnit']
+            f_str, m_str = c_tab(tab=tab)
+            self.clipboard = self.clipboard + '%s%s%s%d\t%d' % (
+                f_str, stuff['name'], m_str, stuff['amount'], stuff['pricePerUnit']) + '\n'
             if 'craft' in stuff:
-                self.query_item_cost(stuff['craft'])
+                self.query_item_cost(stuff['craft'], tab=tab + 1)
             elif 'pricePerUnit' in stuff:
                 self.o_cost += stuff['pricePerUnit']
         return d_cost

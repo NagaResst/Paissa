@@ -414,7 +414,7 @@ class Queryer(object):
                 if i['id'] not in self.price_cache:
                     ids.append(str(i['id']))
                 else:
-                    i['pricePerUnit'] = self.price_cache[i['id']]
+                    i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']])
                     logging.debug("{} 缓存命中，使用缓存".format(i['name']))
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)

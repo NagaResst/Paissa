@@ -52,15 +52,15 @@ def get_item_details(item_id):
             print(item_id, '查询失败，重试')
 
 
-tpool = ThreadPoolExecutor(max_workers=50)
+tpool = ThreadPoolExecutor(max_workers=100)
 tpool.map(get_item_details, item_out_list)
 tpool.shutdown(wait=True)
 
 """
 数据写入磁盘
 """
-print(item_out_list)
-version = {'data-version': '6.18'}
+# print(item_out_list)
+version = {'data-version': '6.20'}
 version.update(item_out_list)
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
     json.dump(version, item_data)

@@ -532,9 +532,9 @@ class Queryer(object):
         self.o_cost = 0
         # 查询配方
         self.query_item_craft()
-        self.calibration_quantity(self.stuff['craft'])
         # 确认到有配方
         if len(self.stuff) > 0:
+            self.calibration_quantity(self.stuff['craft'])
             self.d_cost = self.query_item_cost(self.stuff['craft'])
             # debug 计算查询用时
             end = time.time()

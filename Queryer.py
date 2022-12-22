@@ -302,8 +302,6 @@ class Queryer(object):
         """
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
-        # if 'pricePerUnit' not in unit:
-        #     self.query_item_cost_min(unit)
         if self.static is False:
             if 'vendors' in result:
                 unit['priceFromNpc'] = result['price']
@@ -312,16 +310,8 @@ class Queryer(object):
                 unit['priceFromNpc'] = result['priceFromNpc']
         if 'craft' in result:
             unit['craft'] = result['craft']
-            # for i in unit['craft']:
-            #     r = self.query_item_detial(i['id'])
-            #     i['name'] = r['name']
-            #     if 'craft' in r:
-            #         i['craft'] = r['craft']
-            #         if 'yield' in r:
-            #             i['yield'] = r['yield']
             if 'yield' in result:
                 unit['yield'] = result['yield']
-            # self.query_item_cost_min(items)
             self.make_item_craft(unit['craft'])
 
     def make_item_craft(self, stuff_list):
@@ -413,6 +403,7 @@ class Queryer(object):
             for i in item:
                 if i['id'] not in self.price_cache:
                     ids.append(str(i['id']))
+                    logging.debug("{} 没有查询到缓存 ，在线查询".format(i['name']))
                 else:
                     i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']])
                     logging.debug("{} 缓存命中，使用缓存".format(i['name']))

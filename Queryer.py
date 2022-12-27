@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 
 class Queryer(object):
-    def __init__(self, query_server, item_id=None):
+    def __init__(self, query_server='猫小胖', item_id=None):
         """
         对象初始化
         """
@@ -428,6 +428,9 @@ class Queryer(object):
                                 # 碎晶，水晶，晶簇
                                 logging.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
+                                if i['pricePerUnit'] == 0:
+                                    i['pricePerUnit'] = int(r['averagePrice'])
+                                    logging.debug("{}物品ID小于20 推测为水晶类，但是价格查询失败，使用平均价格".format(i['name']))
                             elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
                                 logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
                                 i['pricePerUnit'] = int(r['averagePrice'])
@@ -438,7 +441,7 @@ class Queryer(object):
                             else:
                                 logging.debug("{}差价较低，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
-                            logging.info("查询材料{}成功，更新缓存".format(i['name']))
+                            logging.info("查询材料{}成功，更新缓存,价格为{}".format(i['name'], i['pricePerUnit']))
                             self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])
 
     def calibration_quantity(self, stuff_list, count=1):
@@ -531,7 +534,7 @@ class Queryer(object):
             end = time.time()
             logging.info('材料树计算用时 {}'.format(end - start))
             self.clipboard = '%s\t\t直接材料成本\t%d\t\t原始材料成本\t%d\t\t更新时间\t%s\n\n' % (
-                self.name, self.d_cost, self.o_cost, self.timestamp_to_time(time.time())) + self.clipboard
+                self.stuff['name'], self.d_cost, self.o_cost, self.timestamp_to_time(time.time())) + self.clipboard
             return self.d_cost, self.o_cost
         else:
             self.stuff['craft'] = [{'name': '该物品不能被制作', 'amount': '', 'pricePerUnit': ''}]
@@ -594,11 +597,11 @@ if __name__ == '__main__':
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
     # itemObj.query_item_craft()
-    itemObj.query_item_craft()
-    itemObj.calibration_quantity(itemObj.stuff['craft'])
+    # itemObj.query_item_craft()
+    # itemObj.calibration_quantity(itemObj.stuff['craft'])
     itemObj.show_item_cost()
     print(itemObj.stuff)
-    print('直接材料成本{}，原始材料成本{}'.format(itemObj.d_cost, itemObj.o_cost))
+    # print('直接材料成本{}，原始材料成本{}'.format(itemObj.d_cost, itemObj.o_cost))
     print(itemObj.clipboard)
     # with open('Data/item.Pdt', 'r', encoding='utf8') as item_list:
     #     item_str = item_list.read()

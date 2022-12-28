@@ -19,6 +19,9 @@ from UI.show_price import Ui_show_price
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
 所以 ui文件 和成对出现的 py文件 不会做任何修改，界面行为在这里进行重新定义，后台查询功能在 Queryer 内实现。
 """
+# 解决中文路径的问题  https://github.com/skywind3000/PyStand/issues/6
+QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
+
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s : %(levelname)s  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'

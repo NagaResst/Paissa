@@ -586,7 +586,7 @@ def show_check_update_window():
 
 def test_network():
     global first_query
-    if first_query is False:
+    if first_query is True:
         result = item.test_network()
         logging.info('网络测试结果，{}'.format(result))
         if result == "success":
@@ -594,6 +594,7 @@ def test_network():
         else:
             QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
     else:
+        logging.info('跳过网络测试')
         query_price()
 
 

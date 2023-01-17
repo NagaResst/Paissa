@@ -385,8 +385,13 @@ class Queryer(object):
                     item['pricePerUnit'] = int(result['averagePrice'])
                     logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
                 elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
-                    item['pricePerUnit'] = result['listings'][4]['pricePerUnit']
-                    logging.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
+                    try:
+                        item['pricePerUnit'] = result['listings'][3]['pricePerUnit']
+                        logging.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
+                    except:
+                        item['pricePerUnit'] = int(result['averagePrice'])
+                        logging.debug(
+                            "{}价差较高，但是市场上比较稀缺，使用平均价格".format(item['name'], result['averagePrice']))
                 else:
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
                     logging.debug("{}差价较低，使用最低价格".format(item['name']))
@@ -430,14 +435,21 @@ class Queryer(object):
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
                                 if i['pricePerUnit'] == 0:
                                     i['pricePerUnit'] = int(r['averagePrice'])
-                                    logging.debug("{}物品ID小于20 推测为水晶类，但是价格查询失败，使用平均价格".format(i['name']))
+                                    logging.debug(
+                                        "{}物品ID小于20 推测为水晶类，但是价格查询失败，使用平均价格".format(i['name']))
                             elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
                                 logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
                                 i['pricePerUnit'] = int(r['averagePrice'])
                             elif x > 300 and r['listings'][0]['pricePerUnit'] > 666:
-                                logging.debug(
-                                    "{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(i['name']))
-                                i['pricePerUnit'] = r['listings'][4]['pricePerUnit']
+                                try:
+                                    logging.debug(
+                                        "{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(i['name']))
+                                    i['pricePerUnit'] = r['listings'][4]['pricePerUnit']
+                                except:
+                                    logging.debug("{}价差较高，但是物品比较贵，使用平均价格{}，仅供参考"
+                                                  .format(i['name'], r['averagePrice']))
+                                    i['pricePerUnit'] = int(r['averagePrice'])
+
                             else:
                                 logging.debug("{}差价较低，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']

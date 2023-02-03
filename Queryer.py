@@ -42,6 +42,7 @@ class Queryer(object):
         self.o_cost = 0
         # 当前查询的服务器
         self.server = query_server
+        self.world = 'maoxiaopang'
         self.every_server = []
         # 物品图标
         self.icon = None
@@ -155,48 +156,75 @@ class Queryer(object):
         select_server_Meteor = ['Meteor', 'Belias', 'Shinryu', 'Unicorn',
                                 'Yojimbo', 'Zeromus', 'Valefor', 'Ramuh', 'Mandragora']
         select_server_Dynamis = ['Dynamis', 'Marilith', 'Seraph', 'Halicarnassus', 'Maduin']
-        select_server_global = ['Elemental', 'Gaia', 'Mana', 'Aether',
-                                'Primal', 'Chaos', 'Light', 'Crystal', 'Materia', 'Meteor', 'Dynamis']
+        select_server_japan = ['Elemental', 'Gaia', 'Mana', 'Meteor']
+        select_server_europe = ['Chaos', 'Light']
+        select_server_na = ['Aether', 'Primal', 'Crystal', 'Dynamis']
+        select_server_oceania = ['Materia']
         select_server_china = ['猫小胖', '莫古力', '陆行鸟', '豆豆柴']
-
         # 设置默认大区为猫区
         server_list = select_server_mao
         # 根据服务器所在大区选择比价的服务器
         if self.server in select_server_mao:
             server_list = select_server_mao[1:]
+            self.world = 'maoxiaopang'
         elif self.server in select_server_niao:
             server_list = select_server_niao[1:]
+            self.world = 'luxingniao'
         elif self.server in select_server_zhu:
             server_list = select_server_zhu[1:]
+            self.world = 'moguli'
         elif self.server in select_server_gou:
             server_list = select_server_gou[1:]
+            self.world = 'doudouchai'
         elif self.server in select_server_Elemental:
             server_list = select_server_Elemental[1:]
+            self.world = 'Elemental'
         elif self.server in select_server_Gaia:
             server_list = select_server_Gaia[1:]
+            self.world = 'Gaia'
         elif self.server in select_server_Mana:
             server_list = select_server_Mana[1:]
+            self.world = 'Mana'
         elif self.server in select_server_Aether:
             server_list = select_server_Aether[1:]
+            self.world = 'Aether'
         elif self.server in select_server_Primal:
             server_list = select_server_Primal[1:]
+            self.world = 'Primal'
         elif self.server in select_server_Chaos:
             server_list = select_server_Chaos[1:]
+            self.world = 'Chaos'
         elif self.server in select_server_Light:
             server_list = select_server_Light[1:]
+            self.world = 'Light'
         elif self.server in select_server_Crystal:
             server_list = select_server_Crystal[1:]
+            self.world = 'Crystal'
         elif self.server in select_server_Materia:
             server_list = select_server_Materia[1:]
+            self.world = 'Materia'
         elif self.server in select_server_Meteor:
             server_list = select_server_Meteor[1:]
+            self.world = 'Meteor'
         elif self.server in select_server_Dynamis:
             server_list = select_server_Dynamis[1:]
-        elif self.server == 'global':
-            server_list = select_server_global
-        elif self.server == 'china':
+            self.world = 'Dynamis'
+        elif self.server == 'Japan':
+            server_list = select_server_japan
+            self.world = 'Japan'
+        elif self.server == 'North-America':
+            server_list = select_server_na
+            self.world = 'North-America'
+        elif self.server == 'Oceania':
+            server_list = select_server_oceania
+            self.world = 'Oceania'
+        elif self.server == 'Europe':
+            server_list = select_server_europe
+            self.world = 'Europe'
+        elif self.server == 'China':
             server_list = select_server_china
-        logging.info('服务器列表初始化为{}'.format(server_list))
+            self.world = 'China'
+        logging.info('查询区域为{}， 服务器列表初始化为{}'.format(self.world, server_list))
         return server_list
 
     def query_item_id(self, name):
@@ -402,25 +430,11 @@ class Queryer(object):
         查询单项物品的板子价格，调用缓存或者是在线查询物品的最低价
         :param item -> dist 物品的数据
         """
-        # 确定查询的服务器所在大区
-        select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
-                             '梦羽宝境']
-        select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染',
-                              '晨曦王座']
-        select_server_gou = ['豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
-        if self.server in select_server_niao:
-            server = '陆行鸟'
-        elif self.server in select_server_zhu:
-            server = '莫古力'
-        elif self.server in select_server_gou:
-            server = '豆豆柴'
-        else:
-            server = '猫小胖'
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
             if item['id'] not in self.price_cache:
                 logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, item['id'])
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
                 result = self.init_query_result(query_url)
                 if len(result['listings']) == 0:
                     result['listings'].append({'pricePerUnit': 0})
@@ -440,7 +454,7 @@ class Queryer(object):
                         logging.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
                     except:
                         item['pricePerUnit'] = int(result['averagePrice'])
-                        logging.debug("{}价差较高，但是市场上比较稀缺，使用平均价格"
+                        logging.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}"
                                       .format(item['name'], result['averagePrice']))
                 else:
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
@@ -465,11 +479,13 @@ class Queryer(object):
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = self.init_query_result(query_url)['items']
             elif len(ids) == 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = [self.init_query_result(query_url)]
+            else:
+                result = []
             for i in item:
                 # 把在线查询到的结果更新到缓存中
                 if i['id'] not in self.price_cache:

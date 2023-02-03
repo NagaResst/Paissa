@@ -459,7 +459,18 @@ def click_select_server(server):
     """
     # 修改界面上显示的当前服务器
     ui.show_server.setText(server)
-    item.server = server
+    if server == "欧服":
+        item.server = 'Europe'
+    elif server == "日服":
+        item.server = 'Japan'
+    elif server == "美服":
+        item.server = 'North-America'
+    elif server == "太平洋服":
+        item.server = 'Oceania'
+    elif server == "国服":
+        item.server = 'China'
+    else:
+        item.server = server
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
         logging.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))

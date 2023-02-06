@@ -614,15 +614,10 @@
     </property>
     <addaction name="use_static_file"/>
     <addaction name="filter_item"/>
-   </widget>
-   <widget class="QMenu" name="check_update">
-    <property name="title">
-     <string>关于</string>
-    </property>
+    <addaction name="check_update"/>
    </widget>
    <addaction name="server"/>
    <addaction name="other"/>
-   <addaction name="check_update"/>
   </widget>
   <action name="select_server_china">
    <property name="enabled">
@@ -2365,10 +2360,11 @@
    <property name="text">
     <string>使用静态资源加速</string>
    </property>
-  </action>
-  <action name="check_update">
-   <property name="text">
-    <string>关于</string>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="filter_item">
@@ -2380,6 +2376,23 @@
    </property>
    <property name="text">
     <string>过滤不可在市场出售的物品</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="check_update">
+   <property name="text">
+    <string>关于</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
  </widget>

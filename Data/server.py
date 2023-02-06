@@ -191,10 +191,7 @@ list = []
 gs = []
 china = []
 for s in server:
-    if s['region'] == '中国':
-        china.append(s['name'])
-    else:
-        gs.append(s['name'])
+    list.append(s['region'])
     ss = [s['name']]
     for n in s['worlds']:
         for w in world:
@@ -202,5 +199,4 @@ for s in server:
                 ss.append(w['name'])
     list.append(ss)
 print(list)
-print("国际服大区")
-print("国服大区")
+

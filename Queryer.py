@@ -42,6 +42,7 @@ class Queryer(object):
         self.o_cost = 0
         # 当前查询的服务器
         self.server = query_server
+        self.world = 'maoxiaopang'
         self.every_server = []
         # 物品图标
         self.icon = None
@@ -110,14 +111,11 @@ class Queryer(object):
                 if str(i['id']) == str(self.id):
                     icon_url = "https://cafemaker.wakingsands.com" + i['icon']
         elif len(self.item_list) > 1 and self.static is True:
-            icon_url = "https://garlandtools.cn/files/icons/item/" + \
-                self.item_data[str(self.id)]['icon'] + '.png'
+            icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
         elif len(self.item_list) == 1 and self.static is False:
-            icon_url = "https://cafemaker.wakingsands.com" + \
-                self.item_list[0]['icon']
+            icon_url = "https://cafemaker.wakingsands.com" + self.item_list[0]['icon']
         elif len(self.item_list) == 1 and self.static is True:
-            icon_url = "https://garlandtools.cn/files/icons/item/" + \
-                self.item_data[str(self.id)]['icon'] + '.png'
+            icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
         try:
             result = get(icon_url, timeout=3, headers=self.header)
             self.icon = result.content
@@ -132,8 +130,7 @@ class Queryer(object):
         跨大区开放后 server_list 将返回所有区服的列表
         :return server_list -> list:包含多个服务器的str的列表，去掉了大区名称
         """
-        select_server_mao = ['猫小胖', '紫水栈桥', '延夏',
-                             '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
+        select_server_mao = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
         select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
                              '梦羽宝境']
         select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染',
@@ -155,54 +152,79 @@ class Queryer(object):
                                'Zodiark', 'Phoenix', 'Odin', 'Shiva', 'Alpha', 'Raiden']
         select_server_Crystal = ['Crystal', 'Brynhildr', 'Mateus',
                                  'Zalera', 'Diabolos', 'Coeurl', 'Malboro', 'Goblin', 'Balmung']
-        select_server_Materia = ['Materia', 'Ravana',
-                                 'Bismarck', 'Sephirot', 'Sophia', 'Zurvan']
+        select_server_Materia = ['Materia', 'Ravana', 'Bismarck', 'Sephirot', 'Sophia', 'Zurvan']
         select_server_Meteor = ['Meteor', 'Belias', 'Shinryu', 'Unicorn',
                                 'Yojimbo', 'Zeromus', 'Valefor', 'Ramuh', 'Mandragora']
-        select_server_Dynamis = ['Dynamis', 'Marilith',
-                                 'Seraph', 'Halicarnassus', 'Maduin']
-        select_server_global = ['Elemental', 'Gaia', 'Mana', 'Aether',
-                                'Primal', 'Chaos', 'Light', 'Crystal', 'Materia', 'Meteor', 'Dynamis']
+        select_server_Dynamis = ['Dynamis', 'Marilith', 'Seraph', 'Halicarnassus', 'Maduin']
+        select_server_japan = ['Elemental', 'Gaia', 'Mana', 'Meteor']
+        select_server_europe = ['Chaos', 'Light']
+        select_server_na = ['Aether', 'Primal', 'Crystal', 'Dynamis']
+        select_server_oceania = ['Materia']
         select_server_china = ['猫小胖', '莫古力', '陆行鸟', '豆豆柴']
-
         # 设置默认大区为猫区
         server_list = select_server_mao
         # 根据服务器所在大区选择比价的服务器
         if self.server in select_server_mao:
             server_list = select_server_mao[1:]
+            self.world = 'maoxiaopang'
         elif self.server in select_server_niao:
             server_list = select_server_niao[1:]
+            self.world = 'luxingniao'
         elif self.server in select_server_zhu:
             server_list = select_server_zhu[1:]
+            self.world = 'moguli'
         elif self.server in select_server_gou:
             server_list = select_server_gou[1:]
+            self.world = 'doudouchai'
         elif self.server in select_server_Elemental:
             server_list = select_server_Elemental[1:]
+            self.world = 'Elemental'
         elif self.server in select_server_Gaia:
             server_list = select_server_Gaia[1:]
+            self.world = 'Gaia'
         elif self.server in select_server_Mana:
             server_list = select_server_Mana[1:]
+            self.world = 'Mana'
         elif self.server in select_server_Aether:
             server_list = select_server_Aether[1:]
+            self.world = 'Aether'
         elif self.server in select_server_Primal:
             server_list = select_server_Primal[1:]
+            self.world = 'Primal'
         elif self.server in select_server_Chaos:
             server_list = select_server_Chaos[1:]
+            self.world = 'Chaos'
         elif self.server in select_server_Light:
             server_list = select_server_Light[1:]
+            self.world = 'Light'
         elif self.server in select_server_Crystal:
             server_list = select_server_Crystal[1:]
+            self.world = 'Crystal'
         elif self.server in select_server_Materia:
             server_list = select_server_Materia[1:]
+            self.world = 'Materia'
         elif self.server in select_server_Meteor:
             server_list = select_server_Meteor[1:]
+            self.world = 'Meteor'
         elif self.server in select_server_Dynamis:
             server_list = select_server_Dynamis[1:]
-        elif self.server == 'global':
-            server_list = select_server_global
-        elif self.server == 'china':
+            self.world = 'Dynamis'
+        elif self.server == 'Japan':
+            server_list = select_server_japan
+            self.world = 'Japan'
+        elif self.server == 'North-America':
+            server_list = select_server_na
+            self.world = 'North-America'
+        elif self.server == 'Oceania':
+            server_list = select_server_oceania
+            self.world = 'Oceania'
+        elif self.server == 'Europe':
+            server_list = select_server_europe
+            self.world = 'Europe'
+        elif self.server == 'China':
             server_list = select_server_china
-        logging.info('服务器列表初始化为{}'.format(server_list))
+            self.world = 'China'
+        logging.info('查询区域为{}， 服务器列表初始化为{}'.format(self.world, server_list))
         return server_list
 
     def query_item_id(self, name):
@@ -225,15 +247,12 @@ class Queryer(object):
             for item in all_list:
                 # 过滤掉不可在市场上交易的物品
                 if self.filter_item is True and item['ID'] in marketable:
-                    this_item = {
-                        'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
+                    this_item = {'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
                     self.item_list.append(this_item)
                 elif self.filter_item is False:
-                    this_item = {
-                        'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
+                    this_item = {'id': item['ID'], 'name': item['Name'], 'icon': item['Icon']}
                     self.item_list.append(this_item)
-            self.item_list = sorted(
-                self.item_list, key=lambda e: e.__getitem__('id'), reverse=False)
+            self.item_list = sorted(self.item_list, key=lambda e: e.__getitem__('id'), reverse=False)
         # 使用本地资源查询
         elif self.static is True:
             for item in self.item_data.values():
@@ -258,19 +277,16 @@ class Queryer(object):
                 self.server, self.id)
         else:
             logging.info("全品质查询")
-            query_url = '/api/%s/%s?listings=50&noGst=true' % (
-                self.server, self.id)
+            query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
         result = self.init_query_result(query_url)
         # 如果查询不到物品，强制重查一次NQ
         if self.hq is True and len(result['listings']) == 0:
             logging.info("查询不到物品，强制重查一次NQ")
             self.hq = False
-            query_url = '/api/%s/%s?listings=50&noGst=true' % (
-                self.server, self.id)
+            query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url)
         # 将查询结果的销量指数和平均售价取出
-        logging.debug("nqSaleVelocity:{}, hqSaleVelocity:{}".format(
-            result['nqSaleVelocity'], result['hqSaleVelocity']))
+        logging.debug("nqSaleVelocity:{}, hqSaleVelocity:{}".format(result['nqSaleVelocity'], result['hqSaleVelocity']))
         if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
             self.avgp = int(result['minPriceHQ'])
             logging.debug('平均价格取出 minPriceHQ')
@@ -320,8 +336,7 @@ class Queryer(object):
         # 多线程操作
         threads = []
         for server in server_list:
-            thread = threading.Thread(
-                target=query_single_server, args=(server, self.id))
+            thread = threading.Thread(target=query_single_server, args=(server, self.id))
             thread.start()
             threads.append(thread)
         for t in threads:
@@ -335,8 +350,7 @@ class Queryer(object):
         """
         if len(self.stuff) == 0:
             if self.static is False:
-                query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + \
-                    str(self.id)
+                query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id)
                 self.stuff = self.init_query_result(query_url)['item']
                 if 'craft' in self.stuff:
                     if 'yield' in self.stuff['craft'][0]:
@@ -385,8 +399,7 @@ class Queryer(object):
         """
         threads = []
         for unit in stuff_list:
-            thread_make_child_craft = threading.Thread(
-                target=self.make_child_item_craft, args=[unit])
+            thread_make_child_craft = threading.Thread(target=self.make_child_item_craft, args=[unit])
             thread_make_child_craft.start()
             threads.append(thread_make_child_craft)
             # thread_make_child_craft.join()  # debug
@@ -401,8 +414,7 @@ class Queryer(object):
         """
         logging.debug("材料递归查询，物品ID {} ".format(itemid))
         if self.static is False:
-            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + \
-                str(itemid)
+            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
             result = self.init_query_result(query_url)['item']
             if 'craft' in result:
                 if 'yield' in result['craft'][0]:
@@ -418,62 +430,41 @@ class Queryer(object):
         查询单项物品的板子价格，调用缓存或者是在线查询物品的最低价
         :param item -> dist 物品的数据
         """
-        # 确定查询的服务器所在大区
-        select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
-                             '梦羽宝境']
-        select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染',
-                              '晨曦王座']
-        select_server_gou = ['豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
-        if self.server in select_server_niao:
-            server = '陆行鸟'
-        elif self.server in select_server_zhu:
-            server = '莫古力'
-        elif self.server in select_server_gou:
-            server = '豆豆柴'
-        else:
-            server = '猫小胖'
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
             if item['id'] not in self.price_cache:
                 logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (
-                    server, item['id'])
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
                 result = self.init_query_result(query_url)
                 if len(result['listings']) == 0:
                     result['listings'].append({'pricePerUnit': 0})
                 # x参数  抗人为干扰
-                x = abs(result['averagePrice'] -
-                        result['listings'][0]['pricePerUnit'])
+                x = abs(result['averagePrice'] - result['listings'][0]['pricePerUnit'])
                 logging.debug("{}在市场上平均价格和最低价格的差价为{}".format(item['name'], x))
                 if int(item['id']) < 20:
                     # 碎晶，水晶，晶簇
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
-                    logging.debug(
-                        "{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
+                    logging.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
                 elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
                     item['pricePerUnit'] = int(result['averagePrice'])
-                    logging.debug(
-                        "{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
+                    logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
                 elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
                     try:
                         item['pricePerUnit'] = result['listings'][3]['pricePerUnit']
-                        logging.debug(
-                            "{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
+                        logging.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
                     except:
                         item['pricePerUnit'] = int(result['averagePrice'])
-                        logging.debug(
-                            "{}价差较高，但是市场上比较稀缺，使用平均价格".format(item['name'], result['averagePrice']))
+                        logging.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}"
+                                      .format(item['name'], result['averagePrice']))
                 else:
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
                     logging.debug("{}差价较低，使用最低价格".format(item['name']))
                 # 更新缓存
                 logging.info("更新缓存 {}".format(item['name']))
-                self.price_cache[int(item['id'])] = copy.deepcopy(
-                    item['pricePerUnit'])
+                self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
             else:
                 # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
-                item['pricePerUnit'] = copy.deepcopy(
-                    self.price_cache[item['id']])
+                item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']])
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
             ids = []
@@ -483,17 +474,18 @@ class Queryer(object):
                     ids.append(str(i['id']))
                     logging.debug("{} 没有查询到缓存 ，在线查询".format(i['name']))
                 else:
-                    i['pricePerUnit'] = copy.deepcopy(
-                        self.price_cache[i['id']])
+                    i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']])
                     logging.debug("{} 缓存命中，使用缓存".format(i['name']))
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = self.init_query_result(query_url)['items']
             elif len(ids) == 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (server, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = [self.init_query_result(query_url)]
+            else:
+                result = []
             for i in item:
                 # 把在线查询到的结果更新到缓存中
                 if i['id'] not in self.price_cache:
@@ -501,22 +493,18 @@ class Queryer(object):
                         if str(r['itemID']) == str(i['id']):
                             if len(r['listings']) == 0:
                                 r['listings'].append({'pricePerUnit': 0})
-                            x = abs(r['averagePrice'] -
-                                    r['listings'][0]['pricePerUnit'])
-                            logging.debug(
-                                "{}平均价格和最低价格的差价为{}".format(i['name'], x))
+                            x = abs(r['averagePrice'] - r['listings'][0]['pricePerUnit'])
+                            logging.debug("{}平均价格和最低价格的差价为{}".format(i['name'], x))
                             if int(i['id']) < 20:
                                 # 碎晶，水晶，晶簇
-                                logging.debug(
-                                    "{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(i['name']))
+                                logging.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
                                 if i['pricePerUnit'] == 0:
                                     i['pricePerUnit'] = int(r['averagePrice'])
                                     logging.debug(
                                         "{}物品ID小于20 推测为水晶类，但是价格查询失败，使用平均价格".format(i['name']))
                             elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
-                                logging.debug(
-                                    "{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
+                                logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
                                 i['pricePerUnit'] = int(r['averagePrice'])
                             elif x > 300 and r['listings'][0]['pricePerUnit'] > 666:
                                 try:
@@ -527,15 +515,11 @@ class Queryer(object):
                                     logging.debug("{}价差较高，但是物品比较贵，使用平均价格{}，仅供参考"
                                                   .format(i['name'], r['averagePrice']))
                                     i['pricePerUnit'] = int(r['averagePrice'])
-
                             else:
-                                logging.debug(
-                                    "{}差价较低，使用最低价格".format(i['name']))
+                                logging.debug("{}差价较低，使用最低价格".format(i['name']))
                                 i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
-                            logging.info("查询材料{}成功，更新缓存,价格为{}".format(
-                                i['name'], i['pricePerUnit']))
-                            self.price_cache[int(i['id'])] = copy.deepcopy(
-                                i['pricePerUnit'])
+                            logging.info("查询材料{}成功，更新缓存,价格为{}".format(i['name'], i['pricePerUnit']))
+                            self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])
 
     def calibration_quantity(self, stuff_list, count=1):
         """
@@ -548,15 +532,13 @@ class Queryer(object):
             n_count = (stuff['amount'] * count)
             stuff['amount'] = n_count
             if 'craft' in stuff and 'yield' in stuff:
-                logging.debug("{}每次可以生产的个数为{}".format(
-                    stuff['name'], stuff['yield']))
+                logging.debug("{}每次可以生产的个数为{}".format(stuff['name'], stuff['yield']))
                 # c_count 每次生产产出材料为多个时 'yield' 为单次生产产出数量
                 c_count = 0
                 if n_count > stuff['yield']:
                     # ceil  向上取整
                     c_count = ceil(n_count / stuff['yield'])
-                    logging.debug("{}需要多次生产，生产次数 {}".format(
-                        stuff['name'], c_count))
+                    logging.debug("{}需要多次生产，生产次数 {}".format(stuff['name'], c_count))
                 elif n_count <= stuff['yield']:
                     c_count = 1
                     logging.debug("只生产一次")
@@ -632,8 +614,7 @@ class Queryer(object):
                 self.stuff['name'], self.d_cost, self.o_cost, self.timestamp_to_time(time.time())) + self.clipboard
             return self.d_cost, self.o_cost
         else:
-            self.stuff['craft'] = [
-                {'name': '该物品不能被制作', 'amount': '', 'pricePerUnit': ''}]
+            self.stuff['craft'] = [{'name': '该物品不能被制作', 'amount': '', 'pricePerUnit': ''}]
             return None, None
 
     def get_online_version(self):

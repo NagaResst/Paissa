@@ -583,20 +583,26 @@
     <addaction name="server_maoxiaopang"/>
     <addaction name="server_doudouchai"/>
     <addaction name="separator"/>
-    <addaction name="select_server_global"/>
+    <addaction name="select_server_japan"/>
     <addaction name="server_Elemental"/>
     <addaction name="server_Gaia"/>
     <addaction name="server_Mana"/>
-    <addaction name="server_Aether"/>
-    <addaction name="server_Primal"/>
+    <addaction name="server_Meteor"/>
+    <addaction name="separator"/>
+    <addaction name="select_server_europe"/>
     <addaction name="server_Chaos"/>
     <addaction name="server_Light"/>
+    <addaction name="separator"/>
+    <addaction name="select_server_na"/>
+    <addaction name="server_Aether"/>
+    <addaction name="server_Primal"/>
     <addaction name="server_Crystal"/>
-    <addaction name="server_Materia"/>
-    <addaction name="server_Meteor"/>
     <addaction name="server_Dynamis"/>
+    <addaction name="separator"/>
+    <addaction name="select_server_oceania"/>
+    <addaction name="server_Materia"/>
    </widget>
-   <widget class="QMenu" name="about">
+   <widget class="QMenu" name="other">
     <property name="font">
      <font>
       <family>Arial</family>
@@ -608,10 +614,15 @@
     </property>
     <addaction name="use_static_file"/>
     <addaction name="filter_item"/>
-    <addaction name="check_update"/>
+   </widget>
+   <widget class="QMenu" name="check_update">
+    <property name="title">
+     <string>关于</string>
+    </property>
    </widget>
    <addaction name="server"/>
-   <addaction name="about"/>
+   <addaction name="other"/>
+   <addaction name="check_update"/>
   </widget>
   <action name="select_server_china">
    <property name="enabled">
@@ -627,12 +638,54 @@
     </font>
    </property>
   </action>
-  <action name="select_server_global">
+  <action name="select_server_japan">
    <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>国际服</string>
+    <string>日服</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="select_server_europe">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>欧服</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="select_server_na">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>美服</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="select_server_oceania">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>太平洋服</string>
    </property>
    <property name="font">
     <font>

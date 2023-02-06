@@ -361,7 +361,7 @@ def query_sale_list():
     正在售出列表填充
     """
     global query_history
-    hq_icon = QtGui.QIcon(resource_path(os.path.join("Data", "hq.png")))
+    hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 查询正在售出的记录
     price_list = item.query_item_price()
     logging.info("物品的售出价格查询完毕，开始绘制价格表格")
@@ -439,7 +439,7 @@ def query_every_server(all_server_list):
     """
     全服比价列表填充
     """
-    hq_icon = QtGui.QIcon(resource_path(os.path.join("Data", "hq.png")))
+    hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 设置表格样式
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
@@ -709,24 +709,13 @@ def test_network():
         query_price()
 
 
-def resource_path(relative_path):
-    """
-    静态资源打包功能，在spec文件的datas中写入目录名
-    """
-    if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
-
-
 """
 公共数据部分
 """
 # 与 Data/version 文件中的版本对应
 program_version = '0.8.6'
 # 加载查询历史
-history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
+history_file = os.path.join('Data', "Paissa_query_history.txt")
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)

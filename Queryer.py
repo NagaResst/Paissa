@@ -3,7 +3,6 @@ import logging
 import re
 import threading
 import time
-# from concurrent.futures import ThreadPoolExecutor
 from json import loads, load
 from math import ceil
 
@@ -12,7 +11,7 @@ from requests import get
 from Data.marketable import marketable
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s : %(levelname)s  %(message)s',
+                    format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
 
@@ -50,8 +49,6 @@ class Queryer(object):
         self.item_data = {}
         # 静态资源加速
         self.static = True
-        # 反向代理
-        self.proxy = False
         # 是否过滤掉不可在市场上查询的物品
         self.filter_item = True
         # 成本查询复制到剪贴板的容器变量
@@ -66,10 +63,7 @@ class Queryer(object):
         :param url:要调用的接口path
         :return dist：universalis返回的查询结果
         """
-        if self.proxy is True:
-            url = 'http://43.142.142.18/universalis' + url
-        else:
-            url = 'https://universalis.app' + url
+        url = 'https://universalis.app' + url
         while True:
             try:
                 result = get(url, timeout=5, headers=self.header)
@@ -273,17 +267,17 @@ class Queryer(object):
         self.yields = 1
         if self.hq is True:
             logging.debug('锁定查询HQ')
-            query_url = '/api/v2/%s/%s?listings=50&hq=true&noGst=true' % (
+            query_url = '/api/%s/%s?listings=50&hq=true&noGst=true' % (
                 self.server, self.id)
         else:
             logging.info("全品质查询")
-            query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+            query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
         result = self.init_query_result(query_url)
         # 如果查询不到物品，强制重查一次NQ
         if self.hq is True and len(result['listings']) == 0:
             logging.info("查询不到物品，强制重查一次NQ")
             self.hq = False
-            query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+            query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url)
         # 将查询结果的销量指数和平均售价取出
         logging.debug("nqSaleVelocity:{}, hqSaleVelocity:{}".format(result['nqSaleVelocity'], result['hqSaleVelocity']))
@@ -317,7 +311,7 @@ class Queryer(object):
 
         # 单个服务器查询最低价格的方法
         def query_single_server(server, item_id):
-            query_url = '/api/%s/%s?listings=1&noGst=true' % (server, item_id)
+            query_url = '/api/v2/%s/%s?listings=1&noGst=true' % (server, item_id)
             result = self.init_query_result(query_url)
             # 重新组织比价用的数据，并加入全服查价的结果列表，如果不重新组织数据，某些区服查询出空集时，会报错
             if len(result['listings']) != 0:
@@ -434,7 +428,7 @@ class Queryer(object):
             # 缓存中没有数据，进行在线查询
             if item['id'] not in self.price_cache:
                 logging.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
+                query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
                 result = self.init_query_result(query_url)
                 if len(result['listings']) == 0:
                     result['listings'].append({'pricePerUnit': 0})
@@ -479,10 +473,10 @@ class Queryer(object):
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
+                query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = self.init_query_result(query_url)['items']
             elif len(ids) == 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
+                query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = [self.init_query_result(query_url)]
             else:
                 result = []
@@ -621,22 +615,14 @@ class Queryer(object):
         """
         通过github拉取程序版本
         """
-        try:
-            url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
-            result = get(url, timeout=5, headers=self.header)
-            logging.debug("{} success".format(url))
-        except:
-            url = 'http://43.142.142.18/version'
-            result = get(url, timeout=3, headers=self.header)
-            logging.debug("{} success".format(url))
+        url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+        result = get(url, timeout=5, headers=self.header)
+        logging.debug("{} success".format(url))
         return loads(result.text)
 
     def test_network(self):
         """网络测试方法"""
-        if self.proxy is False:
-            url = "https://universalis.app/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1"
-        else:
-            url = 'http://43.142.142.18/universalis/api/v2/extra/stats/least-recently-updated?world=hongyuhai&entries=1'
+        url = "https://universalis.app/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1"
         c = 0
         while c < 3:
             try:
@@ -668,7 +654,6 @@ if __name__ == '__main__':
     itemObj.id = '35814'
     itemObj.hq = True
     # https://universalis.app/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
-    # http://43.142.142.18/universalis/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
 
     # price_list = itemObj.query_item_price()
     # server_list = itemObj.server_list()

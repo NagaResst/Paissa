@@ -23,7 +23,7 @@ from UI.show_price import Ui_show_price
 QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s : %(levelname)s  %(message)s',
+                    format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
 
@@ -191,7 +191,6 @@ class MainWindow(Ui_mainWindow):
         self.select_server_oceania.triggered.connect(lambda: click_select_server("太平洋服"))
         self.use_static_file.triggered.connect(use_static_file_or_not)
         self.check_update.triggered.connect(show_check_update_window)
-        # self.use_proxy_universalis.triggered.connect(use_proxy_or_not)
         self.filter_item.triggered.connect(filter_item_or_not)
 
 
@@ -627,13 +626,6 @@ def use_static_file_or_not(status):
     item.static = status
 
 
-def use_proxy_or_not(status):
-    """
-    是否启用反向代理查询
-    """
-    item.proxy = status
-
-
 def filter_item_or_not(status):
     """
     过滤不可在市场上交易的物品
@@ -726,10 +718,11 @@ def test_network():
 """
 公共数据部分
 """
+logging.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
 program_version = '0.8.6'
 # 加载查询历史
-history_file = os.path.join('Data', "Paissa_query_history.txt")
+history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)

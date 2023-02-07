@@ -40,7 +40,7 @@ class RQMainWindow(QtWidgets.QMainWindow):
         global query_history
         # 移除空查询
         for i in query_history:
-            if i['itemName'] is None:
+            if i['itemName'] == 'None' or i['itemName'] is None:
                 query_history.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
         history = {"server": item.server, 'use_static': item.static, "history": query_history}
@@ -335,9 +335,9 @@ def query_price():
     # 查询完成之后将查询记录加入历史记录。如果已经存在，删除旧的纪录，新的纪录添加到末尾
     this_query = {"itemID": item.id, "itemName": item.name, "HQ": item.hq, "server": item.server}
     if this_query in query_history:
-        item_name = item.name
+        item_name = item.name + ' - ' + item.server
         if this_query['HQ'] is True:
-            item_name = item.name + 'HQ'
+            item_name = item.name + 'HQ' + ' - ' + item.server
         while True:
             history_item = history_board.history_list.findItems(item_name, QtCore.Qt.MatchExactly)
             if len(history_item) > 0:
@@ -730,12 +730,12 @@ try:
         # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
         if len(query_history) == 0:
             # 加入None条目，后面的切换界面判断方法就不用判空了
-            query_history = [{"itemName": 'None', "HQ": None, "server": None}]
+            query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
         item = Queryer(history_json['server'])
         logging.info("读取查询历史成功")
 except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
-    query_history = [{"itemName": 'None', "HQ": None, "server": None}]
+    query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
     item = Queryer('猫小胖')
     logging.warning("没有发现历史数据，初始化历史数据")
 # 加载本地静态文件
@@ -834,9 +834,9 @@ history_board = HistoryPage()
 history_board.setupUi(widget2)
 history_board.history_list.doubleClicked.connect(click_history_query)
 for i in query_history:
-    if i['HQ'] is not True:
+    if i['HQ'] is not True and i["itemName"] != 'None':
         history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
-    elif i['HQ'] is True:
+    elif i['HQ'] is True and i["itemName"] != 'None':
         history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
 
 """

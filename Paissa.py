@@ -347,9 +347,9 @@ def query_price():
                 break
         query_history.remove(this_query)
     if item.hq is not True:
-        history_board.history_list.insertItem(0, item.name)
+        history_board.history_list.insertItem(0, item.name + ' - ' + item.server)
     elif item.hq is True:
-        history_board.history_list.insertItem(0, item.name + 'HQ')
+        history_board.history_list.insertItem(0, item.name + 'HQ' + ' - ' + item.server)
     query_history.append(this_query)
     logging.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
@@ -360,7 +360,6 @@ def query_sale_list():
     """
     正在售出列表填充
     """
-    global query_history
     hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 查询正在售出的记录
     price_list = item.query_item_price()
@@ -525,7 +524,7 @@ def make_cost_tree():
 def click_history_query(selected):
     """
     通过点击历史面板查询物品
-    # """
+    """
     # print(selected, isinstance(selected, QtCore.QModelIndex))
     global query_history
     # 最顶端的记录为本次查询的结果，do nothing
@@ -533,8 +532,22 @@ def click_history_query(selected):
         pass
     else:
         # 重新查询
-        item_name = history_board.history_list.item(selected.row()).text()
-        logging.info("通过点击材料树进行查询{}".format(item_name))
+        recode1 = history_board.history_list.item(selected.row()).text().split()
+        item_name = recode1[0]
+        item.server = recode1[-1]
+        if item.server == 'Japan':
+            ui.show_server.setText('日服')
+        elif item.server == 'Europe':
+            ui.show_server.setText('欧服')
+        elif item.server == 'North-America':
+            ui.show_server.setText('美服')
+        elif item.server == 'Oceania':
+            ui.show_server.setText("太平洋服")
+        elif item.server == "China":
+            ui.show_server.setText("国服")
+        else:
+            ui.show_server.setText(item.server)
+        logging.info("通过点击历史面板进行查询 {} 的 {}".format(item.server, item_name))
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]
             item.hq = True
@@ -559,7 +572,6 @@ def click_select_server(server):
     ui.show_server.setText(server)
     if server == "欧服":
         item.server = 'Europe'
-
     elif server == "日服":
         item.server = 'Japan'
     elif server == "美服":
@@ -583,11 +595,13 @@ def click_query_item_name(selected):
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(selected.text(0))
         item.name = selected.text(0)
+        logging.info("材料名称 {} 已经复制到粘贴板".format(item.name))
         for i in item.item_data.values():
             if i['name'] == item.name:
                 item.id = i['id']
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
+        logging.info("通过点击材料树重新查询材料 {}".format(item.name))
         query_price()
     else:
         back_to_index()
@@ -723,12 +737,12 @@ try:
         # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
         if len(query_history) == 0:
             # 加入None条目，后面的切换界面判断方法就不用判空了
-            query_history = [{"itemName": None, "HQ": None, "server": None}]
+            query_history = [{"itemName": 'None', "HQ": None, "server": None}]
         item = Queryer(history_json['server'])
         logging.info("读取查询历史成功")
 except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
-    query_history = [{"itemName": None, "HQ": None, "server": None}]
+    query_history = [{"itemName": 'None', "HQ": None, "server": None}]
     item = Queryer('猫小胖')
     logging.warning("没有发现历史数据，初始化历史数据")
 # 加载本地静态文件
@@ -828,9 +842,9 @@ history_board.setupUi(widget2)
 history_board.history_list.doubleClicked.connect(click_history_query)
 for i in query_history:
     if i['HQ'] is not True:
-        history_board.history_list.insertItem(0, i["itemName"])
+        history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
     elif i['HQ'] is True:
-        history_board.history_list.insertItem(0, i["itemName"] + 'HQ')
+        history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
 
 """
 check update

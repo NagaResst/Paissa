@@ -720,7 +720,7 @@ def test_network():
 """
 logging.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '0.8.6'
+program_version = '0.9.4'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:

@@ -439,6 +439,10 @@ class Queryer(object):
                     # 碎晶，水晶，晶簇
                     item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
                     logging.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
+                elif 'priceFromNpc' in item and item['priceFromNpc'] < result['averagePrice']:
+                    logging.debug("NPC贩售价格{}低于板子平均价格{}，使用NPC贩售价格计算"
+                                  .format(item['priceFromNpc'], result['averagePrice']))
+                    item['pricePerUnit'] = item['priceFromNpc']
                 elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
                     item['pricePerUnit'] = int(result['averagePrice'])
                     logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
@@ -473,10 +477,10 @@ class Queryer(object):
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
-                query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = self.init_query_result(query_url)['items']
             elif len(ids) == 1:
-                query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, idss)
+                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
                 result = [self.init_query_result(query_url)]
             else:
                 result = []
@@ -497,6 +501,11 @@ class Queryer(object):
                                     i['pricePerUnit'] = int(r['averagePrice'])
                                     logging.debug(
                                         "{}物品ID小于20 推测为水晶类，但是价格查询失败，使用平均价格".format(i['name']))
+                            elif 'priceFromNpc' in i and i['priceFromNpc'] < r['averagePrice']:
+                                logging.debug(
+                                    "NPC贩售价格{}低于板子平均价格{}，使用NPC贩售价格计算"
+                                    .format(i['priceFromNpc'], r['averagePrice']))
+                                i['pricePerUnit'] = i['priceFromNpc']
                             elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
                                 logging.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
                                 i['pricePerUnit'] = int(r['averagePrice'])

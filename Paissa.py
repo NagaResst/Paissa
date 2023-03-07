@@ -585,6 +585,7 @@ def click_select_server(server):
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
         logging.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
+        item.price_cache = {}
         query_price()
 
 

@@ -54,6 +54,7 @@ class Queryer(object):
         # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
         self.header = {'User-Agent': ''}
+        # 物品价格静态缓存
         self.price_cache = {}
         logging.info("查询物品槽位初始化")
 

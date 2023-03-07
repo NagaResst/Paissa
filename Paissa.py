@@ -23,7 +23,7 @@ from UI.show_price import Ui_show_price
 QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
 
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s : %(levelname)s  %(message)s',
+                    format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
 
@@ -40,7 +40,7 @@ class RQMainWindow(QtWidgets.QMainWindow):
         global query_history
         # 移除空查询
         for i in query_history:
-            if i['itemName'] is None:
+            if i['itemName'] == 'None' or i['itemName'] is None:
                 query_history.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
         history = {"server": item.server, 'use_static': item.static, "history": query_history}
@@ -191,7 +191,6 @@ class MainWindow(Ui_mainWindow):
         # self.select_server_oceania.triggered.connect(lambda: click_select_server("太平洋服"))
         self.use_static_file.triggered.connect(use_static_file_or_not)
         self.check_update.triggered.connect(show_check_update_window)
-        # self.use_proxy_universalis.triggered.connect(use_proxy_or_not)
         self.filter_item.triggered.connect(filter_item_or_not)
 
 
@@ -336,9 +335,9 @@ def query_price():
     # 查询完成之后将查询记录加入历史记录。如果已经存在，删除旧的纪录，新的纪录添加到末尾
     this_query = {"itemID": item.id, "itemName": item.name, "HQ": item.hq, "server": item.server}
     if this_query in query_history:
-        item_name = item.name
+        item_name = item.name + ' - ' + item.server
         if this_query['HQ'] is True:
-            item_name = item.name + 'HQ'
+            item_name = item.name + 'HQ' + ' - ' + item.server
         while True:
             history_item = history_board.history_list.findItems(item_name, QtCore.Qt.MatchExactly)
             if len(history_item) > 0:
@@ -347,9 +346,9 @@ def query_price():
                 break
         query_history.remove(this_query)
     if item.hq is not True:
-        history_board.history_list.insertItem(0, item.name)
+        history_board.history_list.insertItem(0, item.name + ' - ' + item.server)
     elif item.hq is True:
-        history_board.history_list.insertItem(0, item.name + 'HQ')
+        history_board.history_list.insertItem(0, item.name + 'HQ' + ' - ' + item.server)
     query_history.append(this_query)
     logging.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
@@ -525,7 +524,7 @@ def make_cost_tree():
 def click_history_query(selected):
     """
     通过点击历史面板查询物品
-    # """
+    """
     # print(selected, isinstance(selected, QtCore.QModelIndex))
     global query_history
     # 最顶端的记录为本次查询的结果，do nothing
@@ -533,8 +532,22 @@ def click_history_query(selected):
         pass
     else:
         # 重新查询
-        item_name = history_board.history_list.item(selected.row()).text()
-        logging.info("通过点击材料树进行查询{}".format(item_name))
+        recode1 = history_board.history_list.item(selected.row()).text().split()
+        item_name = recode1[0]
+        item.server = recode1[-1]
+        if item.server == 'Japan':
+            ui.show_server.setText('日服')
+        elif item.server == 'Europe':
+            ui.show_server.setText('欧服')
+        elif item.server == 'North-America':
+            ui.show_server.setText('美服')
+        elif item.server == 'Oceania':
+            ui.show_server.setText("太平洋服")
+        elif item.server == "China":
+            ui.show_server.setText("国服")
+        else:
+            ui.show_server.setText(item.server)
+        logging.info("通过点击历史面板进行查询 {} 的 {}".format(item.server, item_name))
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]
             item.hq = True
@@ -559,7 +572,6 @@ def click_select_server(server):
     ui.show_server.setText(server)
     if server == "欧服":
         item.server = 'Europe'
-
     elif server == "日服":
         item.server = 'Japan'
     elif server == "美服":
@@ -583,11 +595,13 @@ def click_query_item_name(selected):
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(selected.text(0))
         item.name = selected.text(0)
+        logging.info("材料名称 {} 已经复制到粘贴板".format(item.name))
         for i in item.item_data.values():
             if i['name'] == item.name:
                 item.id = i['id']
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
+        logging.info("通过点击材料树重新查询材料 {}".format(item.name))
         query_price()
     else:
         back_to_index()
@@ -611,13 +625,6 @@ def use_static_file_or_not(status):
     是否启用静态资源加速
     """
     item.static = status
-
-
-def use_proxy_or_not(status):
-    """
-    是否启用反向代理查询
-    """
-    item.proxy = status
 
 
 def filter_item_or_not(status):
@@ -723,10 +730,10 @@ def resource_path(relative_path):
 """
 公共数据部分
 """
-# 与 Data/version 文件中的版本对应
-program_version = '0.8.6'
+logging.info("主程序启动，开始处理公共数据")
+program_version = '0.9.4'
 # 加载查询历史
-history_file = resource_path(os.path.join('Data', "Paissa_query_history.txt"))
+history_file = resource_path(os.path.join('Data', "Paissa_query_history.log"))
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
@@ -734,12 +741,12 @@ try:
         # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
         if len(query_history) == 0:
             # 加入None条目，后面的切换界面判断方法就不用判空了
-            query_history = [{"itemName": None, "HQ": None, "server": None}]
+            query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
         item = Queryer(history_json['server'])
         logging.info("读取查询历史成功")
 except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
-    query_history = [{"itemName": None, "HQ": None, "server": None}]
+    query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
     item = Queryer('猫小胖')
     logging.warning("没有发现历史数据，初始化历史数据")
 # 加载本地静态文件
@@ -838,10 +845,10 @@ history_board = HistoryPage()
 history_board.setupUi(widget2)
 history_board.history_list.doubleClicked.connect(click_history_query)
 for i in query_history:
-    if i['HQ'] is not True:
-        history_board.history_list.insertItem(0, i["itemName"])
-    elif i['HQ'] is True:
-        history_board.history_list.insertItem(0, i["itemName"] + 'HQ')
+    if i['HQ'] is not True and i["itemName"] != 'None':
+        history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
+    elif i['HQ'] is True and i["itemName"] != 'None':
+        history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
 
 """
 check update

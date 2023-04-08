@@ -757,10 +757,21 @@ logging.debug("主程序数据初始化完成")
 主程序开始
 """
 app = QtWidgets.QApplication(sys.argv)
+desktop = app.desktop()
+logging.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
 app.setStyle("Fusion")
 widget = RQMainWindow()
 ui = MainWindow()
 ui.setupUi(widget)
+if desktop.height() <= 1200:
+    widget.resize(1200, 800)
+    logging.debug("设置窗体大小为{} * {}".format(1200, 800))
+elif 1500 >= desktop.height() <= 2000:
+    widget.resize(1640, 960)
+    logging.debug("设置窗体大小为{} * {}".format(1640, 960))
+elif 2000 >= desktop.height() :
+    widget.resize(2400, 1400)
+    logging.debug("设置窗体大小为{} * {}".format(3600, 1600))
 ui.setup_menu()
 ui.jump_to_wiki.setOpenExternalLinks(True)
 ui.show_server.setText(item.server)

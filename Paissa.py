@@ -763,15 +763,7 @@ app.setStyle("Fusion")
 widget = RQMainWindow()
 ui = MainWindow()
 ui.setupUi(widget)
-if desktop.height() <= 1200:
-    widget.resize(1200, 800)
-    logging.debug("设置窗体大小为{} * {}".format(1200, 800))
-elif 1500 >= desktop.height() <= 2000:
-    widget.resize(1640, 960)
-    logging.debug("设置窗体大小为{} * {}".format(1640, 960))
-elif 2000 >= desktop.height() :
-    widget.resize(2400, 1400)
-    logging.debug("设置窗体大小为{} * {}".format(3600, 1600))
+widget.resize(int(desktop.width()*0.6), int(desktop.height()*0.6))
 ui.setup_menu()
 ui.jump_to_wiki.setOpenExternalLinks(True)
 ui.show_server.setText(item.server)
@@ -784,7 +776,7 @@ ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
 ui.query_history.clicked.connect(hidden_history_board)
 ui.show_cost.clicked.connect(make_cost_tree)
-ui.use_static_file.setChecked(history_json['use_static'])
+# ui.use_static_file.setChecked(history_json['use_static'])
 widget.show()
 
 """
@@ -844,6 +836,7 @@ loading_page.setupUi(ui.loading_ui)
 widget2 = QtWidgets.QMainWindow()
 history_board = HistoryPage()
 history_board.setupUi(widget2)
+widget2.resize(int(desktop.width()*0.15), int(desktop.height()*0.6))
 history_board.history_list.doubleClicked.connect(click_history_query)
 for i in query_history:
     if i['HQ'] is not True and i["itemName"] != 'None':

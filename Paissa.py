@@ -776,7 +776,7 @@ ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
 ui.query_history.clicked.connect(hidden_history_board)
 ui.show_cost.clicked.connect(make_cost_tree)
-# ui.use_static_file.setChecked(history_json['use_static'])
+ui.use_static_file.setChecked(history_json['use_static'])
 widget.show()
 
 """

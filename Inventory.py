@@ -13,7 +13,7 @@ class Inventory(object):
         # self.store = {'name': amount}
         self.store = {'name': 0}
         self.queryer = Queryer.Queryer
-        logging.info('³õÊ¼»¯Íê³É')
+        logging.info('åˆå§‹åŒ–å®Œæˆ')
 
     def inbound(self, items):
         """
@@ -21,13 +21,13 @@ class Inventory(object):
         """
         for i in items:
             name = list(i.keys())[0]
-            logging.info('¿ªÊ¼Îª{}×·¼Ó¿â´æ'.format(name))
+            logging.info('å¼€å§‹ä¸º{}è¿½åŠ åº“å­˜'.format(name))
             if name in self.store:
                 self.store[name] += i[name]
-                logging.info('{} ÒÑÔÚ¿âÖĞ£¬×·¼ÓÊıÁ¿ {}£¬×·¼ÓºóÊıÁ¿ {}'.format(name, i[name], self.store[name]))
+                logging.info('{} å·²åœ¨åº“ä¸­ï¼Œè¿½åŠ æ•°é‡ {}ï¼Œè¿½åŠ åæ•°é‡ {}'.format(name, i[name], self.store[name]))
             else:
                 self.store.update(i)
-                logging.info('{} ²»ÔÚ¿âÖĞ£¬×·¼Ó¸ÃÎïÆ·£¬ÊıÁ¿ {}'.format(name, self.store[name]))
+                logging.info('{} ä¸åœ¨åº“ä¸­ï¼Œè¿½åŠ è¯¥ç‰©å“ï¼Œæ•°é‡ {}'.format(name, self.store[name]))
         return True
 
     def outbound(self, items):
@@ -39,6 +39,8 @@ class Inventory(object):
 
             a.query_item_craft()
             a.calibration_quantity(a.stuff['craft'])
+            print(a)
+            logging.info('å·²ç»æŸ¥æ‰¾åˆ°{}çš„åˆ¶ä½œé…æ–¹ï¼Œå‡†å¤‡è¿›è¡Œå‡ºåº“æ“ä½œ'.format(a['name']))
 
     def make_queue(self):
         pass

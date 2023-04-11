@@ -64,7 +64,10 @@ class Queryer(object):
         :param url:要调用的接口path
         :return dist：universalis返回的查询结果
         """
-        url = 'https://universalis.app' + url
+        if url[0:5] == 'https':
+            pass
+        else:
+            url = 'https://universalis.app' + url
         while True:
             try:
                 result = get(url, timeout=5, headers=self.header)

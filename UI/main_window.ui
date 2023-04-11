@@ -370,7 +370,7 @@
     <addaction name="server_maoxiaopang"/>
     <addaction name="server_doudouchai"/>
    </widget>
-   <widget class="QMenu" name="about">
+   <widget class="QMenu" name="other">
     <property name="font">
      <font>
       <family>Arial</family>
@@ -385,7 +385,7 @@
     <addaction name="check_update"/>
    </widget>
    <addaction name="server"/>
-   <addaction name="about"/>
+   <addaction name="other"/>
   </widget>
   <action name="select_server_china">
    <property name="enabled">
@@ -784,10 +784,11 @@
    <property name="text">
     <string>使用静态资源加速</string>
    </property>
-  </action>
-  <action name="check_update">
-   <property name="text">
-    <string>关于</string>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
   <action name="filter_item">
@@ -799,6 +800,23 @@
    </property>
    <property name="text">
     <string>过滤不可在市场出售的物品</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="check_update">
+   <property name="text">
+    <string>关于</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
  </widget>

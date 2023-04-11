@@ -22,7 +22,7 @@ from UI.show_price import Ui_show_price
 # 解决中文路径的问题  https://github.com/skywind3000/PyStand/issues/6
 QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
@@ -93,102 +93,6 @@ class MainWindow(Ui_mainWindow):
         self.select_server_moguli.triggered.connect(lambda: click_select_server("莫古力"))
         self.select_server_maoxiaopang.triggered.connect(lambda: click_select_server("猫小胖"))
         self.select_server_doudouchai.triggered.connect(lambda: click_select_server("豆豆柴"))
-        # self.select_server_Elemental.triggered.connect(lambda: click_select_server("Elemental"))
-        # self.select_server_Carbuncle.triggered.connect(lambda: click_select_server("Carbuncle"))
-        # self.select_server_Kujata.triggered.connect(lambda: click_select_server("Kujata"))
-        # self.select_server_Typhon.triggered.connect(lambda: click_select_server("Typhon"))
-        # self.select_server_Garuda.triggered.connect(lambda: click_select_server("Garuda"))
-        # self.select_server_Atomos.triggered.connect(lambda: click_select_server("Atomos"))
-        # self.select_server_Tonberry.triggered.connect(lambda: click_select_server("Tonberry"))
-        # self.select_server_Aegis.triggered.connect(lambda: click_select_server("Aegis"))
-        # self.select_server_Gungnir.triggered.connect(lambda: click_select_server("Gungnir"))
-        # self.select_server_Gaia.triggered.connect(lambda: click_select_server("Gaia"))
-        # self.select_server_Alexander.triggered.connect(lambda: click_select_server("Alexander"))
-        # self.select_server_Fenrir.triggered.connect(lambda: click_select_server("Fenrir"))
-        # self.select_server_Ultima.triggered.connect(lambda: click_select_server("Ultima"))
-        # self.select_server_Ifrit.triggered.connect(lambda: click_select_server("Ifrit"))
-        # self.select_server_Bahamut.triggered.connect(lambda: click_select_server("Bahamut"))
-        # self.select_server_Tiamat.triggered.connect(lambda: click_select_server("Tiamat"))
-        # self.select_server_Durandal.triggered.connect(lambda: click_select_server("Durandal"))
-        # self.select_server_Ridill.triggered.connect(lambda: click_select_server("Ridill"))
-        # self.select_server_Mana.triggered.connect(lambda: click_select_server("Mana"))
-        # self.select_server_Asura.triggered.connect(lambda: click_select_server("Asura"))
-        # self.select_server_Pandaemonium.triggered.connect(lambda: click_select_server("Pandaemonium"))
-        # self.select_server_Anima.triggered.connect(lambda: click_select_server("Anima"))
-        # self.select_server_Hades.triggered.connect(lambda: click_select_server("Hades"))
-        # self.select_server_Ixion.triggered.connect(lambda: click_select_server("Ixion"))
-        # self.select_server_Titan.triggered.connect(lambda: click_select_server("Titan"))
-        # self.select_server_Chocobo.triggered.connect(lambda: click_select_server("Chocobo"))
-        # self.select_server_Masamune.triggered.connect(lambda: click_select_server("Masamune"))
-        # self.select_server_Aether.triggered.connect(lambda: click_select_server("Aether"))
-        # self.select_server_Jenova.triggered.connect(lambda: click_select_server("Jenova"))
-        # self.select_server_Faerie.triggered.connect(lambda: click_select_server("Faerie"))
-        # self.select_server_Siren.triggered.connect(lambda: click_select_server("Siren"))
-        # self.select_server_Gilgamesh.triggered.connect(lambda: click_select_server("Gilgamesh"))
-        # self.select_server_Midgardsormr.triggered.connect(lambda: click_select_server("Midgardsormr"))
-        # self.select_server_Adamantoise.triggered.connect(lambda: click_select_server("Adamantoise"))
-        # self.select_server_Cactuar.triggered.connect(lambda: click_select_server("Cactuar"))
-        # self.select_server_Sargatanas.triggered.connect(lambda: click_select_server("Sargatanas"))
-        # self.select_server_Primal.triggered.connect(lambda: click_select_server("Primal"))
-        # self.select_server_Famfrit.triggered.connect(lambda: click_select_server("Famfrit"))
-        # self.select_server_Exodus.triggered.connect(lambda: click_select_server("Exodus"))
-        # self.select_server_Lamia.triggered.connect(lambda: click_select_server("Lamia"))
-        # self.select_server_Leviathan.triggered.connect(lambda: click_select_server("Leviathan"))
-        # self.select_server_Ultros.triggered.connect(lambda: click_select_server("Ultros"))
-        # self.select_server_Behemoth.triggered.connect(lambda: click_select_server("Behemoth"))
-        # self.select_server_Excalibur.triggered.connect(lambda: click_select_server("Excalibur"))
-        # self.select_server_Hyperion.triggered.connect(lambda: click_select_server("Hyperion"))
-        # self.select_server_Chaos.triggered.connect(lambda: click_select_server("Chaos"))
-        # self.select_server_Omega.triggered.connect(lambda: click_select_server("Omega"))
-        # self.select_server_Moogle.triggered.connect(lambda: click_select_server("Moogle"))
-        # self.select_server_Cerberus.triggered.connect(lambda: click_select_server("Cerberus"))
-        # self.select_server_Louisoix.triggered.connect(lambda: click_select_server("Louisoix"))
-        # self.select_server_Spriggan.triggered.connect(lambda: click_select_server("Spriggan"))
-        # self.select_server_Ragnarok.triggered.connect(lambda: click_select_server("Ragnarok"))
-        # self.select_server_Sagittarius.triggered.connect(lambda: click_select_server("Sagittarius"))
-        # self.select_server_Phantom.triggered.connect(lambda: click_select_server("Phantom"))
-        # self.select_server_Light.triggered.connect(lambda: click_select_server("Light"))
-        # self.select_server_Twintania.triggered.connect(lambda: click_select_server("Twintania"))
-        # self.select_server_Lich.triggered.connect(lambda: click_select_server("Lich"))
-        # self.select_server_Zodiark.triggered.connect(lambda: click_select_server("Zodiark"))
-        # self.select_server_Phoenix.triggered.connect(lambda: click_select_server("Phoenix"))
-        # self.select_server_Odin.triggered.connect(lambda: click_select_server("Odin"))
-        # self.select_server_Shiva.triggered.connect(lambda: click_select_server("Shiva"))
-        # self.select_server_Alpha.triggered.connect(lambda: click_select_server("Alpha"))
-        # self.select_server_Raiden.triggered.connect(lambda: click_select_server("Raiden"))
-        # self.select_server_Crystal.triggered.connect(lambda: click_select_server("Crystal"))
-        # self.select_server_Brynhildr.triggered.connect(lambda: click_select_server("Brynhildr"))
-        # self.select_server_Mateus.triggered.connect(lambda: click_select_server("Mateus"))
-        # self.select_server_Zalera.triggered.connect(lambda: click_select_server("Zalera"))
-        # self.select_server_Diabolos.triggered.connect(lambda: click_select_server("Diabolos"))
-        # self.select_server_Coeurl.triggered.connect(lambda: click_select_server("Coeurl"))
-        # self.select_server_Malboro.triggered.connect(lambda: click_select_server("Malboro"))
-        # self.select_server_Goblin.triggered.connect(lambda: click_select_server("Goblin"))
-        # self.select_server_Balmung.triggered.connect(lambda: click_select_server("Balmung"))
-        # self.select_server_Materia.triggered.connect(lambda: click_select_server("Materia"))
-        # self.select_server_Ravana.triggered.connect(lambda: click_select_server("Ravana"))
-        # self.select_server_Bismarck.triggered.connect(lambda: click_select_server("Bismarck"))
-        # self.select_server_Sephirot.triggered.connect(lambda: click_select_server("Sephirot"))
-        # self.select_server_Sophia.triggered.connect(lambda: click_select_server("Sophia"))
-        # self.select_server_Zurvan.triggered.connect(lambda: click_select_server("Zurvan"))
-        # self.select_server_Meteor.triggered.connect(lambda: click_select_server("Meteor"))
-        # self.select_server_Belias.triggered.connect(lambda: click_select_server("Belias"))
-        # self.select_server_Shinryu.triggered.connect(lambda: click_select_server("Shinryu"))
-        # self.select_server_Unicorn.triggered.connect(lambda: click_select_server("Unicorn"))
-        # self.select_server_Yojimbo.triggered.connect(lambda: click_select_server("Yojimbo"))
-        # self.select_server_Zeromus.triggered.connect(lambda: click_select_server("Zeromus"))
-        # self.select_server_Valefor.triggered.connect(lambda: click_select_server(""))
-        # self.select_server_Ramuh.triggered.connect(lambda: click_select_server("Ramuh"))
-        # self.select_server_Mandragora.triggered.connect(lambda: click_select_server("Mandragora"))
-        # self.select_server_Dynamis.triggered.connect(lambda: click_select_server("Dynamis"))
-        # self.select_server_Marilith.triggered.connect(lambda: click_select_server("Marilith"))
-        # self.select_server_Seraph.triggered.connect(lambda: click_select_server("Seraph"))
-        # self.select_server_Halicarnassus.triggered.connect(lambda: click_select_server("Halicarnassus"))
-        # self.select_server_Maduin.triggered.connect(lambda: click_select_server("Maduin"))
-        # self.select_server_japan.triggered.connect(lambda: click_select_server("日服"))
-        # self.select_server_na.triggered.connect(lambda: click_select_server("美服"))
-        # self.select_server_europe.triggered.connect(lambda: click_select_server("欧服"))
-        # self.select_server_oceania.triggered.connect(lambda: click_select_server("太平洋服"))
         self.use_static_file.triggered.connect(use_static_file_or_not)
         self.check_update.triggered.connect(show_check_update_window)
         self.filter_item.triggered.connect(filter_item_or_not)
@@ -359,8 +263,7 @@ def query_sale_list():
     """
     正在售出列表填充
     """
-    global query_history
-    hq_icon = QtGui.QIcon(resource_path(os.path.join("Data", "hq.png")))
+    hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 查询正在售出的记录
     price_list = item.query_item_price()
     logging.info("物品的售出价格查询完毕，开始绘制价格表格")
@@ -438,7 +341,7 @@ def query_every_server(all_server_list):
     """
     全服比价列表填充
     """
-    hq_icon = QtGui.QIcon(resource_path(os.path.join("Data", "hq.png")))
+    hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 设置表格样式
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
@@ -585,7 +488,7 @@ def click_select_server(server):
     server_list = item.server_list()
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
-        logging.info("重新选择了服务器为{}，清空价格缓存，开始进行{}价格查询".format(item.server, item.name))
+        logging.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
         item.price_cache = {}
         query_price()
 
@@ -717,24 +620,14 @@ def test_network():
         query_price()
 
 
-def resource_path(relative_path):
-    """
-    静态资源打包功能，在spec文件的datas中写入目录名
-    """
-    if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
-
-
 """
 公共数据部分
 """
 logging.info("主程序启动，开始处理公共数据")
+# 与 Data/version 文件中的版本对应
 program_version = '0.9.4'
 # 加载查询历史
-history_file = resource_path(os.path.join('Data', "Paissa_query_history.log"))
+history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
@@ -768,10 +661,13 @@ logging.debug("主程序数据初始化完成")
 主程序开始
 """
 app = QtWidgets.QApplication(sys.argv)
+desktop = app.desktop()
+logging.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
 app.setStyle("Fusion")
 widget = RQMainWindow()
 ui = MainWindow()
 ui.setupUi(widget)
+widget.resize(int(desktop.width()*0.6), int(desktop.height()*0.6))
 ui.setup_menu()
 ui.jump_to_wiki.setOpenExternalLinks(True)
 ui.show_server.setText(item.server)
@@ -844,6 +740,7 @@ loading_page.setupUi(ui.loading_ui)
 widget2 = QtWidgets.QMainWindow()
 history_board = HistoryPage()
 history_board.setupUi(widget2)
+widget2.resize(int(desktop.width()*0.15), int(desktop.height()*0.6))
 history_board.history_list.doubleClicked.connect(click_history_query)
 for i in query_history:
     if i['HQ'] is not True and i["itemName"] != 'None':

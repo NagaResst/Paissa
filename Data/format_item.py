@@ -5,9 +5,20 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 """
+下载数据文件到本地
+"""
+# Download_addres = 'https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
+# f = requests.get(Download_addres)
+# # 下载文件
+# with open("item.csv", "w") as code:
+#     code.write(f.content)
+#     print('数据文件下载完成')
+#     code.close()
+
+"""
 转换物品列表
 """
-with open('item.csv', 'r', encoding='utf8') as item_file:
+with open('Item.csv', 'r', encoding='utf8') as item_file:
     item_in_list = csv.DictReader(item_file)
     item_out_list = {}
     for i in item_in_list:
@@ -25,6 +36,7 @@ if '#' in item_out_list:
     del item_out_list['#']
 if 'int32' in item_out_list:
     del item_out_list['int32']
+    print('数据列表转换完毕，准备抓取数据')
 
 """
 花环万岁！
@@ -37,6 +49,7 @@ def get_item_details(item_id):
         try:
             result = requests.get(url, timeout=5)
             if result.status_code == 200:
+                print(item_id)
                 result = json.loads(result.text)['item']
                 print(result['id'], end='\n')
                 if 'vendors' in result:
@@ -60,7 +73,7 @@ tpool.shutdown(wait=True)
 数据写入磁盘
 """
 # print(item_out_list)
-version = {'data-version': '6.20'}
+version = {'data-version': '6.25'}
 version.update(item_out_list)
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
     json.dump(version, item_data)

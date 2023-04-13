@@ -321,7 +321,13 @@ def query_price():
     # 设置wiki链接
     first_query = False
     ui.jump_to_wiki.setText(
-        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
+        '''
+        <a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">灰机wiki</a> 
+        | 
+        <a href="https://garlandtools.cn/db/#item/{}">花环</a>
+        '''.format(item.name, item.id))
+    # ui.jump_to_garland.setText(
+    #     '<a href="https://garlandtools.cn/db/#item/{}">在花环数据库中查看</a>'.format(item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     logging.info("开始查询{}的{}".format(item.server, item.name))
     query_sale_list()
@@ -721,7 +727,7 @@ def test_network():
 """
 logging.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '0.9.4'
+program_version = '0.9.5'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:

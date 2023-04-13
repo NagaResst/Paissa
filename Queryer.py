@@ -103,23 +103,24 @@ class Queryer(object):
         self.icon = None
         if len(self.item_list) == 0:
             self.query_item_id(self.name)
+        logging.debug('物品列表长度为：{}'.format(len(self.item_list)))
         # 静态加速的数据来源于garlandtools,在线查询的数据来源于cafemaker,所以取图标的API不同
         if len(self.item_list) > 1 and self.static is False:
             for i in self.item_list:
                 if str(i['id']) == str(self.id):
                     icon_url = "https://cafemaker.wakingsands.com" + i['icon']
         elif len(self.item_list) > 1 and self.static is True:
-            icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
+            icon_url = "https://garlandtools.cn/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
         elif len(self.item_list) == 1 and self.static is False:
             icon_url = "https://cafemaker.wakingsands.com" + self.item_list[0]['icon']
         elif len(self.item_list) == 1 and self.static is True:
-            icon_url = "https://garlandtools.cn/files/icons/item/" + self.item_data[str(self.id)]['icon'] + '.png'
+            icon_url = "https://garlandtools.cn/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
         try:
             result = get(icon_url, timeout=3, headers=self.header)
             self.icon = result.content
-            logging.info('图标获取成功')
+            logging.debug('图标获取成功')
         except:
-            logging.info('图标获取失败')
+            logging.debug('图标获取失败')
 
     def server_list(self):
         """

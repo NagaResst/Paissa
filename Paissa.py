@@ -722,7 +722,7 @@ def test_network():
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '0.9.6'
+program_version = '0.9.7'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
@@ -732,12 +732,12 @@ try:
         # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
         if len(query_history) == 0:
             # 加入None条目，后面的切换界面判断方法就不用判空了
-            query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
+            query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": 'None'}]
         item = Queryer(history_json['server'])
         logger.info("读取查询历史成功")
 except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
-    query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
+    query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": None}]
     item = Queryer('猫小胖')
     logger.warning("没有发现历史数据，初始化历史数据")
 # 加载本地静态文件

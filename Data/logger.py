@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 
 
 class Log(object):
@@ -7,15 +8,15 @@ class Log(object):
         self.log.setLevel(level)
         self.log_format = "%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s"
 
-    def console_handle(self, level="DEBUG"):
+    def console_handle(self):
         console_handle = logging.StreamHandler()
-        # console_handle.setLevel(level)
         console_handle.setFormatter(self.get_formatter()[0])
         return console_handle
 
-    def file_handle(self, level="DEBUG"):
-        file_handler = logging.FileHandler("Data/Paissa.log", mode='a', encoding='utf-8')
-        # file_handler.setLevel(level)
+    def file_handle(self):
+        file_handler = logging.handlers.RotatingFileHandler(
+            "Data/Paissa.log", maxBytes=100000000, backupCount=2, encoding='utf-8')
+
         file_handler.setFormatter(self.get_formatter()[1])
         return file_handler
 

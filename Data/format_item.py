@@ -30,7 +30,7 @@ Download_addres = 'https://raw.githubusercontent.com/thewakingsands/ffxiv-datami
 f = requests.get(Download_addres)
 logging.info('拆包数据下载成功，准备保存到本地')
 # 下载文件
-with open("Item.csv", "w") as code:
+with open("Item.csv", "w", encoding='utf-8') as code:
     code.write(f.text)
     code.close()
 

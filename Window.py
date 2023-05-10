@@ -38,7 +38,8 @@ class RQMainWindow(QtWidgets.QMainWindow):
             if i['itemName'] == 'None' or i['itemName'] is None:
                 query_history.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
-        history = {"server": item.server, 'use_static': item.static, "history": query_history}
+        history = {"program_version": program_version, "server": item.server, 'use_static': item.static,
+                   "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
             logger.info("数据文件回写成功，准备关闭主程序")
@@ -152,7 +153,7 @@ def query_item():
         ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
     else:
-        logger.info("开始查找道具")
+        logger.info("开始查找道具 {}".format(input_name))
         item.query_item_id(input_name)
         # 查询到的道具数量大于1
         if len(item.item_list) > 1:
@@ -220,7 +221,11 @@ def query_price():
     # 设置wiki链接
     first_query = False
     ui.jump_to_wiki.setText(
-        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
+        '''
+        <a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">灰机wiki</a> 
+        | 
+        <a href="https://garlandtools.cn/db/#item/{}">花环</a>
+        '''.format(item.name, item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     logger.info("开始查询{}的{}".format(item.server, item.name))
     query_sale_list()
@@ -589,11 +594,9 @@ def show_check_update_window():
     if c_p_v == l_p_v and c_d_v == l_d_v:
         check_update_window.update_text.hide()
     elif c_p_v == l_p_v and c_d_v != l_d_v:
-        check_update_window.update_text.setText('数据文件需要更新')
+        check_update_window.update_text.setText('数据文件需要更新，请重新启动猴面雀')
     else:
-        check_update_window.update_text.setText(
-            '请点击 <a href=\"http://43.142.142.18/Paissa.zip\"><span style=\" text-decoration: underline; color:#0000ff;\">这里</span></a> 下载最新版本')
-        check_update_window.update_text.setOpenExternalLinks(True)
+        check_update_window.update_text.setText('主程序版本需要更新，请重新启动猴面雀')
     # 面板隐藏或者显示
     if widget3.isVisible():
         widget3.hide()

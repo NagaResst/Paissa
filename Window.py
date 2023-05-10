@@ -13,7 +13,6 @@ from UI.main_window import Ui_mainWindow
 from UI.query_item_id import Ui_query_item_id
 from UI.select_item_list import Ui_select_item_list
 from UI.show_price import Ui_show_price
-from Data.logger import logger
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -21,6 +20,11 @@ from Data.logger import logger
 """
 # 解决中文路径的问题  https://github.com/skywind3000/PyStand/issues/6
 QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S'
+                    )
 
 
 class RQMainWindow(QtWidgets.QMainWindow):
@@ -38,10 +42,10 @@ class RQMainWindow(QtWidgets.QMainWindow):
             if i['itemName'] == 'None' or i['itemName'] is None:
                 query_history.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
-        history = {"program_version": program_version, "server": item.server, 'use_static': item.static, "history": query_history}
+        history = {"server": item.server, 'use_static': item.static, "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
-            logger.info("数据文件回写成功，准备关闭主程序")
+            logging.info("数据文件回写成功，准备关闭主程序")
         event.accept()
         sys.exit(0)  # 退出程序
 
@@ -88,102 +92,6 @@ class MainWindow(Ui_mainWindow):
         self.select_server_moguli.triggered.connect(lambda: click_select_server("莫古力"))
         self.select_server_maoxiaopang.triggered.connect(lambda: click_select_server("猫小胖"))
         self.select_server_doudouchai.triggered.connect(lambda: click_select_server("豆豆柴"))
-        self.select_server_Elemental.triggered.connect(lambda: click_select_server("Elemental"))
-        self.select_server_Carbuncle.triggered.connect(lambda: click_select_server("Carbuncle"))
-        self.select_server_Kujata.triggered.connect(lambda: click_select_server("Kujata"))
-        self.select_server_Typhon.triggered.connect(lambda: click_select_server("Typhon"))
-        self.select_server_Garuda.triggered.connect(lambda: click_select_server("Garuda"))
-        self.select_server_Atomos.triggered.connect(lambda: click_select_server("Atomos"))
-        self.select_server_Tonberry.triggered.connect(lambda: click_select_server("Tonberry"))
-        self.select_server_Aegis.triggered.connect(lambda: click_select_server("Aegis"))
-        self.select_server_Gungnir.triggered.connect(lambda: click_select_server("Gungnir"))
-        self.select_server_Gaia.triggered.connect(lambda: click_select_server("Gaia"))
-        self.select_server_Alexander.triggered.connect(lambda: click_select_server("Alexander"))
-        self.select_server_Fenrir.triggered.connect(lambda: click_select_server("Fenrir"))
-        self.select_server_Ultima.triggered.connect(lambda: click_select_server("Ultima"))
-        self.select_server_Ifrit.triggered.connect(lambda: click_select_server("Ifrit"))
-        self.select_server_Bahamut.triggered.connect(lambda: click_select_server("Bahamut"))
-        self.select_server_Tiamat.triggered.connect(lambda: click_select_server("Tiamat"))
-        self.select_server_Durandal.triggered.connect(lambda: click_select_server("Durandal"))
-        self.select_server_Ridill.triggered.connect(lambda: click_select_server("Ridill"))
-        self.select_server_Mana.triggered.connect(lambda: click_select_server("Mana"))
-        self.select_server_Asura.triggered.connect(lambda: click_select_server("Asura"))
-        self.select_server_Pandaemonium.triggered.connect(lambda: click_select_server("Pandaemonium"))
-        self.select_server_Anima.triggered.connect(lambda: click_select_server("Anima"))
-        self.select_server_Hades.triggered.connect(lambda: click_select_server("Hades"))
-        self.select_server_Ixion.triggered.connect(lambda: click_select_server("Ixion"))
-        self.select_server_Titan.triggered.connect(lambda: click_select_server("Titan"))
-        self.select_server_Chocobo.triggered.connect(lambda: click_select_server("Chocobo"))
-        self.select_server_Masamune.triggered.connect(lambda: click_select_server("Masamune"))
-        self.select_server_Aether.triggered.connect(lambda: click_select_server("Aether"))
-        self.select_server_Jenova.triggered.connect(lambda: click_select_server("Jenova"))
-        self.select_server_Faerie.triggered.connect(lambda: click_select_server("Faerie"))
-        self.select_server_Siren.triggered.connect(lambda: click_select_server("Siren"))
-        self.select_server_Gilgamesh.triggered.connect(lambda: click_select_server("Gilgamesh"))
-        self.select_server_Midgardsormr.triggered.connect(lambda: click_select_server("Midgardsormr"))
-        self.select_server_Adamantoise.triggered.connect(lambda: click_select_server("Adamantoise"))
-        self.select_server_Cactuar.triggered.connect(lambda: click_select_server("Cactuar"))
-        self.select_server_Sargatanas.triggered.connect(lambda: click_select_server("Sargatanas"))
-        self.select_server_Primal.triggered.connect(lambda: click_select_server("Primal"))
-        self.select_server_Famfrit.triggered.connect(lambda: click_select_server("Famfrit"))
-        self.select_server_Exodus.triggered.connect(lambda: click_select_server("Exodus"))
-        self.select_server_Lamia.triggered.connect(lambda: click_select_server("Lamia"))
-        self.select_server_Leviathan.triggered.connect(lambda: click_select_server("Leviathan"))
-        self.select_server_Ultros.triggered.connect(lambda: click_select_server("Ultros"))
-        self.select_server_Behemoth.triggered.connect(lambda: click_select_server("Behemoth"))
-        self.select_server_Excalibur.triggered.connect(lambda: click_select_server("Excalibur"))
-        self.select_server_Hyperion.triggered.connect(lambda: click_select_server("Hyperion"))
-        self.select_server_Chaos.triggered.connect(lambda: click_select_server("Chaos"))
-        self.select_server_Omega.triggered.connect(lambda: click_select_server("Omega"))
-        self.select_server_Moogle.triggered.connect(lambda: click_select_server("Moogle"))
-        self.select_server_Cerberus.triggered.connect(lambda: click_select_server("Cerberus"))
-        self.select_server_Louisoix.triggered.connect(lambda: click_select_server("Louisoix"))
-        self.select_server_Spriggan.triggered.connect(lambda: click_select_server("Spriggan"))
-        self.select_server_Ragnarok.triggered.connect(lambda: click_select_server("Ragnarok"))
-        self.select_server_Sagittarius.triggered.connect(lambda: click_select_server("Sagittarius"))
-        self.select_server_Phantom.triggered.connect(lambda: click_select_server("Phantom"))
-        self.select_server_Light.triggered.connect(lambda: click_select_server("Light"))
-        self.select_server_Twintania.triggered.connect(lambda: click_select_server("Twintania"))
-        self.select_server_Lich.triggered.connect(lambda: click_select_server("Lich"))
-        self.select_server_Zodiark.triggered.connect(lambda: click_select_server("Zodiark"))
-        self.select_server_Phoenix.triggered.connect(lambda: click_select_server("Phoenix"))
-        self.select_server_Odin.triggered.connect(lambda: click_select_server("Odin"))
-        self.select_server_Shiva.triggered.connect(lambda: click_select_server("Shiva"))
-        self.select_server_Alpha.triggered.connect(lambda: click_select_server("Alpha"))
-        self.select_server_Raiden.triggered.connect(lambda: click_select_server("Raiden"))
-        self.select_server_Crystal.triggered.connect(lambda: click_select_server("Crystal"))
-        self.select_server_Brynhildr.triggered.connect(lambda: click_select_server("Brynhildr"))
-        self.select_server_Mateus.triggered.connect(lambda: click_select_server("Mateus"))
-        self.select_server_Zalera.triggered.connect(lambda: click_select_server("Zalera"))
-        self.select_server_Diabolos.triggered.connect(lambda: click_select_server("Diabolos"))
-        self.select_server_Coeurl.triggered.connect(lambda: click_select_server("Coeurl"))
-        self.select_server_Malboro.triggered.connect(lambda: click_select_server("Malboro"))
-        self.select_server_Goblin.triggered.connect(lambda: click_select_server("Goblin"))
-        self.select_server_Balmung.triggered.connect(lambda: click_select_server("Balmung"))
-        self.select_server_Materia.triggered.connect(lambda: click_select_server("Materia"))
-        self.select_server_Ravana.triggered.connect(lambda: click_select_server("Ravana"))
-        self.select_server_Bismarck.triggered.connect(lambda: click_select_server("Bismarck"))
-        self.select_server_Sephirot.triggered.connect(lambda: click_select_server("Sephirot"))
-        self.select_server_Sophia.triggered.connect(lambda: click_select_server("Sophia"))
-        self.select_server_Zurvan.triggered.connect(lambda: click_select_server("Zurvan"))
-        self.select_server_Meteor.triggered.connect(lambda: click_select_server("Meteor"))
-        self.select_server_Belias.triggered.connect(lambda: click_select_server("Belias"))
-        self.select_server_Shinryu.triggered.connect(lambda: click_select_server("Shinryu"))
-        self.select_server_Unicorn.triggered.connect(lambda: click_select_server("Unicorn"))
-        self.select_server_Yojimbo.triggered.connect(lambda: click_select_server("Yojimbo"))
-        self.select_server_Zeromus.triggered.connect(lambda: click_select_server("Zeromus"))
-        self.select_server_Valefor.triggered.connect(lambda: click_select_server(""))
-        self.select_server_Ramuh.triggered.connect(lambda: click_select_server("Ramuh"))
-        self.select_server_Mandragora.triggered.connect(lambda: click_select_server("Mandragora"))
-        self.select_server_Dynamis.triggered.connect(lambda: click_select_server("Dynamis"))
-        self.select_server_Marilith.triggered.connect(lambda: click_select_server("Marilith"))
-        self.select_server_Seraph.triggered.connect(lambda: click_select_server("Seraph"))
-        self.select_server_Halicarnassus.triggered.connect(lambda: click_select_server("Halicarnassus"))
-        self.select_server_Maduin.triggered.connect(lambda: click_select_server("Maduin"))
-        self.select_server_japan.triggered.connect(lambda: click_select_server("日服"))
-        self.select_server_na.triggered.connect(lambda: click_select_server("美服"))
-        self.select_server_europe.triggered.connect(lambda: click_select_server("欧服"))
-        self.select_server_oceania.triggered.connect(lambda: click_select_server("太平洋服"))
         self.use_static_file.triggered.connect(use_static_file_or_not)
         self.check_update.triggered.connect(show_check_update_window)
         self.filter_item.triggered.connect(filter_item_or_not)
@@ -237,22 +145,22 @@ def query_item():
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
     if {"itemName": input_name} == query_history[-1]['itemName'] and len(item.item_list) > 1 and first_query is False:
-        logger.info("与上次查询结果一致，切换到物品选择页面")
+        logging.info("与上次查询结果一致，切换到物品选择页面")
         ui.show_data_box.setCurrentIndex(1)
     elif input_name == query_history[-1]['itemName'] and item.hq == query_history[-1]['HQ'] \
             and item.server == query_history[-1]['server'] and len(item.item_list) == 1 and first_query is False:
-        logger.info("与上次查询结果一致，切换到价格显示页面")
+        logging.info("与上次查询结果一致，切换到价格显示页面")
         ui.item_icon.show()
         ui.jump_to_wiki.show()
         ui.show_cost.show()
         ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
     else:
-        logger.info("开始查找道具 {}".format(input_name))
+        logging.info("开始查找道具")
         item.query_item_id(input_name)
         # 查询到的道具数量大于1
         if len(item.item_list) > 1:
-            logger.info("查询到多个道具，开始渲染物品选择界面")
+            logging.info("查询到多个道具，开始渲染物品选择界面")
             # 绘制表格，让玩家选择道具
             r = 0
             # 绘制前 清空上次查询结果
@@ -262,7 +170,7 @@ def query_item():
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
             select_item_page.items_list_widget.setColumnWidth(0, 120)
             select_item_page.items_list_widget.setRowCount(len(item.item_list))
-            logger.debug("表格填充数据")
+            logging.debug("表格填充数据")
             for i in item.item_list:
                 item_id = QtWidgets.QTableWidgetItem(str(i['id']))
                 item_id.setTextAlignment(4 | 128)
@@ -276,13 +184,13 @@ def query_item():
             ui.show_data_box.setCurrentIndex(1)
         # 只查询到一个道具
         elif len(item.item_list) == 1:
-            logger.info("查询到一个道具，准备进行网络测试")
+            logging.info("查询到一个道具，准备进行网络测试")
             item.id = item.item_list[0]['id']
             item.name = item.item_list[0]['name']
             test_network()
         # 查询不到道具
         else:
-            logger.warning("查询不到道具")
+            logging.warning("查询不到道具")
             show_message()
 
 
@@ -302,7 +210,7 @@ def select_item(selectd):
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-    logger.info("选择了一个道具，准备进行网络测试")
+    logging.info("选择了一个道具，准备进行网络测试")
     test_network()
 
 
@@ -316,15 +224,9 @@ def query_price():
     # 设置wiki链接
     first_query = False
     ui.jump_to_wiki.setText(
-        '''
-        <a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">灰机wiki</a> 
-        | 
-        <a href="https://garlandtools.cn/db/#item/{}">花环</a>
-        '''.format(item.name, item.id))
-    # ui.jump_to_garland.setText(
-    #     '<a href="https://garlandtools.cn/db/#item/{}">在花环数据库中查看</a>'.format(item.id))
+        '<a href="https://ff14.huijiwiki.com/wiki/%E7%89%A9%E5%93%81:{}">在灰机wiki中查看</a>'.format(item.name))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
-    logger.info("开始查询{}的{}".format(item.server, item.name))
+    logging.info("开始查询{}的{}".format(item.server, item.name))
     query_sale_list()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
@@ -351,7 +253,7 @@ def query_price():
     elif item.hq is True:
         history_board.history_list.insertItem(0, item.name + 'HQ' + ' - ' + item.server)
     query_history.append(this_query)
-    logger.debug("查询历史更新完毕")
+    logging.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
     cost_page.cost_tree.clear()
 
@@ -363,7 +265,7 @@ def query_sale_list():
     hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 查询正在售出的记录
     price_list = item.query_item_price()
-    logger.info("物品的售出价格查询完毕，开始绘制价格表格")
+    logging.info("物品的售出价格查询完毕，开始绘制价格表格")
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText(
@@ -393,7 +295,7 @@ def query_sale_list():
     # 清空所有数据
     show_price_page.sale_list.clearContents()
     # 开始填充数据
-    logger.debug("为价格表格填充数据")
+    logging.debug("为价格表格填充数据")
     for i in price_list["listings"]:
         # 准备数据
         pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
@@ -443,7 +345,7 @@ def query_every_server(all_server_list):
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
     # 准备数据
-    logger.debug("绘制全服比价数据表格")
+    logging.debug("绘制全服比价数据表格")
     t = 0
     for i in all_server_list:
         server = QtWidgets.QTableWidgetItem(i['server'])
@@ -495,13 +397,13 @@ def make_cost_tree():
         ui.show_cost.setText('成本计算')
         ui.show_data_box.setCurrentIndex(2)
     elif ui.show_data_box.currentIndex() == 2 and len(item.stuff) > 0:
-        logger.debug("材料树中有内容，判断已经查询过材料树，切换界面")
+        logging.debug("材料树中有内容，判断已经查询过材料树，切换界面")
         ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
     elif len(item.stuff) == 0:
-        logger.debug("材料树是空的，开始查询")
+        logging.debug("材料树是空的，开始查询")
         item.show_item_cost()
-        logger.info("开始绘制材料树")
+        logging.info("开始绘制材料树")
         cost_page.cost_tree.clear()
         for i in item.stuff['craft']:
             make_tree(i, cost_page.cost_tree)
@@ -547,7 +449,7 @@ def click_history_query(selected):
             ui.show_server.setText("国服")
         else:
             ui.show_server.setText(item.server)
-        logger.info("通过点击历史面板进行查询 {} 的 {}".format(item.server, item_name))
+        logging.info("通过点击历史面板进行查询 {} 的 {}".format(item.server, item_name))
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]
             item.hq = True
@@ -585,7 +487,7 @@ def click_select_server(server):
     server_list = item.server_list()
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
-        logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
+        logging.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
         item.price_cache = {}
         query_price()
 
@@ -596,13 +498,13 @@ def click_query_item_name(selected):
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(selected.text(0))
         item.name = selected.text(0)
-        logger.info("材料名称 {} 已经复制到粘贴板".format(item.name))
+        logging.info("材料名称 {} 已经复制到粘贴板".format(item.name))
         for i in item.item_data.values():
             if i['name'] == item.name:
                 item.id = i['id']
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
-        logger.info("通过点击材料树重新查询材料 {}".format(item.name))
+        logging.info("通过点击材料树重新查询材料 {}".format(item.name))
         query_price()
     else:
         back_to_index()
@@ -691,12 +593,11 @@ def show_check_update_window():
     if c_p_v == l_p_v and c_d_v == l_d_v:
         check_update_window.update_text.hide()
     elif c_p_v == l_p_v and c_d_v != l_d_v:
-        check_update_window.update_text.setText('数据文件需要更新，请重新启动猴面雀')
+        check_update_window.update_text.setText('数据文件需要更新')
     else:
-        # check_update_window.update_text.setText(
-        #     '请点击 <a href=\"http://43.142.142.18/Paissa.zip\"><span style=\" text-decoration: underline; color:#0000ff;\">这里</span></a> 下载最新版本')
-        # check_update_window.update_text.setOpenExternalLinks(True)
-        check_update_window.update_text.setText('主程序版本需要更新，请重新启动猴面雀')
+        check_update_window.update_text.setText(
+            '请点击 <a href=\"http://43.142.142.18/Paissa.zip\"><span style=\" text-decoration: underline; color:#0000ff;\">这里</span></a> 下载最新版本')
+        check_update_window.update_text.setOpenExternalLinks(True)
     # 面板隐藏或者显示
     if widget3.isVisible():
         widget3.hide()
@@ -708,13 +609,13 @@ def test_network():
     global first_query
     if first_query is True:
         result = item.test_network()
-        logger.info('网络测试结果，{}'.format(result))
+        logging.info('网络测试结果，{}'.format(result))
         if result == "success":
             query_price()
         else:
             QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
     else:
-        logger.info('跳过网络测试')
+        logging.info('跳过网络测试')
         query_price()
 
 

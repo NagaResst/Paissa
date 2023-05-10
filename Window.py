@@ -737,11 +737,14 @@ history_board = HistoryPage()
 history_board.setupUi(widget2)
 widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
 history_board.history_list.doubleClicked.connect(click_history_query)
-for i in query_history:
-    if i['HQ'] is not True and i["itemName"] != 'None':
-        history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
-    elif i['HQ'] is True and i["itemName"] != 'None':
-        history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+try:
+    for i in query_history:
+        if i['HQ'] is not True and i["itemName"] != 'None':
+            history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
+        elif i['HQ'] is True and i["itemName"] != 'None':
+            history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+except:
+    pass
 
 """
 check update

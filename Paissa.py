@@ -35,11 +35,11 @@ logger.info("本地版本读取成功，主程序版本 {} ， 数据版本 {}".
 
 if version_online['program'] != program_version:
     try:
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Queryer.py', timeout=5).text
     except:
-        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Window.py', timeout=5).text
+        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Queryer.py', timeout=5).text
     with open('Window.py', 'w', encoding='utf-8') as program:
         program.write(program_text)
         program.close()

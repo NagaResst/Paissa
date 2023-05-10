@@ -7,12 +7,12 @@ import json
 通过gitee拉取程序版本
 """
 try:
-    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+    url = 'https://gitee.com/nagaresst/paissa/raw/development/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
 except:
-    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+    url = 'https://gitee.com/nagaresst/paissa/raw/development/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
@@ -35,22 +35,27 @@ logger.info("本地版本读取成功，主程序版本 {} ， 数据版本 {}".
 if version_online['program'] != program_version:
     try:
         program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
     except:
         program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
-with open('Window.py', 'r', encoding='utf-8') as program:
-    program.write(program_text)
-    program.close()
-    logger.info("主程序更新完成")
+        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+    with open('Window.py', 'w', encoding='utf-8') as program:
+        program.write(program_text)
+        program.close()
+    with open('Queryer.py', 'w', encoding='utf-8') as queryer:
+        queryer.write(query_text)
+        queryer.close()
+        logger.info("主程序更新完成")
 
 if version_online['data'] != data_version:
     try:
         data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=5).text
     except:
         data_text = get('https://github.com/NagaResst/Paissa/raw/master/Data/item.Pdt', timeout=5).text
-with open(data_file, 'r', encoding='utf-8') as data:
-    data.write(data_text)
-    data.close()
-    logger.info("数据文件更新完成")
+    with open(data_file, 'w', encoding='utf-8') as data:
+        data.write(data_text)
+        data.close()
+        logger.info("数据文件更新完成")
 
 import Window
 

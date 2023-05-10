@@ -753,7 +753,7 @@ item.static = history_json['use_static']
 item.item_data.pop('data-version')
 first_query = True
 server_list = []
-logger.debug("主程序数据初始化完成")
+logger.info("主程序数据初始化完成")
 
 """
 主程序开始

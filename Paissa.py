@@ -21,17 +21,24 @@ except:
 """
 读取本地版本进行比对
 """
-history_file = os.path.join('Data', "Paissa_query_history.log")
-with open(history_file, 'r', encoding='utf-8') as his:
-    history_json = json.load(his)
-    program_version = history_json['program_version']
-    his.close()
-data_file = os.path.join('Data', "item.Pdt")
-with open(data_file, 'r', encoding='utf-8') as data:
-    data_json = json.load(data)
-    data_version = data_json['data-version']
-    data.close()
-logger.info("本地版本读取成功，主程序版本 {} ， 数据版本 {}".format(program_version, data_version))
+try:
+    history_file = os.path.join('Data', "Paissa_query_history.log")
+    with open(history_file, 'r', encoding='utf-8') as his:
+        history_json = json.load(his)
+        program_version = history_json['program_version']
+        his.close()
+except:
+    program_version = None
+
+try:
+    data_file = os.path.join('Data', "item.Pdt")
+    with open(data_file, 'r', encoding='utf-8') as data:
+        data_json = json.load(data)
+        data_version = data_json['data-version']
+        data.close()
+    logger.info("本地版本读取成功，主程序版本 {} ， 数据版本 {}".format(program_version, data_version))
+except:
+    data_version = None
 
 if version_online['program'] != program_version:
     try:

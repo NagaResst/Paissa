@@ -622,11 +622,11 @@ class Queryer(object):
 
     def get_online_version(self):
         """
-        通过github拉取程序版本
+        通过gitee拉取程序版本
         """
-        url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+        url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
         result = get(url, timeout=5, headers=self.header)
-        logger.debug("{} success".format(url))
+        logger.debug("版本更新检查 {} success".format(url))
         return loads(result.text)
 
     def test_network(self):
@@ -642,7 +642,7 @@ class Queryer(object):
                     logger.warning(url + str(result.status_code))
                     c += 1
             except:
-                logger.error('{} timeout'.format(url))
+                logger.error('市场查询网络测试 {} timeout'.format(url))
                 c += 1
         if c >= 3:
             return "failed"

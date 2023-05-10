@@ -1,21 +1,22 @@
-from requests import get
-from Data.logger import logger
-import os
 import json
+import os
 
+from requests import get
+
+from Data.logger import logger
 
 """
 通过gitee拉取程序版本
 """
 try:
-    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
-    logger.info("版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(
+    logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
 except:
     url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
-    logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
+    logger.info("版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
 
 """
@@ -42,11 +43,11 @@ except:
 
 if version_online['program'] != program_version:
     try:
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Queryer.py', timeout=5).text
-    except:
         program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Window.py', timeout=5).text
         query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Queryer.py', timeout=5).text
+    except:
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Queryer.py', timeout=5).text
     with open('Window.py', 'w', encoding='utf-8') as program:
         program.write(program_text)
         program.close()
@@ -57,9 +58,9 @@ if version_online['program'] != program_version:
 
 if version_online['data'] != data_version:
     try:
-        data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=5).text
+        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
     except:
-        data_text = get('https://github.com/NagaResst/Paissa/raw/master/Data/item.Pdt', timeout=5).text
+        data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=5).text
     with open(data_file, 'w', encoding='utf-8') as data:
         data.write(data_text)
         data.close()

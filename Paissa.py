@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import sys
 
@@ -14,6 +13,7 @@ from UI.main_window import Ui_mainWindow
 from UI.query_item_id import Ui_query_item_id
 from UI.select_item_list import Ui_select_item_list
 from UI.show_price import Ui_show_price
+from Data.logger import logger
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -21,11 +21,6 @@ from UI.show_price import Ui_show_price
 """
 # 解决中文路径的问题  https://github.com/skywind3000/PyStand/issues/6
 QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S'
-                    )
 
 
 class RQMainWindow(QtWidgets.QMainWindow):
@@ -46,7 +41,7 @@ class RQMainWindow(QtWidgets.QMainWindow):
         history = {"server": item.server, 'use_static': item.static, "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
-            logging.info("数据文件回写成功，准备关闭主程序")
+            logger.info("数据文件回写成功，准备关闭主程序")
         event.accept()
         sys.exit(0)  # 退出程序
 
@@ -242,22 +237,22 @@ def query_item():
     input_name = query_item_page.input_item_name.text()
     # 如果与上一次查询结果一致，那么直接使用上次查询的列表
     if {"itemName": input_name} == query_history[-1]['itemName'] and len(item.item_list) > 1 and first_query is False:
-        logging.info("与上次查询结果一致，切换到物品选择页面")
+        logger.info("与上次查询结果一致，切换到物品选择页面")
         ui.show_data_box.setCurrentIndex(1)
     elif input_name == query_history[-1]['itemName'] and item.hq == query_history[-1]['HQ'] \
             and item.server == query_history[-1]['server'] and len(item.item_list) == 1 and first_query is False:
-        logging.info("与上次查询结果一致，切换到价格显示页面")
+        logger.info("与上次查询结果一致，切换到价格显示页面")
         ui.item_icon.show()
         ui.jump_to_wiki.show()
         ui.show_cost.show()
         ui.back_query.show()
         ui.show_data_box.setCurrentIndex(2)
     else:
-        logging.info("开始查找道具")
+        logger.info("开始查找道具 {}".format(input_name))
         item.query_item_id(input_name)
         # 查询到的道具数量大于1
         if len(item.item_list) > 1:
-            logging.info("查询到多个道具，开始渲染物品选择界面")
+            logger.info("查询到多个道具，开始渲染物品选择界面")
             # 绘制表格，让玩家选择道具
             r = 0
             # 绘制前 清空上次查询结果
@@ -267,7 +262,7 @@ def query_item():
             select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
             select_item_page.items_list_widget.setColumnWidth(0, 120)
             select_item_page.items_list_widget.setRowCount(len(item.item_list))
-            logging.debug("表格填充数据")
+            logger.debug("表格填充数据")
             for i in item.item_list:
                 item_id = QtWidgets.QTableWidgetItem(str(i['id']))
                 item_id.setTextAlignment(4 | 128)
@@ -281,13 +276,13 @@ def query_item():
             ui.show_data_box.setCurrentIndex(1)
         # 只查询到一个道具
         elif len(item.item_list) == 1:
-            logging.info("查询到一个道具，准备进行网络测试")
+            logger.info("查询到一个道具，准备进行网络测试")
             item.id = item.item_list[0]['id']
             item.name = item.item_list[0]['name']
             test_network()
         # 查询不到道具
         else:
-            logging.warning("查询不到道具")
+            logger.warning("查询不到道具")
             show_message()
 
 
@@ -307,7 +302,7 @@ def select_item(selectd):
         table_row = selectd.row()
         item.id = select_item_page.items_list_widget.item(table_row, 0).text()
         item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-    logging.info("选择了一个道具，准备进行网络测试")
+    logger.info("选择了一个道具，准备进行网络测试")
     test_network()
 
 
@@ -329,7 +324,7 @@ def query_price():
     # ui.jump_to_garland.setText(
     #     '<a href="https://garlandtools.cn/db/#item/{}">在花环数据库中查看</a>'.format(item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
-    logging.info("开始查询{}的{}".format(item.server, item.name))
+    logger.info("开始查询{}的{}".format(item.server, item.name))
     query_sale_list()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
@@ -356,7 +351,7 @@ def query_price():
     elif item.hq is True:
         history_board.history_list.insertItem(0, item.name + 'HQ' + ' - ' + item.server)
     query_history.append(this_query)
-    logging.debug("查询历史更新完毕")
+    logger.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
     cost_page.cost_tree.clear()
 
@@ -368,7 +363,7 @@ def query_sale_list():
     hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 查询正在售出的记录
     price_list = item.query_item_price()
-    logging.info("物品的售出价格查询完毕，开始绘制价格表格")
+    logger.info("物品的售出价格查询完毕，开始绘制价格表格")
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
     show_price_page.seven_day.setText(
@@ -398,7 +393,7 @@ def query_sale_list():
     # 清空所有数据
     show_price_page.sale_list.clearContents()
     # 开始填充数据
-    logging.debug("为价格表格填充数据")
+    logger.debug("为价格表格填充数据")
     for i in price_list["listings"]:
         # 准备数据
         pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
@@ -448,7 +443,7 @@ def query_every_server(all_server_list):
     show_price_page.all_server.clearContents()
     show_price_page.all_server.setRowCount(len(all_server_list))
     # 准备数据
-    logging.debug("绘制全服比价数据表格")
+    logger.debug("绘制全服比价数据表格")
     t = 0
     for i in all_server_list:
         server = QtWidgets.QTableWidgetItem(i['server'])
@@ -500,13 +495,13 @@ def make_cost_tree():
         ui.show_cost.setText('成本计算')
         ui.show_data_box.setCurrentIndex(2)
     elif ui.show_data_box.currentIndex() == 2 and len(item.stuff) > 0:
-        logging.debug("材料树中有内容，判断已经查询过材料树，切换界面")
+        logger.debug("材料树中有内容，判断已经查询过材料树，切换界面")
         ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
     elif len(item.stuff) == 0:
-        logging.debug("材料树是空的，开始查询")
+        logger.debug("材料树是空的，开始查询")
         item.show_item_cost()
-        logging.info("开始绘制材料树")
+        logger.info("开始绘制材料树")
         cost_page.cost_tree.clear()
         for i in item.stuff['craft']:
             make_tree(i, cost_page.cost_tree)
@@ -552,7 +547,7 @@ def click_history_query(selected):
             ui.show_server.setText("国服")
         else:
             ui.show_server.setText(item.server)
-        logging.info("通过点击历史面板进行查询 {} 的 {}".format(item.server, item_name))
+        logger.info("通过点击历史面板进行查询 {} 的 {}".format(item.server, item_name))
         if item_name[-2:] == 'HQ':
             item_name = item_name[0:-2]
             item.hq = True
@@ -590,7 +585,7 @@ def click_select_server(server):
     server_list = item.server_list()
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
-        logging.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
+        logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
         item.price_cache = {}
         query_price()
 
@@ -601,13 +596,13 @@ def click_query_item_name(selected):
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(selected.text(0))
         item.name = selected.text(0)
-        logging.info("材料名称 {} 已经复制到粘贴板".format(item.name))
+        logger.info("材料名称 {} 已经复制到粘贴板".format(item.name))
         for i in item.item_data.values():
             if i['name'] == item.name:
                 item.id = i['id']
         query_item_page.input_item_name.setText(item.name)
         item.item_list = []
-        logging.info("通过点击材料树重新查询材料 {}".format(item.name))
+        logger.info("通过点击材料树重新查询材料 {}".format(item.name))
         query_price()
     else:
         back_to_index()
@@ -712,22 +707,22 @@ def test_network():
     global first_query
     if first_query is True:
         result = item.test_network()
-        logging.info('网络测试结果，{}'.format(result))
+        logger.info('网络测试结果，{}'.format(result))
         if result == "success":
             query_price()
         else:
             QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
     else:
-        logging.info('跳过网络测试')
+        logger.info('跳过网络测试')
         query_price()
 
 
 """
 公共数据部分
 """
-logging.info("主程序启动，开始处理公共数据")
+logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '0.9.5'
+program_version = '0.9.7'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
@@ -737,34 +732,34 @@ try:
         # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
         if len(query_history) == 0:
             # 加入None条目，后面的切换界面判断方法就不用判空了
-            query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
+            query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": 'None'}]
         item = Queryer(history_json['server'])
-        logging.info("读取查询历史成功")
+        logger.info("读取查询历史成功")
 except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
-    query_history = [{"itemName": 'None', "HQ": None, "server": 'None'}]
+    query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": None}]
     item = Queryer('猫小胖')
-    logging.warning("没有发现历史数据，初始化历史数据")
+    logger.warning("没有发现历史数据，初始化历史数据")
 # 加载本地静态文件
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
     item.item_data = json.load(item_list_file)
 date_version = item.item_data['data-version']
 item.header = {'User-Agent': 'Paissa {}'.format(program_version)}
-logging.info("数据文件加载完毕，程序版本{}，数据版本{}".format(program_version, date_version))
+logger.info("数据文件加载完毕，程序版本{}，数据版本{}".format(program_version, date_version))
 if 'use_static' not in history_json:
     history_json['use_static'] = True
 item.static = history_json['use_static']
 item.item_data.pop('data-version')
 first_query = True
 server_list = []
-logging.debug("主程序数据初始化完成")
+logger.debug("主程序数据初始化完成")
 
 """
 主程序开始
 """
 app = QtWidgets.QApplication(sys.argv)
 desktop = app.desktop()
-logging.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
+logger.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
 app.setStyle("Fusion")
 widget = RQMainWindow()
 ui = MainWindow()

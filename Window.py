@@ -4,6 +4,7 @@ import sys
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+from Data.logger import logger
 from Queryer import Queryer
 from UI.check_update import Ui_check_update
 from UI.cost_page import Ui_cost_page
@@ -13,7 +14,6 @@ from UI.main_window import Ui_mainWindow
 from UI.query_item_id import Ui_query_item_id
 from UI.select_item_list import Ui_select_item_list
 from UI.show_price import Ui_show_price
-from Data.logger import logger
 
 """
 .ui文件是使用 QT desginer 生成的文件，通过 pyuic 将 .ui 文件转换为 .py 文件。 
@@ -38,7 +38,8 @@ class RQMainWindow(QtWidgets.QMainWindow):
             if i['itemName'] == 'None' or i['itemName'] is None:
                 query_history.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
-        history = {"program_version": program_version, "server": item.server, 'use_static': item.static, "history": query_history}
+        history = {"program_version": program_version, "server": item.server, 'use_static': item.static,
+                   "history": query_history}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
             logger.info("数据文件回写成功，准备关闭主程序")
@@ -725,8 +726,8 @@ logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
 program_version = '0.10.0'
 # 加载查询历史
-history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
+    history_file = os.path.join('Data', "Paissa_query_history.log")
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
         query_history = history_json['history']
@@ -840,11 +841,14 @@ history_board = HistoryPage()
 history_board.setupUi(widget2)
 widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
 history_board.history_list.doubleClicked.connect(click_history_query)
-for i in query_history:
-    if i['HQ'] is not True and i["itemName"] != 'None':
-        history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
-    elif i['HQ'] is True and i["itemName"] != 'None':
-        history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+try:
+    for i in query_history:
+        if i['HQ'] is not True and i["itemName"] != 'None':
+            history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
+        elif i['HQ'] is True and i["itemName"] != 'None':
+            history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+except:
+    pass
 
 """
 check update

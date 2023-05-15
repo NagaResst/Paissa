@@ -9,7 +9,7 @@ from Data.logger import logger
 通过gitee拉取程序版本
 """
 try:
-    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/version'
+    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
@@ -43,11 +43,11 @@ except:
 
 if version_online['program'] != program_version:
     try:
-        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Queryer.py', timeout=5).text
+        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
+        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
     except:
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/development/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/development/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
     with open('Window.py', 'w', encoding='utf-8') as program:
         program.write(program_text)
         program.close()
@@ -58,9 +58,9 @@ if version_online['program'] != program_version:
 
 if version_online['data'] != data_version:
     try:
-        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/item.Pdt', timeout=5).text
+        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
     except:
-        data_text = get('https://gitee.com/nagaresst/paissa/raw/development/Data/item.Pdt', timeout=5).text
+        data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=5).text
     with open(data_file, 'w', encoding='utf-8') as data:
         data.write(data_text)
         data.close()

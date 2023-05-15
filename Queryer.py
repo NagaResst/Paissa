@@ -218,7 +218,6 @@ class Queryer(object):
         elif self.server == 'China':
             server_list = select_server_china
             self.world = 'China'
-        logger.info('查询区域为{}， 服务器列表初始化为{}'.format(self.world, server_list))
         return server_list
 
     def query_item_id(self, name):
@@ -272,10 +271,11 @@ class Queryer(object):
         else:
             logger.info("全品质查询")
             query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+        # 请求查询数据
         result = self.init_query_result(query_url)
-        # 如果查询不到物品，强制重查一次NQ
+        # 如果查询不到物品，强制一次全品质查询
         if self.hq is True and len(result['listings']) == 0:
-            logger.info("查询不到物品，强制重查一次NQ")
+            logger.info("查询不到物品，强制一次全品质查询")
             self.hq = False
             query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url)

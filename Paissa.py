@@ -14,7 +14,7 @@ try:
     logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
 except:
-    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+    url = 'https://gitee.com/nagaresst/paissa/raw/development/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))

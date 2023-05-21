@@ -724,7 +724,7 @@ def test_network():
         if result == "success":
             query_price()
         else:
-            QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
+            QtWidgets.QMessageBox.warning(ui.query_item, "网络故障", "您的网络无法连接在线数据源，请更换网络环境")
     else:
         logger.info('跳过网络测试')
         query_price()

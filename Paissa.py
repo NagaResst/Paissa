@@ -31,8 +31,9 @@ try:
 except:
     program_version = None
 
+data_file = os.path.join('Data', "item.Pdt")
+
 try:
-    data_file = os.path.join('Data', "item.Pdt")
     with open(data_file, 'r', encoding='utf-8') as data:
         data_json = json.load(data)
         data_version = data_json['data-version']

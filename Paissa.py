@@ -38,8 +38,7 @@ marketable_file = os.path.join('Data', "marketable.py")
 
 try:
     with open(data_file, 'r', encoding='utf-8') as data:
-        data = data.read()[6:]
-        data_json = json.loads(data)
+        data_json = json.load(data)
         data_version = data_json['data-version']
     logger.info("本地数据版本 {}".format(data_version))
 except:
@@ -66,20 +65,21 @@ if version_online['program'] != program_version:
 if version_online['data'] != data_version:
     try:
         logger.info("从 Gitee 更新数据版本")
-        data_text = json.loads(
-            get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=5).text)
-        market_filter = json.loads(
-            get('https://gitee.com/nagaresst/paissa/raw/master/Data/marketable.py', timeout=5).text)
+        market_filter = get('https://gitee.com/nagaresst/paissa/raw/development/Data/marketable.py', timeout=5).text
+        data_text = get('https://gitee.com/nagaresst/paissa/raw/development/Data/item.Pdt', timeout=5).text
     except:
         logger.info("从 Github 更新数据版本")
-        data_text = json.loads(
-            get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text)
-        market_filter = json.loads(
-            get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/marketable.py', timeout=5).text)
-    with open(data_file, 'w', encoding='utf-8') as data:
-        data.write(data_text)
-        data.close()
-        logger.info("数据文件更新完成")
+        market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/marketable.py',
+                            timeout=5).text
+        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/item.Pdt', timeout=5).text
+    try:
+        json.loads(data_text)
+        with open(data_file, 'w', encoding='utf-8') as data:
+            data.write(data_text)
+            data.close()
+            logger.info("数据文件更新完成")
+    except:
+        logger.info("数据文件更新失败")
     with open(marketable_file, 'w', encoding='utf8') as market_table:
         market_table.write('marketable = {}'.format(market_filter))
         market_table.close()

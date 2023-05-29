@@ -8,16 +8,10 @@ from Data.logger import logger
 """
 通过github拉取程序版本
 """
-try:
-    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
-    version_online = json.loads(get(url, timeout=3).text)
-    logger.info("版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(
-        version_online['program'], version_online['data']))
-except:
-    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
-    version_online = json.loads(get(url, timeout=3).text)
-    logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
-        version_online['program'], version_online['data']))
+url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+version_online = json.loads(get(url, timeout=3).text)
+logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
+    version_online['program'], version_online['data']))
 
 """
 读取本地版本进行比对
@@ -46,14 +40,9 @@ except:
     logger.info("本地数据版本检查失败")
 
 if version_online['program'] != program_version:
-    try:
-        logger.info("从 Gitee 更新主程序版本")
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
-    except:
-        logger.info("从 Github 更新主程序版本")
-        program_text = get('https://raw.githubusercontent.com/NagaResst/master/development/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/master/development/Queryer.py', timeout=5).text
+    logger.info("从 Github 更新主程序版本")
+    program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
+    query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
     with open('Window.py', 'w', encoding='utf-8') as program:
         program.write(program_text)
         program.close()

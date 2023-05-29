@@ -18,7 +18,7 @@ class Queryer(object):
         """
         self.name = None
         self.hq = False
-        # item_list 代表本次查询的结果集
+        # item_list 代表本次模糊查询的结果集
         self.item_list = []
         self.id = item_id
         # 物品的制作配方
@@ -59,9 +59,7 @@ class Queryer(object):
         :param url:要调用的接口path
         :return dist：universalis返回的查询结果
         """
-        if url[0:5] == 'https':
-            pass
-        else:
+        if url[0:5] != 'https':
             url = 'https://universalis.app' + url
         while True:
             try:
@@ -93,12 +91,12 @@ class Queryer(object):
         """
         获取图标的方法，数据源不一致，获取图标的地址也不同
         通过 item_list 的项目来获取物品ID可以保证在任何情况下都可以取到值
-        :return self.icon
+        :return self.icon:request.get().content
         """
         self.icon = None
         if len(self.item_list) == 0:
             self.query_item_id(self.name)
-        logger.debug('物品列表长度为：{}'.format(len(self.item_list)))
+        logger.debug('查询到的物品数量：{}'.format(len(self.item_list)))
         # 静态加速的数据来源于garlandtools,在线查询的数据来源于cafemaker,所以取图标的API不同
         if len(self.item_list) > 1 and self.static is False:
             for i in self.item_list:
@@ -218,7 +216,6 @@ class Queryer(object):
         elif self.server == 'China':
             server_list = select_server_china
             self.world = 'China'
-        logger.info('查询区域为{}， 服务器列表初始化为{}'.format(self.world, server_list))
         return server_list
 
     def query_item_id(self, name):
@@ -258,7 +255,7 @@ class Queryer(object):
 
     def query_item_price(self):
         """
-        查询市场价格，根据HQ参数选择查询方法
+        根据物品ID查询市场价格，根据HQ参数选择查询方法
         :return dist：universalis返回的查询结果
         """
         # 初始化数据 清除上次查询的结果对以后查询的影响
@@ -272,10 +269,11 @@ class Queryer(object):
         else:
             logger.info("全品质查询")
             query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
+        # 请求查询数据
         result = self.init_query_result(query_url)
-        # 如果查询不到物品，强制重查一次NQ
+        # 如果查询不到物品，强制一次全品质查询
         if self.hq is True and len(result['listings']) == 0:
-            logger.info("查询不到物品，强制重查一次NQ")
+            logger.info("查询不到物品，强制一次全品质查询")
             self.hq = False
             query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url)
@@ -302,9 +300,9 @@ class Queryer(object):
 
     def query_every_server(self, server_list):
         """
-        大区内服务器比价，
+        大区内服务器比价，根据服务器列表查询每个区的最低价
         :param server_list: list 服务器列表
-        :return self.every_server -> list 根据服务器列表查询每个区的最低价
+        :return self.every_server -> list
         """
         # 清空全服差价的结果列表
         self.every_server = []
@@ -325,7 +323,7 @@ class Queryer(object):
                     'lastReviewTime': result['listings'][0]['lastReviewTime']
                 }
                 self.every_server.append(server_sale)
-                logger.info("{}的数据已加入池中".format(server))
+                logger.debug("{}的数据已加入池中".format(server))
 
         # 多线程操作
         threads = []
@@ -355,7 +353,7 @@ class Queryer(object):
                     logger.info("物品制作配方已查询成功")
                 else:
                     self.stuff = {}
-                    logger.info("物品制作配方已查询失败，清空配方池")
+                    logger.warning("物品制作配方已查询失败，清空配方池")
             elif self.static is True:
                 self.stuff = copy.deepcopy(self.item_data[str(self.id)])
                 if 'craft' in self.stuff:
@@ -365,7 +363,7 @@ class Queryer(object):
                     logger.info("物品制作配方已查询成功")
                 else:
                     self.stuff = {}
-                    logger.info("物品制作配方已查询失败，清空配方池")
+                    logger.warning("物品制作配方已查询失败，清空配方池")
 
     def make_child_item_craft(self, unit):
         """
@@ -424,42 +422,51 @@ class Queryer(object):
         查询单项物品的板子价格，调用缓存或者是在线查询物品的最低价
         :param item -> dist 物品的数据
         """
+
+        def select_item_cost(result, item):
+            """
+            选择最价样品
+            :param result -> list 价格网站查询结果
+            :param item -> dist 物品的数据
+            :return result -> dist 最价样品的数据
+            """
+            if len(result['listings']) == 0:
+                result['listings'].append({'pricePerUnit': 0})
+                # x参数  抗人为干扰
+            x = abs(result['averagePrice'] - result['listings'][0]['pricePerUnit'])
+            logger.debug("{}在市场上平均价格和最低价格的差价为{}".format(item['name'], x))
+            if int(item['id']) < 20:
+                item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
+                logger.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
+            elif 'priceFromNpc' in item and item['priceFromNpc'] < result['averagePrice']:
+                logger.debug("NPC贩售价格{}低于板子平均价格{}，使用NPC贩售价格计算"
+                             .format(item['priceFromNpc'], result['averagePrice']))
+                item['pricePerUnit'] = item['priceFromNpc']
+            elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
+                item['pricePerUnit'] = int(result['averagePrice'])
+                logger.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
+            elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
+                try:
+                    item['pricePerUnit'] = result['listings'][3]['pricePerUnit']
+                    logger.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
+                except:
+                    item['pricePerUnit'] = int(result['averagePrice'])
+                    logger.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}"
+                                 .format(item['name'], result['averagePrice']))
+            else:
+                item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
+                logger.debug("{}差价较低，使用最低价格".format(item['name']))
+            # 更新缓存
+            logger.info("更新缓存 {}".format(item['name']))
+            self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
+
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
             if item['id'] not in self.price_cache:
                 logger.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
                 query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
                 result = self.init_query_result(query_url)
-                if len(result['listings']) == 0:
-                    result['listings'].append({'pricePerUnit': 0})
-                # x参数  抗人为干扰
-                x = abs(result['averagePrice'] - result['listings'][0]['pricePerUnit'])
-                logger.debug("{}在市场上平均价格和最低价格的差价为{}".format(item['name'], x))
-                if int(item['id']) < 20:
-                    # 碎晶，水晶，晶簇
-                    item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
-                    logger.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
-                elif 'priceFromNpc' in item and item['priceFromNpc'] < result['averagePrice']:
-                    logger.debug("NPC贩售价格{}低于板子平均价格{}，使用NPC贩售价格计算"
-                                 .format(item['priceFromNpc'], result['averagePrice']))
-                    item['pricePerUnit'] = item['priceFromNpc']
-                elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
-                    item['pricePerUnit'] = int(result['averagePrice'])
-                    logger.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
-                elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
-                    try:
-                        item['pricePerUnit'] = result['listings'][3]['pricePerUnit']
-                        logger.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
-                    except:
-                        item['pricePerUnit'] = int(result['averagePrice'])
-                        logger.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}"
-                                     .format(item['name'], result['averagePrice']))
-                else:
-                    item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
-                    logger.debug("{}差价较低，使用最低价格".format(item['name']))
-                # 更新缓存
-                logger.info("更新缓存 {}".format(item['name']))
-                self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
+                select_item_cost(result, item)
             else:
                 # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
                 item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']])
@@ -489,40 +496,7 @@ class Queryer(object):
                 if i['id'] not in self.price_cache:
                     for r in result:
                         if str(r['itemID']) == str(i['id']):
-                            if len(r['listings']) == 0:
-                                r['listings'].append({'pricePerUnit': 0})
-                            x = abs(r['averagePrice'] - r['listings'][0]['pricePerUnit'])
-                            logger.debug("{}平均价格和最低价格的差价为{}".format(i['name'], x))
-                            if int(i['id']) < 20:
-                                # 碎晶，水晶，晶簇
-                                logger.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(i['name']))
-                                i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
-                                if i['pricePerUnit'] == 0:
-                                    i['pricePerUnit'] = int(r['averagePrice'])
-                                    logger.debug(
-                                        "{}物品ID小于20 推测为水晶类，但是价格查询失败，使用平均价格".format(i['name']))
-                            elif 'priceFromNpc' in i and i['priceFromNpc'] < r['averagePrice']:
-                                logger.debug(
-                                    "NPC贩售价格{}低于板子平均价格{}，使用NPC贩售价格计算"
-                                    .format(i['priceFromNpc'], r['averagePrice']))
-                                i['pricePerUnit'] = i['priceFromNpc']
-                            elif x > 300 and r['listings'][0]['pricePerUnit'] < 666:
-                                logger.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(i['name']))
-                                i['pricePerUnit'] = int(r['averagePrice'])
-                            elif x > 300 and r['listings'][0]['pricePerUnit'] > 666:
-                                try:
-                                    logger.debug(
-                                        "{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(i['name']))
-                                    i['pricePerUnit'] = r['listings'][4]['pricePerUnit']
-                                except:
-                                    logger.debug("{}价差较高，但是物品比较贵，使用平均价格{}，仅供参考"
-                                                 .format(i['name'], r['averagePrice']))
-                                    i['pricePerUnit'] = int(r['averagePrice'])
-                            else:
-                                logger.debug("{}差价较低，使用最低价格".format(i['name']))
-                                i['pricePerUnit'] = r['listings'][0]['pricePerUnit']
-                            logger.info("查询材料{}成功，更新缓存,价格为{}".format(i['name'], i['pricePerUnit']))
-                            self.price_cache[int(i['id'])] = copy.deepcopy(i['pricePerUnit'])
+                            select_item_cost(r, i)
 
     def calibration_quantity(self, stuff_list, count=1):
         """
@@ -624,8 +598,12 @@ class Queryer(object):
         """
         通过gitee拉取程序版本
         """
-        url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
-        result = get(url, timeout=5, headers=self.header)
+        try:
+            url = 'https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/version'
+            result = get(url, timeout=5, headers=self.header)
+        except:
+            url = 'https://gitee.com/nagaresst/paissa/raw/development/Data/version'
+            result = get(url, timeout=5, headers=self.header)
         logger.debug("版本更新检查 {} success".format(url))
         return loads(result.text)
 
@@ -642,7 +620,7 @@ class Queryer(object):
                     logger.warning(url + str(result.status_code))
                     c += 1
             except:
-                logger.error('市场查询网络测试 {} timeout'.format(url))
+                logger.error('市场查询网络测试 {} timeout')
                 c += 1
         if c >= 3:
             return "failed"
@@ -663,11 +641,9 @@ if __name__ == '__main__':
     itemObj.id = '35814'
     itemObj.hq = True
     # https://universalis.app/api/v2/猫小胖/33283?listings=50&hq=true&noGst=true
-
     # price_list = itemObj.query_item_price()
     # server_list = itemObj.server_list()
     # itemObj.query_every_server(server_list)
-    # itemObj.query_item_craft()
     # itemObj.query_item_craft()
     # itemObj.calibration_quantity(itemObj.stuff['craft'])
     itemObj.show_item_cost()

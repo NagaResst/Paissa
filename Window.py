@@ -213,7 +213,7 @@ def select_item(selectd):
 
 def query_price():
     """
-    价格查询
+    价格查询动作
     """
     global query_history
     global server_list
@@ -228,11 +228,13 @@ def query_price():
         '''.format(item.name, item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     logger.info("开始查询{}的{}".format(item.server, item.name))
-    query_sale_list()
+    query_sale_list(item.query_item_price())
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
-    if item.server not in server_list or item.id != query_history[-1]['itemID']:
+
+    if  server_list != item.server_list() or item.id != query_history[-1]['itemID']:
         server_list = item.server_list()
+        logger.info('查询区域为{}， 服务器列表初始化为{}'.format(item.world, server_list))
         # 查询全服比价的数据
         item.query_every_server(server_list)
         query_every_server(item.every_server)
@@ -259,13 +261,12 @@ def query_price():
     cost_page.cost_tree.clear()
 
 
-def query_sale_list():
+def query_sale_list(price_list):
     """
-    正在售出列表填充
+    界面动作:售出列表填充
     """
     hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
     # 查询正在售出的记录
-    price_list = item.query_item_price()
     logger.info("物品的售出价格查询完毕，开始绘制价格表格")
     # 更新界面的部分数据
     ui.show_update_time.setText(item.timestamp_to_time(price_list["lastUploadTime"]))
@@ -375,6 +376,7 @@ def query_every_server(all_server_list):
         show_price_page.all_server.setItem(t, 6, lastReviewTime)
         t += 1
     show_price_page.all_server.repaint()
+    show_price_page.all_server.doubleClicked.connect(click_select_other_server)
 
 
 def make_cost_tree():
@@ -428,7 +430,6 @@ def click_history_query(selected):
     """
     通过点击历史面板查询物品
     """
-    # print(selected, isinstance(selected, QtCore.QModelIndex))
     global query_history
     # 最顶端的记录为本次查询的结果，do nothing
     if selected.row() == 0 and first_query is not True:
@@ -466,11 +467,24 @@ def click_history_query(selected):
         test_network()
 
 
+def click_select_other_server(selected):
+    """
+    通过点击全服比价的结果重新选择服务器
+    """
+    server = selected.data(0)
+    item.server = server
+    ui.show_server.setText(server)
+    # 立刻刷新价格显示的界面
+    if item.name is not None and ui.show_data_box.currentIndex() != 0:
+        logger.info("通过点击全服比价重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
+        item.price_cache = {}
+        query_price()
+
+
 def click_select_server(server):
     """
     菜单栏选择服务器重新查询的事件
     """
-    global server_list
     # 修改界面上显示的当前服务器
     ui.show_server.setText(server)
     if server == "欧服":
@@ -485,7 +499,6 @@ def click_select_server(server):
         item.server = 'China'
     else:
         item.server = server
-    server_list = item.server_list()
     # 立刻刷新价格显示的界面
     if item.name is not None and ui.show_data_box.currentIndex() != 0:
         logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
@@ -612,7 +625,7 @@ def test_network():
         if result == "success":
             query_price()
         else:
-            QtWidgets.QMessageBox.warning(ui.query_item, "网络错误", "无法连接价格查询网站或连接速度过慢")
+            QtWidgets.QMessageBox.warning(ui.query_item, "网络故障", "您的网络无法连接在线数据源，请更换网络环境")
     else:
         logger.info('跳过网络测试')
         query_price()

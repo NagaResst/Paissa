@@ -6,10 +6,10 @@ from requests import get
 from Data.logger import logger
 
 """
-通过gitee拉取程序版本
+通过github拉取程序版本
 """
 try:
-    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
@@ -31,8 +31,10 @@ try:
 except:
     program_version = None
 
+data_file = os.path.join('Data', "item.Pdt")
+marketable_file = os.path.join('Data', "marketable.py")
+
 try:
-    data_file = os.path.join('Data', "item.Pdt")
     with open(data_file, 'r', encoding='utf-8') as data:
         data_json = json.load(data)
         data_version = data_json['data-version']
@@ -43,11 +45,11 @@ except:
 
 if version_online['program'] != program_version:
     try:
-        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Window.py', timeout=5).text
+        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Queryer.py', timeout=5).text
     except:
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/development/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/development/Queryer.py', timeout=5).text
     with open('Window.py', 'w', encoding='utf-8') as program:
         program.write(program_text)
         program.close()
@@ -59,12 +61,19 @@ if version_online['program'] != program_version:
 if version_online['data'] != data_version:
     try:
         data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
+        market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/marketable.py',
+                            timeout=5).text
     except:
         data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=5).text
+        market_filter = get('https://gitee.com/nagaresst/paissa/raw/master/Data/marketable.py', timeout=5).text
     with open(data_file, 'w', encoding='utf-8') as data:
         data.write(data_text)
         data.close()
         logger.info("数据文件更新完成")
+    with open(marketable_file, 'w', encoding='utf8') as market_table:
+        market_table.write('marketable = {}'.format(market_filter))
+        market_table.close()
+        logger.info("板子过滤数据更新完成")
 
 import Window
 

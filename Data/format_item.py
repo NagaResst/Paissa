@@ -20,6 +20,7 @@ market_filter = requests.get(market_filter_address)
 with open('marketable.py', 'w', encoding='utf8') as market_table:
     market_table.write('marketable = {}'.format(market_filter.text))
     market_table.close()
+    logging.info("板子过滤数据更新完成")
 
 """
 下载数据文件到本地

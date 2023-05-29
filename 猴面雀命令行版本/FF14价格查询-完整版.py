@@ -21,7 +21,6 @@ class ItemQuerier(object):
         self.server = query_server
         self.result = None
         self.static = True
-        self.proxy = False
         self.hq = str(self.name)[-2:]
         if self.hq in ["HQ", "NQ", "hq", "nq"]:
             self.name = str(self.name)[0:-2]
@@ -42,14 +41,12 @@ class ItemQuerier(object):
             server_list = ['水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
         return server_list
 
-    def init_query_result(self, url, site=None):
+    def init_query_result(self, url):
         """
         查询结果序列化成字典
         """
         # 反向代理选择
-        if site == 'universalis' and self.proxy is True:
-            url = 'http://43.142.142.18/universalis' + url
-        elif site == 'universalis' and self.proxy is False:
+        if url[:4] != 'http':
             url = 'https://universalis.app' + url
         while True:
             try:
@@ -57,7 +54,7 @@ class ItemQuerier(object):
                 result = loads(result.text)
                 break
             except:
-                pass
+                print('猴面雀察觉到网络有点问题，正在重新查看资料的存放地址')
         return result
 
     @staticmethod
@@ -159,7 +156,7 @@ class ItemQuerier(object):
                     self.server, self.id)
             else:
                 query_url = '/api/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-            self.result = self.init_query_result(query_url, 'universalis')
+            self.result = self.init_query_result(query_url)
             if len(self.result['listings']) > 0:
                 lastUploadTime = self.timestamp_to_time(self.result['lastUploadTime'])
                 print('\n猴面雀为您查找到 ' + self.name + ' 的最新在售信息。\t\t更新时间： ' + lastUploadTime)
@@ -216,7 +213,7 @@ class ItemQuerier(object):
         """
         在线查询物品的售出历史
         """
-        query_url = 'https://universalis.app/api/history/%s/%s?entries=30' % (self.server, self.id)
+        query_url = '/api/history/%s/%s?entries=30' % (self.server, self.id)
         result = self.init_query_result(query_url)
         lastUploadTime = self.timestamp_to_time(result['lastUploadTime'])
         print('\n猴面雀为您查找到 ' + self.name + ' 的30条售出历史。 \t更新时间： ' + lastUploadTime)
@@ -224,15 +221,15 @@ class ItemQuerier(object):
             hq = self.hq_or_not(record['hq'])
             saletime = self.timestamp_to_time(record['timestamp'])
             if 'worldName' in record:
-                print('''单价：%-6d\t数量：%2d  %s\t总价：%-8d\t服务器：%-5.4s\t\t 售出时间：%s''' % (
-                    record['pricePerUnit'], record['quantity'], hq,
+                print('''%s\t\t单价：%-6d\t数量：%2d  %s\t总价：%-8d\t服务器：%-5.4s\t购买者：%s''' % (
+                    saletime, record['pricePerUnit'], record['quantity'], hq,
                     (record['pricePerUnit'] * record['quantity'] * 1.05),
-                    record['worldName'], saletime))
+                    record['worldName'], record['buyerName']))
             else:
-                print('''单价：%-6d\t数量：%2d  %s\t总价：%-8d\t\t 售出时间：%s''' % (
-                    record['pricePerUnit'], record['quantity'], hq,
-                    (record['pricePerUnit'] * record['quantity'] * 1.05),
-                    saletime))
+                print('''%s\t\t单价：%-6d\t数量：%2d  %s\t总价：%-8d\t\t购买者：%s''' % (
+                    saletime, record['pricePerUnit'], record['quantity'], hq,
+                    (record['pricePerUnit'] * record['quantity'] * 1.05), record['buyerName']
+                ))
 
     def query_item_detial(self, itemid):
         """
@@ -263,7 +260,7 @@ class ItemQuerier(object):
         查询单项物品的板子价格
         """
         try:
-            query_url = 'https://universalis.app/api/%s/%s?listings=%d&noGst=true' % (server, itemid, count)
+            query_url = '/api/%s/%s?listings=%d&noGst=true' % (server, itemid, count)
             result = self.init_query_result(query_url)
             return result
         except ConnectionError:
@@ -273,7 +270,7 @@ class ItemQuerier(object):
         """
         查询单个材料价格的子线程
         """
-        print('-', end='')
+        print('>', end='')
         result = self.query_item_detial(unit['id'])
         unit['name'] = result['name']
         query_result = self.query_item_cost_min(self.server, unit['id'], count=1)
@@ -372,9 +369,12 @@ def select_server():
     """
     while True:
         server = input('请输入要查询的 大区 或者 服务器,可输入大区简称，例如“ 1 猫、2 鸟、3 猪、4 狗 ” \n')
-        server_list = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原', '陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛',
-                       '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座', '莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
-                       '梦羽宝境', '豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川', '猫', '狗', '猪', '鸟', '1', '2', '3', '4']
+        server_list = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原', '陆行鸟',
+                       '红玉海', '神意之地', '拉诺西亚', '幻影群岛',
+                       '萌芽池', '宇宙和音', '沃仙曦染', '晨曦王座', '莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭',
+                       '旅人栈桥', '拂晓之间', '龙巢神殿',
+                       '梦羽宝境', '豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川', '猫', '狗', '猪',
+                       '鸟', '1', '2', '3', '4']
         if server in server_list:
             break
         else:

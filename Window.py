@@ -702,13 +702,8 @@ def show_check_update_window():
     # 数据文件可以单独更新
     if c_p_v == l_p_v and c_d_v == l_d_v:
         check_update_window.update_text.hide()
-    elif c_p_v == l_p_v and c_d_v != l_d_v:
-        check_update_window.update_text.setText('数据文件需要更新，请重新启动猴面雀')
     else:
-        # check_update_window.update_text.setText(
-        #     '请点击 <a href=\"http://43.142.142.18/Paissa.zip\"><span style=\" text-decoration: underline; color:#0000ff;\">这里</span></a> 下载最新版本')
-        # check_update_window.update_text.setOpenExternalLinks(True)
-        check_update_window.update_text.setText('主程序版本需要更新，请重新启动猴面雀')
+        check_update_window.update_text.setText('有新版本可用，请重新启动猴面雀，若多次重启不能更新，请隔段时间再试。')
     # 面板隐藏或者显示
     if widget3.isVisible():
         widget3.hide()

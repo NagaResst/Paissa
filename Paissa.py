@@ -81,7 +81,7 @@ if version_online['data'] != data_version:
     except:
         logger.info("数据文件更新失败")
     with open(marketable_file, 'w', encoding='utf8') as market_table:
-        market_table.write('marketable = {}'.format(market_filter))
+        market_table.write(market_filter)
         market_table.close()
         logger.info("板子过滤数据更新完成")
 

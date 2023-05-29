@@ -63,27 +63,34 @@ if version_online['program'] != program_version:
         logger.info("主程序更新完成")
 
 if version_online['data'] != data_version:
+    market_filter = False
+    data_text = False
     try:
-        logger.info("从 Gitee 更新数据版本")
-        market_filter = get('https://gitee.com/nagaresst/paissa/raw/development/Data/marketable.py', timeout=5).text
-        data_text = get('https://gitee.com/nagaresst/paissa/raw/development/Data/item.Pdt', timeout=5).text
-    except:
         logger.info("从 Github 更新数据版本")
-        market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/marketable.py',
-                            timeout=5).text
-        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/item.Pdt', timeout=5).text
-    try:
-        json.loads(data_text)
+        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
+    except:
+        try:
+            logger.info("从 阿里云 更新数据")
+            data_text = get('https://paissa-update.oss-cn-hongkong.aliyuncs.com/Paissa/item.Pdt', timeout=5).text
+        except:
+            logger.info("版本数据下载失败")
+    if data_text:
         with open(data_file, 'w', encoding='utf-8') as data:
             data.write(data_text)
             data.close()
             logger.info("数据文件更新完成")
+    try:
+        market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5).text)
     except:
-        logger.info("数据文件更新失败")
-    with open(marketable_file, 'w', encoding='utf8') as market_table:
-        market_table.write(market_filter)
-        market_table.close()
-        logger.info("板子过滤数据更新完成")
+        try:
+            market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/marketable.py', timeout=5).text
+        except:
+            logger.info("市场过滤数据下载失败")
+    if market_filter:
+        with open(marketable_file, 'w', encoding='utf8') as market_table:
+            market_table.write(market_filter)
+            market_table.close()
+            logger.info("板子过滤数据更新完成")
 
 import Window
 

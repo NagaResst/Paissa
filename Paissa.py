@@ -9,12 +9,12 @@ from Data.logger import logger
 通过github拉取程序版本
 """
 try:
-    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/version'
+    url = 'https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
 except:
-    url = 'https://gitee.com/nagaresst/paissa/raw/development/Data/version'
+    url = 'https://gitee.com/nagaresst/paissa/raw/only-CN/Data/version'
     version_online = json.loads(get(url, timeout=5).text)
     logger.info("版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(
         version_online['program'], version_online['data']))
@@ -45,11 +45,11 @@ except:
 
 if version_online['program'] != program_version:
     try:
-        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/development/Queryer.py', timeout=5).text
+        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Window.py', timeout=5).text
+        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/only-CN/Queryer.py', timeout=5).text
     except:
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/development/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/development/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Queryer.py', timeout=5).text
     with open('Window.py', 'w', encoding='utf-8') as program:
         program.write(program_text)
         program.close()

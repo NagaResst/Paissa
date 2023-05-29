@@ -755,7 +755,7 @@ except FileNotFoundError:
     logger.warning("没有发现历史数据，初始化历史数据")
 # 加载本地静态文件
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
-    item.item_data = json.load(item_list_file)
+    item.item_data = json.loads(item_list_file.read()[6:])
 date_version = item.item_data['data-version']
 item.header = {'User-Agent': 'Paissa {}'.format(program_version)}
 logger.info("数据文件加载完毕")

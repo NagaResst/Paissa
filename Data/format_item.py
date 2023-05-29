@@ -80,6 +80,8 @@ tpool.shutdown(wait=True)
 # print(item_out_list)
 version = {'data-version': '6.3'}
 version.update(item_out_list)
+
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
-    json.dump(version, item_data)
+    # json.dump(version, item_data)
+    item_data.write("data = {}".format(str(version)))
 logging.info('数据写入完毕')

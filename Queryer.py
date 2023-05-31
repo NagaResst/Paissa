@@ -599,13 +599,13 @@ class Queryer(object):
         通过gitee拉取程序版本
         """
         try:
-            url = 'https://raw.githubusercontent.com/NagaResst/Paissa/development/Data/version'
-            result = get(url, timeout=5, headers=self.header)
+            url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+            result = loads(get(url, timeout=5, headers=self.header).text)
         except:
-            url = 'https://gitee.com/nagaresst/paissa/raw/development/Data/version'
-            result = get(url, timeout=5, headers=self.header)
+            url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+            result = loads(get(url, timeout=5, headers=self.header).text)
         logger.debug("版本更新检查 {} success".format(url))
-        return loads(result.text)
+        return result
 
     def test_network(self):
         """网络测试方法"""

@@ -328,7 +328,7 @@ def query_price():
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
 
-    if  server_list != item.server_list() or item.id != query_history[-1]['itemID']:
+    if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
         server_list = item.server_list()
         logger.info('查询区域为{}， 服务器列表初始化为{}'.format(item.world, server_list))
         # 查询全服比价的数据

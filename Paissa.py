@@ -10,8 +10,8 @@ from Data.logger import logger
 """
 url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
 version_online = json.loads(get(url, timeout=3).text)
-logger.info("版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(
-    version_online['program'], version_online['data']))
+logger.info(
+    "版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'],version_online['data']))
 
 """
 读取本地版本进行比对
@@ -40,16 +40,19 @@ except:
     logger.info("本地数据版本检查失败")
 
 if version_online['program'] != program_version:
-    logger.info("从 Github 更新主程序版本")
-    program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
-    query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
-    with open('Window.py', 'w', encoding='utf-8') as program:
-        program.write(program_text)
-        program.close()
-    with open('Queryer.py', 'w', encoding='utf-8') as queryer:
-        queryer.write(query_text)
-        queryer.close()
-        logger.info("主程序更新完成")
+    try:
+        logger.info("从 Gitee 更新主程序版本")
+        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
+        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+        with open('Window.py', 'w', encoding='utf-8') as program:
+            program.write(program_text)
+            program.close()
+        with open('Queryer.py', 'w', encoding='utf-8') as queryer:
+            queryer.write(query_text)
+            queryer.close()
+            logger.info("主程序更新完成")
+    except:
+        logger.info("主程序更新失败")
 
 if version_online['data'] != data_version:
     market_filter = False
@@ -72,7 +75,8 @@ if version_online['data'] != data_version:
         market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5).text)
     except:
         try:
-            market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/marketable.py', timeout=5).text
+            market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/marketable.py',
+                                timeout=5).text
         except:
             logger.info("市场过滤数据下载失败")
     if market_filter:

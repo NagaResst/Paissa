@@ -230,6 +230,17 @@ class CheckUpdate(Ui_check_update):
         super().__init__()
 
 
+class QueryItemPrice(QtCore.QThread):
+    sinout = QtCore.pyqtSignal(dict)
+
+    def __init__(self):
+        super(QueryItemPrice, self).__init__()
+
+    def run(self):
+        # 发出信号
+        self.sinout.emit(item.query_item_price())
+
+
 def query_item():
     """
     模糊搜索查询物品
@@ -324,10 +335,11 @@ def query_price():
         '''.format(item.name, item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     logger.info("开始查询{}的{}".format(item.server, item.name))
-    query_sale_list(item.query_item_price())
+    query_item_price = QueryItemPrice()
+    query_item_price.sinout.connect(query_sale_list)
+    query_item_price.start()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
-
     if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
         server_list = item.server_list()
         logger.info('查询区域为{}， 服务器列表初始化为{}'.format(item.world, server_list))

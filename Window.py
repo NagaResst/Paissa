@@ -585,6 +585,7 @@ def make_cost_tree():
         show_item_cost.start()
         logger.info("开始载入界面线程")
         show_query_item.start()
+        show_item_cost.exec()
 
 
 def click_history_query(selected):
@@ -795,7 +796,7 @@ def test_network():
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.1'
+program_version = '1.0.1.1'
 # 加载查询历史
 try:
     history_file = os.path.join('Data', "Paissa_query_history.log")

@@ -262,7 +262,7 @@ class ShowItemCost(QtCore.QThread):
         super(ShowItemCost, self).__init__()
 
     def run(self):
-        # 发出信号
+        logger.info("开始查询材料的成本价格")
         item.show_item_cost()
         cost_page.d_cost.setText(str(item.d_cost))
         cost_page.o_cost.setText(str(item.o_cost))
@@ -276,6 +276,7 @@ class ShowItemCost(QtCore.QThread):
         else:
             p = item.avgp - item.d_cost
             cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
+        logger.info("材料树计算完成")
         self.sinout.emit(item.stuff['craft'])
 
 
@@ -286,7 +287,7 @@ class ShowQueryItem(QtCore.QThread):
         super(ShowQueryItem, self).__init__()
 
     def run(self):
-        # 发出信号
+        logger.debug("面板切换显示当前查询材料")
         while True:
             time.sleep(0.3)
             self.sinout.emit(item.cq)
@@ -580,7 +581,9 @@ def make_cost_tree():
         cost_page.cost_tree.clear()
         show_query_item = ShowQueryItem()
         show_query_item.sinout.connect(show_item)
+        logger.info("开始运行材料树线程")
         show_item_cost.start()
+        logger.info("开始载入界面线程")
         show_query_item.start()
 
 
@@ -792,7 +795,7 @@ def test_network():
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '0.10.1'
+program_version = '1.0.1'
 # 加载查询历史
 try:
     history_file = os.path.join('Data', "Paissa_query_history.log")

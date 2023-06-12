@@ -295,6 +295,7 @@ def query_price():
     query_item_price = QueryItemPrice()
     query_item_price.sinout.connect(query_sale_list)
     query_item_price.start()
+    query_item_price.exec()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
     if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
@@ -451,6 +452,7 @@ def make_cost_tree():
     """
 
     def start_tree(stuff):
+        logger.info("开始填充材料树表单")
         for i in stuff:
             make_tree(i, cost_page.cost_tree)
         ui.show_cost.setText('市场价格')
@@ -481,7 +483,6 @@ def make_cost_tree():
         ui.show_data_box.setCurrentIndex(4)
         show_item_cost = ShowItemCost()
         show_item_cost.sinout.connect(start_tree)
-        logger.info("开始绘制材料树")
         cost_page.cost_tree.clear()
         show_query_item = ShowQueryItem()
         show_query_item.sinout.connect(show_item)
@@ -700,7 +701,7 @@ def test_network():
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.1'
+program_version = '1.0.1.2'
 # 加载查询历史
 try:
     history_file = os.path.join('Data', "Paissa_query_history.log")

@@ -421,7 +421,7 @@ def query_price():
     logger.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
     cost_page.cost_tree.clear()
-
+    query_item_price.exec()
 
 def query_sale_list(price_list):
     """

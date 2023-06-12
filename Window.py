@@ -295,7 +295,6 @@ def query_price():
     query_item_price = QueryItemPrice()
     query_item_price.sinout.connect(query_sale_list)
     query_item_price.start()
-    query_item_price.exec()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
     if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
@@ -326,6 +325,7 @@ def query_price():
     logger.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
     cost_page.cost_tree.clear()
+    query_item_price.exec()
 
 
 def query_sale_list(price_list):

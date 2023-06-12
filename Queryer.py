@@ -51,6 +51,8 @@ class Queryer(object):
         self.header = {'User-Agent': ''}
         # 物品价格静态缓存
         self.price_cache = {}
+        # 当前正在查询的物品名称
+        self.cq = None
         logger.info("查询物品槽位初始化")
 
     def init_query_result(self, url):
@@ -464,12 +466,14 @@ class Queryer(object):
             # 缓存中没有数据，进行在线查询
             if item['id'] not in self.price_cache:
                 logger.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
+                self.cq = item['name']
                 query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
                 result = self.init_query_result(query_url)
                 select_item_cost(result, item)
             else:
                 # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
                 item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']])
+                logger.debug("{} 缓存命中，使用缓存".format(item['name']))
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
             ids = []
@@ -478,6 +482,7 @@ class Queryer(object):
                 if i['id'] not in self.price_cache:
                     ids.append(str(i['id']))
                     logger.debug("{} 没有查询到缓存 ，在线查询".format(i['name']))
+                    self.cq = str(i['name'])
                 else:
                     i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']])
                     logger.debug("{} 缓存命中，使用缓存".format(i['name']))

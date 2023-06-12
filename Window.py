@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
@@ -134,6 +135,67 @@ class CheckUpdate(Ui_check_update):
         super().__init__()
 
 
+class QueryItemPrice(QtCore.QThread):
+    sinout = QtCore.pyqtSignal(dict)
+
+    def __init__(self):
+        super(QueryItemPrice, self).__init__()
+
+    def run(self):
+        # 发出信号
+        self.sinout.emit(item.query_item_price())
+
+
+class QueryEveryServer(QtCore.QThread):
+    sinout = QtCore.pyqtSignal(list)
+
+    def __init__(self, server_list):
+        super(QueryEveryServer, self).__init__()
+        self.server_list = server_list
+
+    def run(self):
+        # 发出信号
+        item.query_every_server(server_list)
+        self.sinout.emit(item.every_server)
+
+
+class ShowItemCost(QtCore.QThread):
+    sinout = QtCore.pyqtSignal(list)
+
+    def __init__(self):
+        super(ShowItemCost, self).__init__()
+
+    def run(self):
+        # 发出信号
+        item.show_item_cost()
+        cost_page.d_cost.setText(str(item.d_cost))
+        cost_page.o_cost.setText(str(item.o_cost))
+        # 1级子材料数量不超过9个的时候展开材料树
+        if len(item.stuff['craft']) < 9:
+            cost_page.cost_tree.expandAll()
+        # 如果这个道具一次生产制作多个的利润算法兼容
+        if item.yields > 1:
+            p = item.avgp * item.yields - item.d_cost
+            cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
+        else:
+            p = item.avgp - item.d_cost
+            cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
+        self.sinout.emit(item.stuff['craft'])
+
+
+class ShowQueryItem(QtCore.QThread):
+    sinout = QtCore.pyqtSignal(str)
+
+    def __init__(self):
+        super(ShowQueryItem, self).__init__()
+
+    def run(self):
+        # 发出信号
+        while True:
+            time.sleep(0.3)
+            self.sinout.emit(item.cq)
+
+
 def query_item():
     """
     模糊搜索查询物品
@@ -228,16 +290,19 @@ def query_price():
         '''.format(item.name, item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     logger.info("开始查询{}的{}".format(item.server, item.name))
-    query_sale_list(item.query_item_price())
+    ui.show_data_box.setCurrentIndex(4)
+    query_item_price = QueryItemPrice()
+    query_item_price.sinout.connect(query_sale_list)
+    query_item_price.start()
     get_item_icon()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
-
     if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
         server_list = item.server_list()
         logger.info('查询区域为{}， 服务器列表初始化为{}'.format(item.world, server_list))
         # 查询全服比价的数据
-        item.query_every_server(server_list)
-        query_every_server(item.every_server)
+        iquery_every_server = QueryEveryServer(server_list)
+        iquery_every_server.sinout.connect(query_every_server)
+        iquery_every_server.start()
     # 查询完成之后将查询记录加入历史记录。如果已经存在，删除旧的纪录，新的纪录添加到末尾
     this_query = {"itemID": item.id, "itemName": item.name, "HQ": item.hq, "server": item.server}
     if this_query in query_history:
@@ -384,6 +449,13 @@ def make_cost_tree():
     成本树，显示这个物品的制作材料和成本
     """
 
+    def start_tree(stuff):
+        for i in stuff:
+            make_tree(i, cost_page.cost_tree)
+        ui.show_cost.setText('市场价格')
+        show_query_item.quit()
+        ui.show_data_box.setCurrentIndex(3)
+
     def make_tree(material, father):
         """
         材料树的绘制方法
@@ -404,26 +476,16 @@ def make_cost_tree():
         ui.show_cost.setText('市场价格')
         ui.show_data_box.setCurrentIndex(3)
     elif len(item.stuff) == 0:
-        logger.debug("材料树是空的，开始查询")
-        item.show_item_cost()
+        logger.debug("材料树是空的，切换到查询中界面，开始查询")
+        ui.show_data_box.setCurrentIndex(4)
+        show_item_cost = ShowItemCost()
+        show_item_cost.sinout.connect(start_tree)
         logger.info("开始绘制材料树")
         cost_page.cost_tree.clear()
-        for i in item.stuff['craft']:
-            make_tree(i, cost_page.cost_tree)
-        cost_page.d_cost.setText(str(item.d_cost))
-        cost_page.o_cost.setText(str(item.o_cost))
-        # 1级子材料数量不超过9个的时候展开材料树
-        if len(item.stuff['craft']) < 9:
-            cost_page.cost_tree.expandAll()
-        # 如果这个道具一次生产制作多个的利润算法兼容
-        if item.yields > 1:
-            p = item.avgp * item.yields - item.d_cost
-            cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
-        else:
-            p = item.avgp - item.d_cost
-            cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
-        ui.show_cost.setText('市场价格')
-        ui.show_data_box.setCurrentIndex(3)
+        show_query_item = ShowQueryItem()
+        show_query_item.sinout.connect(show_item)
+        show_item_cost.start()
+        show_query_item.start()
 
 
 def click_history_query(selected):
@@ -670,7 +732,7 @@ logger.info("主程序数据初始化完成")
 主程序开始
 """
 app = QtWidgets.QApplication(sys.argv)
-desktop = app.desktop()
+desktop = app.primaryScreen().size()
 logger.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
 app.setStyle("Fusion")
 widget = RQMainWindow()
@@ -742,6 +804,12 @@ loading界面
 """
 loading_page = LoadingPage()
 loading_page.setupUi(ui.loading_ui)
+loading_page.loading_text.setText("猴面雀正在为您查找资料。")
+
+
+def show_item(item_name):
+    loading_page.loading_text.setText("猴面雀正在网络上为您查询 {} 的价格，请稍等一下。。。".format(item_name))
+
 
 """
 查询历史面板

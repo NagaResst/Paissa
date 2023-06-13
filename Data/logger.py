@@ -3,7 +3,7 @@ import logging.handlers
 
 
 class Log(object):
-    def __init__(self, level="DEBUG"):
+    def __init__(self, level="INFO"):
         self.log = logging.getLogger('猴面雀')
         self.log.setLevel(level)
         self.log_format = "%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s"

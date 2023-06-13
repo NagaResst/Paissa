@@ -293,6 +293,19 @@ class ShowQueryItem(QtCore.QThread):
             self.sinout.emit(item.cq)
 
 
+class GetItemIcon(QtCore.QThread):
+    sinout = QtCore.pyqtSignal(bytes)
+
+    def __init__(self):
+        super(GetItemIcon, self).__init__()
+
+    def run(self):
+        logger.debug("请求物品图标")
+        item.get_icon()
+        # self.sinout.emit(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
+        self.sinout.emit(item.icon)
+
+
 def query_item():
     """
     模糊搜索查询物品
@@ -387,11 +400,14 @@ def query_price():
         '''.format(item.name, item.id))
     widget.setWindowTitle("猴面雀 - FF14市场查询工具 - " + item.name)
     logger.info("开始查询{}的{}".format(item.server, item.name))
+    loading_page.loading_text.setText("猴面雀正在为您查找资料。")
     ui.show_data_box.setCurrentIndex(4)
     query_item_price = QueryItemPrice()
     query_item_price.sinout.connect(query_sale_list)
     query_item_price.start()
-    get_item_icon()
+    get_item_icon = GetItemIcon()
+    get_item_icon.sinout.connect(show_item_icon)
+    get_item_icon.start()
     # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
     if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
         server_list = item.server_list()
@@ -421,7 +437,9 @@ def query_price():
     logger.debug("查询历史更新完毕")
     query_item_page.query_is_hq.setChecked(item.hq)
     cost_page.cost_tree.clear()
+    get_item_icon.exec()
     query_item_price.exec()
+
 
 def query_sale_list(price_list):
     """
@@ -545,12 +563,18 @@ def make_cost_tree():
     """
     成本树，显示这个物品的制作材料和成本
     """
+    global show_query_item
 
     def start_tree(stuff):
         for i in stuff:
             make_tree(i, cost_page.cost_tree)
         ui.show_cost.setText('市场价格')
         show_query_item.quit()
+        ui.item_icon.show()
+        ui.jump_to_wiki.show()
+        ui.show_cost.show()
+        ui.back_query.show()
+        ui.query_history.show()
         ui.show_data_box.setCurrentIndex(3)
 
     def make_tree(material, father):
@@ -579,11 +603,10 @@ def make_cost_tree():
         show_item_cost.sinout.connect(start_tree)
         logger.info("开始绘制材料树")
         cost_page.cost_tree.clear()
-        show_query_item = ShowQueryItem()
-        show_query_item.sinout.connect(show_item)
-        logger.info("开始运行材料树线程")
+        logger.debug("开始运行材料树线程")
         show_item_cost.start()
-        logger.info("开始载入界面线程")
+        logger.debug("开始载入界面线程")
+        show_query_item.sinout.connect(show_item)
         show_query_item.start()
         show_item_cost.exec()
 
@@ -713,14 +736,17 @@ def filter_item_or_not(status):
     item.filter_item = status
 
 
-def get_item_icon():
+def show_item_icon(icon):
     """
     绘制物品图标的方法
     """
-    item.get_icon()
-    ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
+    ui.item_icon.setPixmap(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(icon)))
     ui.item_icon.setScaledContents(True)
     ui.item_icon.show()
+
+
+def show_item(item_name):
+    loading_page.loading_text.setText("猴面雀正在 universalis 上为您查询 {} 的价格，请稍等一下。。。".format(item_name))
 
 
 def back_to_index():
@@ -796,7 +822,7 @@ def test_network():
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.1.1'
+program_version = '1.0.2'
 # 加载查询历史
 try:
     history_file = os.path.join('Data', "Paissa_query_history.log")
@@ -898,17 +924,13 @@ cost_page.setupUi(ui.show_craft)
 cost_page.cost_tree.setColumnWidth(0, 500)
 cost_page.cost_tree.itemDoubleClicked.connect(click_query_item_name)
 cost_page.click_c.clicked.connect(click_copy_cost_tree)
+show_query_item = ShowQueryItem()
 
 """
 loading界面
 """
 loading_page = LoadingPage()
 loading_page.setupUi(ui.loading_ui)
-loading_page.loading_text.setText("猴面雀正在为您查找资料。")
-
-
-def show_item(item_name):
-    loading_page.loading_text.setText("猴面雀正在网络上为您查询 {} 的价格，请稍等一下。。。".format(item_name))
 
 
 """

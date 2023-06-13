@@ -6,12 +6,13 @@ from requests import get
 from Data.logger import logger
 
 """
-通过github拉取程序版本
+通过gitee拉取程序版本
 """
-url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+url = 'https://gitee.com/nagaresst/paissa/raw/only-CN/Data/version'
 version_online = json.loads(get(url, timeout=3).text)
 logger.info(
-    "版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'],version_online['data']))
+    "版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
+
 
 """
 读取本地版本进行比对
@@ -42,8 +43,8 @@ except:
 if version_online['program'] != program_version:
     try:
         logger.info("从 Gitee 更新主程序版本")
-        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/only-CN/Queryer.py', timeout=5).text
         with open('Window.py', 'w', encoding='utf-8') as program:
             program.write(program_text)
             program.close()

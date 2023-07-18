@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
@@ -26,7 +26,7 @@ with open('marketable.py', 'w', encoding='utf8') as market_table:
 下载数据文件到本地
 """
 Download_addres = 'https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
-item_data = requests.get(Download_addres)
+item_data = requests.get(Download_addres, timeout=5)
 logging.info('拆包数据下载成功，准备保存到本地')
 with open("Item.csv", "w", encoding='UTF-8') as code:
     code.write(item_data.text)
@@ -55,7 +55,7 @@ def get_item_details(item_id):
     url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(item_id)
     while True:
         try:
-            logging.info('开始处理物品ID {} '.format(item_id))
+            logging.debug('开始处理物品ID {} '.format(item_id))
             result = json.loads(requests.get(url, timeout=7).text)['item']
             if 'vendors' in result:
                 item_out_list[item_id]['priceFromNpc'] = result['price']

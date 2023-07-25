@@ -26,7 +26,7 @@ with open('marketable.py', 'w', encoding='utf8') as market_table:
 下载数据文件到本地
 """
 Download_addres = 'https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
-item_data = requests.get(Download_addres, timeout=5)
+item_data = requests.get(Download_addres)
 logging.info('拆包数据下载成功，准备保存到本地')
 with open("Item.csv", "w", encoding='UTF-8') as code:
     code.write(item_data.text)
@@ -55,7 +55,10 @@ def get_item_details(item_id):
     url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(item_id)
     while True:
         try:
-            logging.debug('开始处理物品ID {} '.format(item_id))
+            if item_id == '22357':
+                logging.warning('物品ID {} 查询失败，重试3次，跳过'.format(item_id))
+                break
+            logging.info('开始处理物品ID {} '.format(item_id))
             result = json.loads(requests.get(url, timeout=7).text)['item']
             if 'vendors' in result:
                 item_out_list[item_id]['priceFromNpc'] = result['price']
@@ -70,7 +73,7 @@ def get_item_details(item_id):
 
 
 logging.info('建立线程池，准备进行数据抓取')
-tpool = ThreadPoolExecutor(max_workers=50)
+tpool = ThreadPoolExecutor(max_workers=20)
 tpool.map(get_item_details, item_out_list)
 tpool.shutdown(wait=True)
 

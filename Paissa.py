@@ -8,7 +8,8 @@ from Data.logger import logger
 """
 通过github拉取程序版本
 """
-url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+# url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
 version_online = json.loads(get(url, timeout=3).text)
 logger.info(
     "版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'],version_online['data']))
@@ -42,8 +43,10 @@ except:
 if version_online['program'] != program_version:
     try:
         logger.info("从 Gitee 更新主程序版本")
-        program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
-        query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+        # program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
+        # query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
         with open('Window.py', 'w', encoding='utf-8') as program:
             program.write(program_text)
             program.close()
@@ -58,8 +61,9 @@ if version_online['data'] != data_version:
     market_filter = False
     data_text = False
     try:
-        logger.info("从 Github 更新数据版本")
-        data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
+        # data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
+        logger.info("从 gitee 更新数据版本")
+        data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=7).text
     except:
         try:
             logger.info("从 阿里云 更新数据")
@@ -74,11 +78,7 @@ if version_online['data'] != data_version:
     try:
         market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5).text)
     except:
-        try:
-            market_filter = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/marketable.py',
-                                timeout=5).text
-        except:
-            logger.info("市场过滤数据下载失败")
+        logger.info("市场过滤数据下载失败")
     if market_filter:
         with open(marketable_file, 'w', encoding='utf8') as market_table:
             market_table.write(market_filter)

@@ -6,13 +6,13 @@ from requests import get
 from Data.logger import logger
 
 """
-通过github拉取程序版本
+通过gitee拉取程序版本
 """
 # url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
 url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
 version_online = json.loads(get(url, timeout=3).text)
 logger.info(
-    "版本更新检查 Github Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'],version_online['data']))
+    "版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'],version_online['data']))
 
 """
 读取本地版本进行比对

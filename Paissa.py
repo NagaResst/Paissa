@@ -1,7 +1,7 @@
 import json
 import os
 import zipfile
-
+import io
 from requests import get
 
 from Data.logger import logger
@@ -64,18 +64,18 @@ if version_online['program'] != program_version:
 
 if version_online['data'] != data_version:
     market_filter = False
-    data_text = False
     try:
         # data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
         logger.info("从 gitee 更新数据版本")
-        data_zip = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.zip', timeout=7).text
-        zipFile = zipfile.ZipFile(data_zip)
+        data_zip = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.zip', timeout=7).content
+        logger.info("版本数据压缩包下载完成")
+        zipFile = zipfile.ZipFile(io.BytesIO(data_zip), mode="r")
         data_text = zipFile.read('item.Pdt').decode('utf-8')
-        if data_text:
-            with open(data_file, 'w', encoding='utf-8') as data:
-                data.write(data_text)
-                data.close()
-                logger.info("数据文件更新完成")
+        logger.info("版本数据解析完成")
+        with open(data_file, 'w', encoding='utf-8') as data:
+            data.write(data_text)
+            data.close()
+            logger.info("数据文件更新完成")
     except:
         logger.info("版本数据下载失败")
 

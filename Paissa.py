@@ -1,5 +1,6 @@
 import json
 import os
+import zipfile
 
 from requests import get
 
@@ -8,11 +9,15 @@ from Data.logger import logger
 """
 通过gitee拉取程序版本
 """
-# url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
-url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
-version_online = json.loads(get(url, timeout=3).text)
-logger.info(
-    "版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'],version_online['data']))
+version_online = False
+try:
+    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+    version_online = json.loads(get(url, timeout=3).text)
+    logger.info(
+        "版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
+except:
+    logger.info(
+        "版本更新检查 Gitee Success, 失败 ， 没有获取到版本数据")
 
 """
 读取本地版本进行比对
@@ -63,27 +68,27 @@ if version_online['data'] != data_version:
     try:
         # data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
         logger.info("从 gitee 更新数据版本")
-        data_text = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.Pdt', timeout=7).text
+        data_zip = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.zip', timeout=7).text
+        zipFile = zipfile.ZipFile(data_zip)
+        data_text = zipFile.read('item.Pdt').decode('utf-8')
+        if data_text:
+            with open(data_file, 'w', encoding='utf-8') as data:
+                data.write(data_text)
+                data.close()
+                logger.info("数据文件更新完成")
     except:
-        try:
-            logger.info("从 阿里云 更新数据")
-            data_text = get('https://paissa-update.oss-cn-hongkong.aliyuncs.com/Paissa/item.Pdt', timeout=5).text
-        except:
-            logger.info("版本数据下载失败")
-    if data_text:
-        with open(data_file, 'w', encoding='utf-8') as data:
-            data.write(data_text)
-            data.close()
-            logger.info("数据文件更新完成")
+        logger.info("版本数据下载失败")
+
     try:
         market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5).text)
+        if market_filter:
+            with open(marketable_file, 'w', encoding='utf8') as market_table:
+                market_table.write(market_filter)
+                market_table.close()
+                logger.info("板子过滤数据更新完成")
     except:
         logger.info("市场过滤数据下载失败")
-    if market_filter:
-        with open(marketable_file, 'w', encoding='utf8') as market_table:
-            market_table.write(market_filter)
-            market_table.close()
-            logger.info("板子过滤数据更新完成")
+
 
 import Window
 

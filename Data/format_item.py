@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO,
 https://universalis.app/api/marketable
 """
 market_filter_address = 'https://universalis.app/api/marketable'
-market_filter = requests.get(market_filter_address)
+market_filter = requests.get(market_filter_address, timeout=5)
 
 with open('marketable.py', 'w', encoding='utf8') as market_table:
     market_table.write('marketable = {}'.format(market_filter.text))
@@ -25,8 +25,8 @@ with open('marketable.py', 'w', encoding='utf8') as market_table:
 """
 下载数据文件到本地
 """
-Download_addres = 'https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
-item_data = requests.get(Download_addres)
+Download_addres = 'https://ghproxy.com/https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
+item_data = requests.get(Download_addres, timeout=9)
 logging.info('拆包数据下载成功，准备保存到本地')
 with open("Item.csv", "w", encoding='UTF-8') as code:
     code.write(item_data.text)
@@ -42,17 +42,33 @@ with open('Item.csv', 'r', encoding='UTF-8-sig') as item_file:
     for i in item_in_list:
         if i['key'] != '#' and i['key'] != 'int32':
             if i['0'] != '':
-                item_out_list[i['key']] = {'id': i['key'], 'name': i['0'], 'icon': i['10']}
-total = len(item_out_list)
+                item_out_list[i['key']] = {
+                    'id': i['key'], 'name': i['0'], 'icon': i['10']}
+total = list(item_out_list)[-1]
 logging.info('数据列表准备完毕，准备抓取数据，数据集长度 {}'.format(total))
+
+
+with open('item.Pdt', 'r', encoding='utf-8') as pdt_file:
+    local_pdt = json.load(pdt_file)
+logging.info('本地数据文件载入完毕')
 
 """
 花环万岁！
 """
 
 
+def query_item_in_local(item):
+    if item not in local_pdt:
+        logging.info('本地不存在{}的数据，开始查询'.format(item))
+        get_item_details(item)
+    else:
+        item_out_list[item].update(local_pdt[item])
+        logging.debug('本地已存在{}的数据，跳过'.format(item))
+
+
 def get_item_details(item_id):
-    url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(item_id)
+    url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + \
+        str(item_id)
     while True:
         try:
             if item_id == '22357':
@@ -74,14 +90,14 @@ def get_item_details(item_id):
 
 logging.info('建立线程池，准备进行数据抓取')
 tpool = ThreadPoolExecutor(max_workers=20)
-tpool.map(get_item_details, item_out_list)
+tpool.map(query_item_in_local, item_out_list)
 tpool.shutdown(wait=True)
+
 
 """
 数据写入磁盘
 """
-# print(item_out_list)
-version = {'data-version': '6.3'}
+version = {'data-version': '6.4'}
 version.update(item_out_list)
 
 with open('item.Pdt', 'w', encoding='utf8') as item_data:

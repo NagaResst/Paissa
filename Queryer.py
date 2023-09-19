@@ -6,6 +6,7 @@ from json import loads, load
 from math import ceil
 
 from requests import get
+from urllib.request import getproxies
 
 from Data.marketable import marketable
 from Data.logger import logger
@@ -53,6 +54,7 @@ class Queryer(object):
         self.price_cache = {}
         # 当前正在查询的物品名称
         self.cq = None
+        self.proxies = getproxies()
         logger.info("查询物品槽位初始化")
 
     def init_query_result(self, url):
@@ -65,7 +67,7 @@ class Queryer(object):
             url = 'https://universalis.app' + url
         while True:
             try:
-                result = get(url, timeout=5, headers=self.header)
+                result = get(url, timeout=5, headers=self.header, proxies=self.proxies)
                 if result.status_code == 200:
                     result = loads(result.text)
                     logger.debug("{} success".format(url))
@@ -111,7 +113,7 @@ class Queryer(object):
         elif len(self.item_list) == 1 and self.static is True:
             icon_url = "https://garlandtools.cn/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
         try:
-            result = get(icon_url, timeout=3, headers=self.header)
+            result = get(icon_url, timeout=3, headers=self.header, proxies=self.proxies)
             self.icon = result.content
             logger.debug('图标获取成功')
         except:
@@ -605,10 +607,10 @@ class Queryer(object):
         """
         try:
             url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
-            result = loads(get(url, timeout=5, headers=self.header).text)
+            result = loads(get(url, timeout=5, headers=self.header, proxies=self.proxies).text)
         except:
             url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
-            result = loads(get(url, timeout=5, headers=self.header).text)
+            result = loads(get(url, timeout=5, headers=self.header, proxies=self.proxies).text)
         logger.debug("版本更新检查 {} success".format(url))
         return result
 
@@ -618,7 +620,7 @@ class Queryer(object):
         c = 0
         while c < 3:
             try:
-                result = get(url, timeout=5, headers=self.header)
+                result = get(url, timeout=5, headers=self.header, proxies=self.proxies)
                 if result.status_code == 200:
                     return "success"
                 else:

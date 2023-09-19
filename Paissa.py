@@ -3,21 +3,24 @@ import os
 import zipfile
 import io
 from requests import get
+from urllib.request import getproxies
 
 from Data.logger import logger
 
 """
 通过gitee拉取程序版本
 """
+proxies = getproxies()
+logger.info('获取系统代理 {}'.format(proxies))
 version_online = False
-try:
-    url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
-    version_online = json.loads(get(url, timeout=3).text)
-    logger.info(
-        "版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
-except:
-    logger.info(
-        "版本更新检查 Gitee Success, 失败 ， 没有获取到版本数据")
+# try:
+url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
+version_online = json.loads(get(url, timeout=3, proxies=proxies).text)
+logger.info(
+    "版本更新检查 Gitee Success, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
+# except:
+#     logger.info(
+#         "版本更新检查 Gitee failed ， 没有获取到版本数据")
 
 """
 读取本地版本进行比对
@@ -50,8 +53,8 @@ if version_online['program'] != program_version:
         logger.info("从 Gitee 更新主程序版本")
         # program_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Window.py', timeout=5).text
         # query_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Queryer.py', timeout=5).text
-        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5).text
-        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5).text
+        program_text = get('https://gitee.com/nagaresst/paissa/raw/master/Window.py', timeout=5, proxies=proxies).text
+        query_text = get('https://gitee.com/nagaresst/paissa/raw/master/Queryer.py', timeout=5, proxies=proxies).text
         with open('Window.py', 'w', encoding='utf-8') as program:
             program.write(program_text)
             program.close()
@@ -67,7 +70,7 @@ if version_online['data'] != data_version:
     try:
         # data_text = get('https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/item.Pdt', timeout=5).text
         logger.info("从 gitee 更新数据版本")
-        data_zip = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.zip', timeout=7).content
+        data_zip = get('https://gitee.com/nagaresst/paissa/raw/master/Data/item.zip', timeout=7, proxies=proxies).content
         logger.info("版本数据压缩包下载完成")
         zipFile = zipfile.ZipFile(io.BytesIO(data_zip), mode="r")
         data_text = zipFile.read('item.Pdt').decode('utf-8')
@@ -80,7 +83,7 @@ if version_online['data'] != data_version:
         logger.info("版本数据下载失败")
 
     try:
-        market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5).text)
+        market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5, proxies=proxies).text)
         if market_filter:
             with open(marketable_file, 'w', encoding='utf8') as market_table:
                 market_table.write(market_filter)

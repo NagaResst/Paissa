@@ -607,7 +607,7 @@ class Queryer(object):
             url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
             result = loads(get(url, timeout=5, headers=self.header).text)
         except:
-            url = 'https://raw.githubusercontent.com/NagaResst/Paissa/master/Data/version'
+            url = 'https://paissa-data.oss-cn-hongkong.aliyuncs.com/version'
             result = loads(get(url, timeout=5, headers=self.header).text)
         logger.debug("版本更新检查 {} success".format(url))
         return result

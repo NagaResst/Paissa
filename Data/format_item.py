@@ -25,7 +25,8 @@ with open('marketable.py', 'w', encoding='utf8') as market_table:
 """
 下载数据文件到本地
 """
-Download_addres = 'https://ghproxy.com/https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
+# 这里使用了镜像站下载资源，如果镜像站不可用，需要修改资源下载地址
+Download_addres = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
 item_data = requests.get(Download_addres, timeout=9)
 logging.info('拆包数据下载成功，准备保存到本地')
 with open("Item.csv", "w", encoding='UTF-8') as code:
@@ -47,7 +48,6 @@ with open('Item.csv', 'r', encoding='UTF-8-sig') as item_file:
 total = list(item_out_list)[-1]
 logging.info('数据列表准备完毕，准备抓取数据，数据集长度 {}'.format(total))
 
-
 with open('item.Pdt', 'r', encoding='utf-8') as pdt_file:
     local_pdt = json.load(pdt_file)
 logging.info('本地数据文件载入完毕')
@@ -67,15 +67,15 @@ def query_item_in_local(item):
 
 
 def get_item_details(item_id):
-    url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + \
-        str(item_id)
+    url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(item_id)
     while True:
         try:
             if item_id == '22357':
-                logging.warning('物品ID {} 查询失败，重试3次，跳过'.format(item_id))
+                logging.warning('物品ID 22357 查询失败，跳过')
                 break
             logging.info('开始处理物品ID {} '.format(item_id))
             result = json.loads(requests.get(url, timeout=7).text)['item']
+            item_out_list[item_id]['patch'] = result['patch']
             if 'vendors' in result:
                 item_out_list[item_id]['priceFromNpc'] = result['price']
             if 'craft' in result:
@@ -90,14 +90,15 @@ def get_item_details(item_id):
 
 logging.info('建立线程池，准备进行数据抓取')
 tpool = ThreadPoolExecutor(max_workers=20)
-tpool.map(query_item_in_local, item_out_list)
+# tpool.map(query_item_in_local, item_out_list)
+# 强制更新所有数据
+tpool.map(get_item_details, item_out_list)
 tpool.shutdown(wait=True)
-
 
 """
 数据写入磁盘
 """
-version = {'data-version': '6.4'}
+version = {'data-version': '6.45'}
 version.update(item_out_list)
 
 with open('item.Pdt', 'w', encoding='utf8') as item_data:

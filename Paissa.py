@@ -8,7 +8,7 @@ from urllib.request import getproxies
 from Data.logger import logger
 
 """
-通过gitee拉取程序版本
+通过阿里云拉取程序版本
 """
 proxies = getproxies()
 logger.info('获取系统代理 {}'.format(proxies))

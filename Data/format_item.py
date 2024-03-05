@@ -71,7 +71,7 @@ def get_item_details(item_id):
     while True:
         try:
             if item_id == '22357':
-                logging.warning('物品ID 22357 查询失败，跳过')
+                logging.warning('物品ID 22357 为礼物盒，跳过')
                 break
             logging.info('开始处理物品ID {} '.format(item_id))
             result = json.loads(requests.get(url, timeout=7).text)['item']

@@ -7,7 +7,7 @@ pyqt5
 requests 
 
 
-# **打包方法**：  
+# **Windows端运行方法**：  
 使用了[PyStand](https://github.com/skywind3000/PyStand )的启动器，将```Paissa.py```重命名为```Paissa.int```后，运行Paissa.exe启动。
 
 # **版本数据更新**：

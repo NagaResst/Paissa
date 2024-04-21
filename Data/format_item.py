@@ -98,7 +98,7 @@ tpool.shutdown(wait=True)
 """
 数据写入磁盘
 """
-version = {'data-version': '6.45'}
+version = {'data-version': '6.51'}
 version.update(item_out_list)
 
 with open('item.Pdt', 'w', encoding='utf8') as item_data:

@@ -90,15 +90,15 @@ def get_item_details(item_id):
 
 logging.info('建立线程池，准备进行数据抓取')
 tpool = ThreadPoolExecutor(max_workers=20)
-# tpool.map(query_item_in_local, item_out_list)
+tpool.map(query_item_in_local, item_out_list)
 # 强制更新所有数据
-tpool.map(get_item_details, item_out_list)
+# tpool.map(get_item_details, item_out_list)
 tpool.shutdown(wait=True)
 
 """
 数据写入磁盘
 """
-version = {'data-version': '6.51'}
+version = {'data-version': '6.55'}
 version.update(item_out_list)
 
 with open('item.Pdt', 'w', encoding='utf8') as item_data:

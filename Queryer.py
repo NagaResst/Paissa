@@ -6,6 +6,7 @@ from json import loads, load
 from math import ceil
 
 from requests import get
+from urllib.request import getproxies
 
 from Data.marketable import marketable
 from Data.logger import logger
@@ -54,6 +55,7 @@ class Queryer(object):
         # 当前正在查询的物品名称
         self.cq = None
         logger.info("查询物品槽位初始化")
+        self.proxies = getproxies()
 
     def init_query_result(self, url):
         """
@@ -65,7 +67,7 @@ class Queryer(object):
             url = 'https://universalis.app' + url
         while True:
             try:
-                result = get(url, timeout=5, headers=self.header)
+                result = get(url, timeout=5, headers=self.header, proxies=self.proxies)
                 if result.status_code == 200:
                     result = loads(result.text)
                     logger.debug("{} success".format(url))

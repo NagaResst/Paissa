@@ -27,7 +27,7 @@ with open('marketable.py', 'w', encoding='utf8') as market_table:
 """
 # 这里使用了镜像站下载资源，如果镜像站不可用，需要修改资源下载地址
 Download_addres = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
-item_data = requests.get(Download_addres, timeout=9)
+item_data = requests.get(Download_addres, timeout=9, verify=False)
 logging.info('拆包数据下载成功，准备保存到本地')
 with open("Item.csv", "w", encoding='UTF-8') as code:
     code.write(item_data.text)
@@ -98,7 +98,7 @@ tpool.shutdown(wait=True)
 """
 数据写入磁盘
 """
-version = {'data-version': '6.55'}
+version = {'data-version': '7.0'}
 version.update(item_out_list)
 
 with open('item.Pdt', 'w', encoding='utf8') as item_data:

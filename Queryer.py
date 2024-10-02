@@ -616,7 +616,7 @@ class Queryer(object):
 
     def test_network(self):
         """网络测试方法"""
-        url = "https://universalis.app/api/v2/extra/stats/least-recently-updated?world=maoxiaopang&entries=1"
+        url = "https://universalis.app/api/v2/猫小胖/33283?listings=1"
         c = 0
         while c < 3:
             try:

@@ -47,7 +47,7 @@ except:
 
 if version_online['program'] != program_version:
     try:
-        logger.info("从 Gitee 更新主程序版本")
+        logger.info("从网络源更新主程序版本")
         program_text = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Window.py', timeout=5, proxies=proxies).text
         query_text = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Queryer.py', timeout=5, proxies=proxies).text
         with open('Window.py', 'w', encoding='utf-8') as program:
@@ -86,7 +86,6 @@ if version_online['data'] != data_version:
                 logger.info("板子过滤数据更新完成")
     except:
         logger.info("市场过滤数据下载失败")
-
 
 import Window
 

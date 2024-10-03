@@ -1,0 +1,96 @@
+name: Push to OSS
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  check-version-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # 使actions/checkout拉取完整的git历史记录
+
+    - name: Detect changes in version file
+      id: changes
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          version:
+            - 'Data/version'
+
+    - name: Setup Python
+      if: steps.changes.outputs.version == 'true'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      if: steps.changes.outputs.version == 'true'
+      run: |
+        python -m pip install --upgrade pip
+        pip install oss2  
+
+    - name: Parse version and upload to OSS
+      if: steps.changes.outputs.version == 'true'
+      env:
+        OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+        OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+        OSS_BUCKET_NAME: ${{ secrets.OSS_BUCKET_NAME }}
+        OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+      run: |
+        import os
+        import json
+        from oss2 import Auth, Bucket
+        import subprocess
+        import zipfile
+        
+        
+        def get_previous_version():
+            last_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD^1']).strip().decode()
+            try:
+                output = subprocess.check_output(['git', 'show', f'{last_commit}:Data/version'], stderr=subprocess.STDOUT)
+                return json.loads(output.decode())
+            except subprocess.CalledProcessError as e:
+                if "does not exist" in e.output.decode():
+                    return None
+                raise
+        
+        
+        with open('Data/version', 'r') as f:
+            current_version = json.load(f)
+        
+        previous_version = get_previous_version()
+        
+        with open('version', 'r') as f:
+            data = json.load(f)
+        
+        files_to_upload = {
+            "program": ["Window.py", "Queryer.py"],
+            "data": ["Data/item.Pdt"],
+            "version": ['Data/version']
+        }
+        
+        auth = Auth(os.environ['ALIYUN_OSS_ACCESS_KEY_ID'], os.environ['ALIYUN_OSS_ACCESS_KEY_SECRET'])
+        bucket = Bucket(auth, os.environ['ALIYUN_OSS_ENDPOINT'], os.environ['ALIYUN_OSS_BUCKET_NAME'])
+        
+        if not previous_version or current_version != previous_version:
+            if current_version['program'] != previous_version['program']:
+                files = files_to_upload["program"]
+                # 上传文件
+                for file in files:
+                    bucket.put_object_from_file(file, file)
+                bucket.put_object_from_file('version', 'version')
+                print(f"Uploaded program files to OSS.")
+            elif current_version['data'] != previous_version['data']:
+                files = files_to_upload["data"]
+                bucket.put_object_from_file('version', 'version')
+                with zipfile.ZipFile('item.zip', 'w') as zipf:
+                    zipf.write('Data/item.Pdt')
+                bucket.put_object_from_file('item.zip', 'item.zip')
+                print(f"Uploaded data file to OSS.")      
+
+      shell: python

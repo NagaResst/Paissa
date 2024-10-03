@@ -12,7 +12,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # 使actions/checkout拉取完整的git历史记录
+        fetch-depth: 3
 
     - name: Detect changes in version file
       id: changes
@@ -56,6 +56,7 @@ jobs:
                 return json.loads(output.decode())
             except subprocess.CalledProcessError as e:
                 if "does not exist" in e.output.decode():
+                    print('no need update')
                     return None
                 raise
         
@@ -65,7 +66,7 @@ jobs:
         
         previous_version = get_previous_version()
         
-        with open('version', 'r') as f:
+        with open('Data/version', 'r') as f:
             data = json.load(f)
         
         files_to_upload = {
@@ -74,20 +75,21 @@ jobs:
             "version": ['Data/version']
         }
         
-        auth = Auth(os.environ['ALIYUN_OSS_ACCESS_KEY_ID'], os.environ['ALIYUN_OSS_ACCESS_KEY_SECRET'])
-        bucket = Bucket(auth, os.environ['ALIYUN_OSS_ENDPOINT'], os.environ['ALIYUN_OSS_BUCKET_NAME'])
+        auth = Auth(os.environ['OSS_ACCESS_KEY_ID'], os.environ['OSS_ACCESS_KEY_SECRET'])
+        bucket = Bucket(auth, os.environ['OSS_ENDPOINT'], os.environ['OSS_BUCKET_NAME'])
+        header = {'Content-Type': 'text/plain', 'Content-Encoding': 'utf-8'}
         
         if not previous_version or current_version != previous_version:
             if current_version['program'] != previous_version['program']:
                 files = files_to_upload["program"]
                 # 上传文件
                 for file in files:
-                    bucket.put_object_from_file(file, file)
-                bucket.put_object_from_file('version', 'version')
+                    bucket.put_object_from_file(file, file, headers=header)
+                bucket.put_object_from_file('version', 'Data/version')
                 print(f"Uploaded program files to OSS.")
             elif current_version['data'] != previous_version['data']:
                 files = files_to_upload["data"]
-                bucket.put_object_from_file('version', 'version')
+                bucket.put_object_from_file('version', 'Data/version')
                 with zipfile.ZipFile('item.zip', 'w') as zipf:
                     zipf.write('Data/item.Pdt')
                 bucket.put_object_from_file('item.zip', 'item.zip')

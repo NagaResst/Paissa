@@ -48,17 +48,19 @@ except:
 if version_online['program'] != program_version:
     try:
         logger.info("从网络源更新主程序版本")
-        program_text = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Window.py', timeout=5, proxies=proxies).text
-        query_text = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Queryer.py', timeout=5, proxies=proxies).text
+        program_code = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Window.py', timeout=5, proxies=proxies)
+        program_code.encoding = 'utf-8'
+        query_code = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Queryer.py', timeout=5, proxies=proxies)
+        query_code.encoding = 'utf-8'
         with open('Window.py', 'w', encoding='utf-8') as program:
-            program.write(program_text)
+            program.write(program_code.text)
             program.close()
         with open('Queryer.py', 'w', encoding='utf-8') as queryer:
-            queryer.write(query_text)
+            queryer.write(query_code.text)
             queryer.close()
             logger.info("主程序更新完成")
     except:
-        logger.warn("主程序更新失败")
+        logger.warning("主程序更新失败")
 
 if version_online['data'] != data_version:
     market_filter = False
@@ -74,7 +76,7 @@ if version_online['data'] != data_version:
             data.close()
             logger.info("数据文件更新完成")
     except:
-        logger.warn("版本数据下载失败")
+        logger.warning("版本数据下载失败")
 
     try:
         marketable_file = os.path.join('Data', "marketable.py")

@@ -2,7 +2,8 @@ name: Push to OSS
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       force_upload:
@@ -20,13 +21,13 @@ jobs:
       with:
         fetch-depth: 3
 
-    - name: Detect changes in version file
-      id: changes
-      uses: dorny/paths-filter@v2
-      with:
-        filters: |
-          version:
-            - 'Data/version'
+#    - name: Detect changes in version file
+#      id: changes
+#      uses: dorny/paths-filter@v2
+#      with:
+#        filters: |
+#          version:
+#            - 'Data/version'
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -44,6 +45,7 @@ jobs:
         OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
         OSS_BUCKET_NAME: ${{ secrets.OSS_BUCKET_NAME }}
         OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+        FORCE_UPLOAD: ${{ github.event.inputs.force_upload }}
       run: |
         import os
         import json
@@ -63,14 +65,16 @@ jobs:
                     return None
                 raise
         
-        
-        with open('Data/version', 'r') as f:
-            try:
-                current_version = force_upload
-            except:
+        force_upload = os.environ['FORCE_UPLOAD']
+        print(f"force_upload: {force_upload}")
+        if force_upload == "true":
+            current_version = {"program": "latest", "data": "latest"}
+        else:
+            with open('Data/version', 'r') as f:
                 current_version = json.load(f)
-        
+        print(f"current_version: {current_version}")
         previous_version = get_previous_version()
+        print(f"previous_version: {previous_version}")
         
         with open('Data/version', 'r') as f:
             data = json.load(f)
@@ -93,11 +97,11 @@ jobs:
                     bucket.put_object_from_file(file, file, headers=header)
                 bucket.put_object_from_file('version', 'Data/version')
                 print(f"Uploaded program files to OSS.")
-            elif current_version['data'] != previous_version['data']:
+            if current_version['data'] != previous_version['data']:
                 files = files_to_upload["data"]
                 bucket.put_object_from_file('version', 'Data/version')
                 with zipfile.ZipFile('item.zip', 'w') as zipf:
-                    zipf.write('Data/item.Pdt')
+                    zipf.write('Data/item.Pdt', arcname="item.Pdt")
                 bucket.put_object_from_file('item.zip', 'item.zip')
                 print(f"Uploaded data file to OSS.")      
 

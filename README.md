@@ -1,3 +1,4 @@
+[![Auto Check and Update Patch Data](https://github.com/NagaResst/Paissa/actions/workflows/auto-update.yaml/badge.svg)](https://github.com/NagaResst/Paissa/actions/workflows/auto-update.yaml) [![Push to OSS](https://github.com/NagaResst/Paissa/actions/workflows/push-data.yaml/badge.svg)](https://github.com/NagaResst/Paissa/actions/workflows/push-data.yaml)
 # **开发环境**:  
 python 3.10  
 qt designer  

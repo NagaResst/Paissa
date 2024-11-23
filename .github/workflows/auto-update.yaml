@@ -61,3 +61,9 @@ jobs:
       with:
         github_token: "${{ secrets.GIT_KEY }}"
         commit_message: "Automatic commit: Update Item Data"
+
+    - name: Trigger Push Data to OSS Workflow
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: push-data.yaml
+        inputs: '{"force_upload": "true"}'

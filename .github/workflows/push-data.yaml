@@ -3,6 +3,12 @@ name: Push to OSS
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
+    input:
+      force_upload:
+        description: 'Force Upload file to OSS'
+        required: false
+        default: false
 
 jobs:
   check-version-and-push:
@@ -62,7 +68,10 @@ jobs:
         
         
         with open('Data/version', 'r') as f:
-            current_version = json.load(f)
+            if force_upload != false:
+                current_version = "latest"
+            else:
+                current_version = json.load(f)
         
         previous_version = get_previous_version()
         

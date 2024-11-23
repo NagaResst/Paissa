@@ -58,7 +58,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,10,1,2,1">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,10,1,2,1,0">
          <property name="spacing">
           <number>15</number>
          </property>
@@ -178,6 +178,25 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="note_panel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>记录板</string>
+           </property>
+          </widget>
+         </item>
          <item alignment="Qt::AlignRight">
           <widget class="QLabel" name="show_text_uptime">
            <property name="sizePolicy">
@@ -289,7 +308,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>25</height>
+     <height>24</height>
     </rect>
    </property>
    <property name="font">

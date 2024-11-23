@@ -38,9 +38,12 @@ class RQMainWindow(QtWidgets.QMainWindow):
         for i in query_history:
             if i['itemName'] == 'None' or i['itemName'] is None:
                 query_history.remove(i)
+        for i in note_list:
+            if i['itemName'] == 'None' or i['itemName'] is None:
+                note_list.remove(i)
         # 查询服务器，是否使用静态资源加速，查询历史
         history = {"program_version": program_version, "server": item.server, 'use_static': item.static,
-                   "history": query_history}
+                   "history": query_history, "note_list": note_list}
         with open(history_file, 'w', encoding='utf-8') as his:
             his.write(json.dumps(history))
             logger.info("数据文件回写成功，准备关闭主程序")
@@ -786,6 +789,16 @@ def hidden_history_board():
         widget2.show()
 
 
+def hidden_note_panel():
+    """
+    显示或者隐藏记录板
+    """
+    if widget4.isVisible():
+        widget4.hide()
+    elif widget4.isHidden():
+        widget4.show()
+
+
 def show_check_update_window():
     """
     显示或者隐藏关于面板，包含检查更新的事件
@@ -832,22 +845,38 @@ logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
 program_version = '1.0.53'
 # 加载查询历史
+history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
-    history_file = os.path.join('Data', "Paissa_query_history.log")
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
         query_history = history_json['history']
+        note_list = history_json['note_list']
         # 如果使用者点开过软件，却没有查询道具，会生成空查询记录的历史文件。
+        # 加入None条目，后面的切换界面判断方法就不用判空了
         if len(query_history) == 0:
-            # 加入None条目，后面的切换界面判断方法就不用判空了
             query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": 'None'}]
+        if len(note_list) == 0:
+            note_list = [{"itemID": None, "itemName": None, "server": 'None', "item_cost": 'None'}]
         item = Queryer(history_json['server'])
         logger.info("读取查询历史成功")
 except FileNotFoundError:
     history_json = {"server": '猫小胖', 'use_static': True, "history": []}
     query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": None}]
+    note_list = [{"itemID": None, "itemName": None, "server": 'None', "item_cost": 'None'}]
     item = Queryer('猫小胖')
     logger.warning("没有发现历史数据，初始化历史数据")
+except KeyError:
+    with open(history_file, 'r', encoding='utf-8') as his:
+        history_json = json.load(his)
+        query_history = history_json['history']
+        if len(query_history) == 0:
+            query_history = [{"itemID": None, "itemName": None, "HQ": None, "server": 'None'}]
+        if 'note_list' not in history_json:
+            note_list = [{"itemID": None, "itemName": None, "server": 'None', "item_cost": 'None'}]
+            logger.info("没有找到记录板数据，初始化空数据")
+    item = Queryer(history_json['server'])
+    logger.info("读取查询历史成功")
+
 # 加载本地静态文件
 with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
     item.item_data = json.load(item_list_file)
@@ -882,9 +911,11 @@ ui.jump_to_wiki.hide()
 ui.show_cost.hide()
 ui.back_query.hide()
 ui.query_history.show()
+ui.note_panel.show()
 ui.back_query.clicked.connect(back_to_index)
 ui.show_data_box.setCurrentIndex(0)
 ui.query_history.clicked.connect(hidden_history_board)
+ui.note_panel.clicked.connect(hidden_note_panel)
 ui.show_cost.clicked.connect(make_cost_tree)
 ui.use_static_file.setChecked(history_json['use_static'])
 widget.show()
@@ -950,6 +981,7 @@ widget2 = QtWidgets.QMainWindow()
 history_board = HistoryPage()
 history_board.setupUi(widget2)
 widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
+widget2.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
 history_board.history_list.doubleClicked.connect(click_history_query)
 try:
     for i in query_history:
@@ -957,6 +989,23 @@ try:
             history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
         elif i['HQ'] is True and i["itemName"] != 'None':
             history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+except:
+    pass
+
+"""
+特别记录板面板
+"""
+widget4 = QtWidgets.QMainWindow()
+note_panel = HistoryPage()
+note_panel.setupUi(widget4)
+widget4.setWindowTitle(QtCore.QCoreApplication.translate("history_Window", "记录板"))
+widget4.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
+widget4.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
+note_panel.history_list.doubleClicked.connect(click_history_query)
+try:
+    for i in note_list:
+        if i["itemName"] != 'None':
+            note_panel.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'] + ' - ' + i['item_cost'])
 except:
     pass
 

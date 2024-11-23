@@ -65,9 +65,9 @@ jobs:
         
         
         with open('Data/version', 'r') as f:
-            if force_upload != false:
-                current_version = "latest"
-            else:
+            try:
+                current_version = force_upload
+            except:
                 current_version = json.load(f)
         
         previous_version = get_previous_version()

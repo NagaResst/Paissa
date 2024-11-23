@@ -11,7 +11,6 @@ on:
         description: 'Check all item'
         required: false
         default: false
-
   schedule:
     - cron: '0 15 * * 2'
 
@@ -56,14 +55,21 @@ jobs:
         git config --global user.name 'Naga Resst'
         git config --global user.email 'nagaresst@live.com'
 
+    - name: Check Have Files Been Changed
+      id: check_diff
+      run: |
+        echo "check_diff=$(git diff --staged --name-status | wc -l)" >> $GITHUB_OUTPUT
+
     - name: Push Code to Repo
+      if : ${{ steps.check_diff.outputs.check_diff != '0' }}
       uses: devops-infra/action-commit-push@master
       with:
         github_token: "${{ secrets.GIT_KEY }}"
         commit_message: "Automatic commit: Update Item Data"
-#
-#    - name: Trigger Push Data to OSS Workflow
-#      uses: benc-uk/workflow-dispatch@v1
-#      with:
-#        workflow: push-data.yaml
-#        inputs: '{"force_upload": "true"}'
+
+    - name: Trigger Push Data to OSS Workflow
+      if : ${{ steps.check_diff.outputs.check_diff != '0' }}
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: push-data.yaml
+        inputs: '{"force_upload": "true"}'

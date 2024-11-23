@@ -1,12 +1,18 @@
 import csv
 import json
+import os
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s : <%(module)s>  [%(levelname)s]  %(message)s',
+patch_version = os.environ['FFXIV_PATCH_VERSION']
+check_all = os.environ['CHECK_ALL']
+log_level = os.environ['LOG_LEVEL'].upper()
+numeric_level = getattr(logging, log_level, "INFO")
+
+logging.basicConfig(level=numeric_level,
+                    format='%(asctime)s : [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
 
@@ -25,8 +31,7 @@ with open('marketable.py', 'w', encoding='utf8') as market_table:
 """
 下载数据文件到本地
 """
-# 这里使用了镜像站下载资源，如果镜像站不可用，需要修改资源下载地址
-Download_addres = 'https://mirror.ghproxy.com/https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
+Download_addres = f'https://raw.githubusercontent.com/thewakingsands/ffxiv-datamining-cn/master/Item.csv'
 item_data = requests.get(Download_addres, timeout=9, verify=False)
 logging.info('拆包数据下载成功，准备保存到本地')
 with open("Item.csv", "w", encoding='UTF-8') as code:
@@ -59,7 +64,7 @@ logging.info('本地数据文件载入完毕')
 
 def query_item_in_local(item):
     if item not in local_pdt:
-        logging.info('本地不存在{}的数据，开始查询'.format(item))
+        logging.debug('本地不存在{}的数据，开始查询'.format(item))
         get_item_details(item)
     else:
         item_out_list[item].update(local_pdt[item])
@@ -71,9 +76,9 @@ def get_item_details(item_id):
     while True:
         try:
             if item_id == '22357':
-                logging.warning('物品ID 22357 为礼物盒，跳过')
+                logging.debug('物品ID 22357 为礼物盒，跳过')
                 break
-            logging.info('开始处理物品ID {} '.format(item_id))
+            logging.debug('开始处理物品ID {} '.format(item_id))
             result = json.loads(requests.get(url, timeout=7).text)['item']
             item_out_list[item_id]['patch'] = result['patch']
             if 'vendors' in result:
@@ -85,22 +90,32 @@ def get_item_details(item_id):
             logging.info('物品ID {} / {}处理完毕'.format(result['id'], total))
             break
         except:
-            logging.warning('物品ID {} 查询失败，重试'.format(item_id))
+            logging.warn('物品ID {} 查询失败，重试'.format(item_id))
 
 
 logging.info('建立线程池，准备进行数据抓取')
 tpool = ThreadPoolExecutor(max_workers=20)
-tpool.map(query_item_in_local, item_out_list)
-# 强制更新所有数据
-# tpool.map(get_item_details, item_out_list)
+if check_all != "false":
+    tpool.map(get_item_details, item_out_list)
+else:
+    tpool.map(query_item_in_local, item_out_list)
 tpool.shutdown(wait=True)
 
 """
 数据写入磁盘
 """
-version = {'data-version': '7.0'}
+version = {'data-version': patch_version}
 version.update(item_out_list)
 
 with open('item.Pdt', 'w', encoding='utf8') as item_data:
     json.dump(version, item_data)
+
+with open('version', 'r', encoding='utf8') as version_file:
+    data_version = json.load(version_file)
+    data_version.update({"data": patch_version})
+    version_file.close()
+with open('version', 'w', encoding='utf8') as version_file:
+    json.dump(data_version, version_file)
+    version_file.close()
+
 logging.info('数据写入完毕')

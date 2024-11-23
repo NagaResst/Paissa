@@ -1,0 +1,63 @@
+name: Auto Check and Update Patch Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: 'Log Level'
+        required: false
+        default: info
+      check_all:
+        description: 'Check all item'
+        required: false
+        default: false
+
+  schedule:
+    - cron: '0 15 * * 2'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check FFXIX CN Patch Code Version
+      id: check_version
+      run: |
+        output=$(git ls-remote https://github.com/thewakingsands/ffxiv-datamining-cn |grep "patch" |awk -F "-" '{print $2}'| tail -1)
+        echo "patch_version=$output" >> $GITHUB_OUTPUT
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Check directory
+      run: |
+        pwd && ls -l
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run Python script
+      env:
+        FFXIV_PATCH_VERSION: ${{steps.check_version.outputs.patch_version}}
+        CHECK_ALL: ${{ github.event.inputs.check_all }}
+        LOG_LEVEL: ${{ github.event.inputs.log_level }}
+      run: |
+        python format_item.py
+      working-directory: Data
+
+    - name: Configure Git user
+      run: |
+        git config --global user.name 'Naga Resst'
+        git config --global user.email 'nagaresst@live.com'
+
+    - name: Push Code to Repo
+      uses: devops-infra/action-commit-push@master
+      with:
+        github_token: "${{ secrets.GIT_KEY }}"
+        commit_message: "Automatic commit: Update Item Data"

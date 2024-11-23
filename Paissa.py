@@ -42,7 +42,7 @@ try:
         data_version = data_json['data-version']
     logger.info("本地数据版本 {}".format(data_version))
 except:
-    data_version = None
+    data_version = 0
     logger.error("本地数据版本检查失败")
 
 if version_online['program'] != program_version:
@@ -62,7 +62,7 @@ if version_online['program'] != program_version:
     except:
         logger.warning("主程序更新失败")
 
-if version_online['data'] != data_version:
+if float(version_online['data']) > float(data_version):
     market_filter = False
     try:
         data_zip = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/item.zip', timeout=7, proxies=proxies).content

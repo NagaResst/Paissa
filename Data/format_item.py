@@ -95,7 +95,7 @@ def get_item_details(item_id):
 
 logging.info('建立线程池，准备进行数据抓取')
 tpool = ThreadPoolExecutor(max_workers=20)
-if check_all != "false":
+if check_all == "true":
     tpool.map(get_item_details, item_out_list)
 else:
     tpool.map(query_item_in_local, item_out_list)

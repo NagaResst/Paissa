@@ -592,8 +592,10 @@ def make_cost_tree():
         """
         node = QtWidgets.QTreeWidgetItem(father)
         node.setText(0, material['name'])
-        node.setText(1, str(material['amount']))
-        node.setText(2, str(material['pricePerUnit']))
+        node.setText(1, str(material['pricePerUnit']))
+        node.setText(2, str(material['amount']))
+        node.setText(3, str(material['priceTotal']))
+        node.setText(4, str(material['lowestPriceServer']))
         if 'craft' in material:
             for i in material['craft']:
                 make_tree(i, node)
@@ -662,6 +664,40 @@ def click_history_query(selected):
         item.item_list = []
         test_network()
 
+def click_note_list(selected):
+    """
+    通过点击历史面板查询物品
+    """
+    global note_list
+    # 最顶端的记录为本次查询的结果，do nothing
+    if selected.row() == 0 and first_query is not True:
+        pass
+    else:
+        # 重新查询
+        recode1 = note_panel.history_list.item(selected.row()).text().split()
+        item_name = recode1[0]
+        item.server = recode1[-1]
+        if item.server == 'Japan':
+            ui.show_server.setText('日服')
+        elif item.server == 'Europe':
+            ui.show_server.setText('欧服')
+        elif item.server == 'North-America':
+            ui.show_server.setText('美服')
+        elif item.server == 'Oceania':
+            ui.show_server.setText("太平洋服")
+        elif item.server == "China":
+            ui.show_server.setText("国服")
+        else:
+            ui.show_server.setText(item.server)
+        logger.info("通过点击进行查询 {} 的 {}".format(item.server, item_name))
+        for i in note_list:
+            if i["itemName"] == item_name:
+                item.id = i['itemID']
+                item.name = item_name
+                break
+        query_item_page.input_item_name.setText(item.name)
+        item.item_list = []
+        test_network()
 
 def click_select_other_server(selected):
     """
@@ -843,7 +879,7 @@ def test_network():
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.53'
+program_version = '1.0.6'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
@@ -1001,11 +1037,11 @@ note_panel.setupUi(widget4)
 widget4.setWindowTitle(QtCore.QCoreApplication.translate("history_Window", "记录板"))
 widget4.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
 widget4.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
-note_panel.history_list.doubleClicked.connect(click_history_query)
+note_panel.history_list.doubleClicked.connect(click_note_list)
 try:
     for i in note_list:
         if i["itemName"] != 'None':
-            note_panel.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'] + ' - ' + i['item_cost'])
+            note_panel.history_list.insertItem(0, i["itemName"] + ' - ' + i['item_cost'] + ' - ' + i['server'])
 except:
     pass
 

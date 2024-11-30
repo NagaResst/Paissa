@@ -441,28 +441,35 @@ class Queryer(object):
             logger.debug("{}在市场上平均价格和最低价格的差价为{}".format(item['name'], x))
             if int(item['id']) < 20:
                 item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
-                logger.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格".format(item['name']))
+                item['lowestPriceServer'] = result['listings'][0]['worldName']
+                logger.debug("{}物品ID小于20 推测为水晶类，无视差价，使用最低价格，服务器{}".format(item['name'], item['lowestPriceServer']))
             elif 'priceFromNpc' in item and item['priceFromNpc'] < result['averagePrice']:
                 logger.debug("NPC贩售价格{}低于板子平均价格{}，使用NPC贩售价格计算"
                              .format(item['priceFromNpc'], result['averagePrice']))
                 item['pricePerUnit'] = item['priceFromNpc']
+                item['lowestPriceServer'] = "NPC"
             elif x > 300 and result['listings'][0]['pricePerUnit'] < 666:
                 item['pricePerUnit'] = int(result['averagePrice'])
-                logger.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格".format(item['name']))
+                item['lowestPriceServer'] = result['listings'][0]['worldName']
+                logger.debug("{}价差较高，但是物品价格便宜，推测为材料类，使用平均价格，服务器{}".format(item['name'], item['lowestPriceServer']))
             elif x > 300 and result['listings'][0]['pricePerUnit'] > 666:
                 try:
                     item['pricePerUnit'] = result['listings'][3]['pricePerUnit']
-                    logger.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考".format(item['name']))
+                    item['lowestPriceServer'] = result['listings'][3]['worldName']
+                    logger.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考，服务器{}".format(item['name'],item['lowestPriceServer']))
                 except:
                     item['pricePerUnit'] = int(result['averagePrice'])
-                    logger.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}"
-                                 .format(item['name'], result['averagePrice']))
+                    item['lowestPriceServer'] = result['listings'][0]['worldName']
+                    logger.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}，服务器{}"
+                                 .format(item['name'], result['averagePrice'], item['lowestPriceServer']))
             else:
                 item['pricePerUnit'] = result['listings'][0]['pricePerUnit']
-                logger.debug("{}差价较低，使用最低价格".format(item['name']))
+                item['lowestPriceServer'] = result['listings'][0]['worldName']
+                logger.debug("{}差价较低，使用最低价格，服务器{}".format(item['name'],item['lowestPriceServer']))
             # 更新缓存
             logger.info("更新缓存 {}".format(item['name']))
             self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
+            self.price_cache[int(item['id'])] = {"pricePerUnit": copy.deepcopy(item['pricePerUnit']), "lowestPriceServer": copy.deepcopy(item['lowestPriceServer'])}
 
         if type(item) is not list:
             # 缓存中没有数据，进行在线查询
@@ -474,7 +481,8 @@ class Queryer(object):
                 select_item_cost(result, item)
             else:
                 # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
-                item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']])
+                item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']]['pricePerUnit'])
+                item['lowestPriceServer']= copy.deepcopy(self.price_cache[item['id']]['lowestPriceServer'])
                 logger.debug("{} 缓存命中，使用缓存".format(item['name']))
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
@@ -486,7 +494,8 @@ class Queryer(object):
                     logger.debug("{} 没有查询到缓存 ，在线查询".format(i['name']))
                     self.cq = str(i['name'])
                 else:
-                    i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']])
+                    i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']]['pricePerUnit'])
+                    i['lowestPriceServer'] = copy.deepcopy(self.price_cache[i['id']]['lowestPriceServer'])
                     logger.debug("{} 缓存命中，使用缓存".format(i['name']))
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
@@ -560,15 +569,15 @@ class Queryer(object):
         for stuff in stuff_list:
             if 'pricePerUnit' not in stuff:
                 self.query_item_cost_min(stuff)
-            stuff['pricePerUnit'] = stuff['pricePerUnit'] * stuff['amount']
-            d_cost += stuff['pricePerUnit']
+            stuff['priceTotal'] = stuff['pricePerUnit'] * stuff['amount']
+            d_cost += stuff['priceTotal']
             f_str, m_str = c_tab(tab=tab)
             self.clipboard = self.clipboard + '%s%s%s%d\t%d' % (
                 f_str, stuff['name'], m_str, stuff['amount'], stuff['pricePerUnit']) + '\n'
             if 'craft' in stuff:
                 self.query_item_cost(stuff['craft'], tab=tab + 1)
             elif 'pricePerUnit' in stuff:
-                self.o_cost += stuff['pricePerUnit']
+                self.o_cost += stuff['priceTotal']
         return d_cost
 
     def show_item_cost(self):
@@ -636,6 +645,7 @@ class Queryer(object):
 if __name__ == '__main__':
     # 初始化测试数据
     # item = '群星壁挂'
+    logger.setLevel("DEBUG")
     server = '猫小胖'
     itemObj = Queryer(server)
     with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:

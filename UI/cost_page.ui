@@ -35,12 +35,22 @@
      </column>
      <column>
       <property name="text">
+       <string>理想单价</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
        <string>所需数量</string>
       </property>
      </column>
      <column>
       <property name="text">
        <string>该项成本</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>最佳服务器</string>
       </property>
      </column>
     </widget>

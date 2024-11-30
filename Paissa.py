@@ -13,9 +13,10 @@ from Data.logger import logger
 proxies = getproxies()
 logger.info('获取系统代理 {}'.format(proxies))
 version_online = False
+header = {"referer": "http://Paissa.public/"}
 try:
     url = 'https://paissa-data.oss-cn-hongkong.aliyuncs.com/version'
-    version_online = json.loads(get(url, timeout=3, proxies=proxies).text)
+    version_online = json.loads(get(url, timeout=3, proxies=proxies, headers=header).text)
     logger.info(
         "版本更新检查, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
 except:
@@ -48,24 +49,18 @@ except:
 if version_online['program'] != program_version:
     try:
         logger.info("从网络源更新主程序版本")
-        program_code = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Window.py', timeout=5, proxies=proxies)
-        program_code.encoding = 'utf-8'
-        query_code = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/Queryer.py', timeout=5, proxies=proxies)
-        query_code.encoding = 'utf-8'
-        with open('Window.py', 'w', encoding='utf-8') as program:
-            program.write(program_code.text)
-            program.close()
-        with open('Queryer.py', 'w', encoding='utf-8') as queryer:
-            queryer.write(query_code.text)
-            queryer.close()
-            logger.info("主程序更新完成")
+        for file in version_online['files']:
+            with open(file, 'w', encoding='utf-8') as program:
+                program.write(get(f"https://paissa-data.oss-cn-hongkong.aliyuncs.com/{file}", timeout=5, proxies=proxies, headers=header).text)
+                program.close()
+        logger.info("主程序更新完成")
     except:
         logger.warning("主程序更新失败")
 
 if float(version_online['data']) > float(data_version):
     market_filter = False
     try:
-        data_zip = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/item.zip', timeout=7, proxies=proxies).content
+        data_zip = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/item.zip', timeout=7, proxies=proxies, headers=header).content
         logger.info("版本数据压缩包下载完成")
         zipFile = zipfile.ZipFile(io.BytesIO(data_zip), mode="r")
         data_text = zipFile.read('item.Pdt').decode('utf-8')

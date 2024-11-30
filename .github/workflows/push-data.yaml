@@ -81,6 +81,7 @@ jobs:
         
         files_to_upload = {
             "program": ["Window.py", "Queryer.py"],
+            "UI": ["UI/check_update.py", "UI/cost_page.py", "UI/history_page.py", "UI/loading_page.py", "UI/main_window.py", "UI/query_item_id.py", "UI/select_item_list.py", "UI/show_price.py"],
             "data": ["Data/item.Pdt"],
             "version": ['Data/version']
         }
@@ -94,6 +95,9 @@ jobs:
                 files = files_to_upload["program"]
                 # 上传文件
                 for file in files:
+                    bucket.put_object_from_file(file, file, headers=header)
+                ui_files = files_to_upload["UI"]
+                for file in ui_files:
                     bucket.put_object_from_file(file, file, headers=header)
                 bucket.put_object_from_file('version', 'Data/version')
                 print(f"Uploaded program files to OSS.")

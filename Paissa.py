@@ -51,7 +51,10 @@ if version_online['program'] != program_version:
         logger.info("从网络源更新主程序版本")
         for file in version_online['files']:
             with open(file, 'w', encoding='utf-8') as program:
-                program.write(get(f"https://paissa-data.oss-cn-hongkong.aliyuncs.com/{file}", timeout=5, proxies=proxies, headers=header).text)
+                remote_file = get(f"https://paissa-data.oss-cn-hongkong.aliyuncs.com/{file}", timeout=5, proxies=proxies,
+                    headers=header)
+                remote_file.encoding = 'utf-8'
+                program.write(remote_file.text)
                 program.close()
         logger.info("主程序更新完成")
     except:

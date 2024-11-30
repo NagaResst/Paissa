@@ -98,7 +98,7 @@ jobs:
                     bucket.put_object_from_file(file, file, headers=header)
                 ui_files = files_to_upload["UI"]
                 for file in ui_files:
-                    bucket.put_object_from_file(file.replace("UI/", ""), file, headers=header)
+                    bucket.put_object_from_file(file, file, headers=header)
                 bucket.put_object_from_file('version', 'Data/version')
                 print(f"Uploaded program files to OSS.")
             if current_version['data'] != previous_version['data']:

@@ -58,7 +58,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,10,1,2,1,0">
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,10,1,2,1">
          <property name="spacing">
           <number>15</number>
          </property>
@@ -289,7 +289,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>24</height>
+     <height>25</height>
     </rect>
    </property>
    <property name="font">

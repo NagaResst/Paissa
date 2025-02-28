@@ -75,6 +75,11 @@ jobs:
       run: |
         echo "check_diff=$(git diff --staged --name-status | wc -l)" >> $GITHUB_OUTPUT
 
+    - name: Check Diff Output
+      run: |
+        echo "The value of check_diff is ${{ steps.check_diff.outputs.check_diff }}"
+        echo "The type of check_diff is $(echo ${{ steps.check_diff.outputs.check_diff }} | jq type)"
+
     - name: Push Code to Repo
       if : ${{ steps.check_diff.outputs.check_diff != '0' }}
       uses: devops-infra/action-commit-push@master

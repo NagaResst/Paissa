@@ -22,14 +22,15 @@ jobs:
       id: check_version
       run: |
         output=$(git ls-remote https://github.com/thewakingsands/ffxiv-datamining-cn |grep "patch" |awk -F "-" '{print $2}'| tail -1)
+        echo "解包文件版本号: $output"
         echo "patch_version=$output" >> $GITHUB_OUTPUT
 
     - name: Fetch garlandtools version
       id: garlandtools_version
       run: |
         MAJOR_VERSION=$(curl -s "https://garlandtools.cn/db/doc/core/chs/3/data.json" | jq -r '.patch.current')
-        PATCH_VERSIONS=$(curl -s "https://garlandtools.cn/db/doc/patch/chs/2/${{ env.MAJOR_VERSION }}.json" | jq -r '.patch.patches | keys[]')
-        GARLANDTOOLS_VERSION=$(echo "$${{ env.PATCH_VERSIONS }}" | tr ' ' '\n' | sort -n | tail -n 1)
+        PATCH_VERSIONS=$(curl -s "https://garlandtools.cn/db/doc/patch/chs/2/${MAJOR_VERSION}.json" | jq -r '.patch.patches | keys[]')
+        GARLANDTOOLS_VERSION=$(echo "${PATCH_VERSIONS}" | tr ' ' '\n' | sort -n | tail -n 1)
         echo "花环补丁版本号: $GARLANDTOOLS_VERSION"
         echo "garlandtools_version=$GARLANDTOOLS_VERSION" >> $GITHUB_ENV
 

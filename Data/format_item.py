@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-patch_version = os.environ['FFXIV_PATCH_VERSION']
+patch_version = float(os.environ['FFXIV_PATCH_VERSION'])
 check_all = os.environ['CHECK_ALL']
 log_level = os.environ['LOG_LEVEL'].upper()
 numeric_level = getattr(logging, log_level, "INFO")
@@ -15,6 +15,13 @@ logging.basicConfig(level=numeric_level,
                     format='%(asctime)s : [%(levelname)s]  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
+
+majar_verion = json.loads(requests.get("https://garlandtools.cn/db/doc/core/chs/3/data.json", timeout=5).text)['patch']['current']
+min_verion = json.loads(requests.get(f"https://garlandtools.cn/db/doc/patch/chs/2/{majar_verion}.json", timeout=5).text)['patch']['patches']
+garlandtools_version = max([float(key) for key in list(min_verion.keys())])
+
+if patch_version != garlandtools_version:
+    exit(0)
 
 """
 可以在市场上交易的物品ID

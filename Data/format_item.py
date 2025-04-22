@@ -16,12 +16,12 @@ logging.basicConfig(level=numeric_level,
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
 
-majar_verion = json.loads(requests.get("https://garlandtools.cn/db/doc/core/chs/3/data.json", timeout=5).text)['patch']['current']
-min_verion = json.loads(requests.get(f"https://garlandtools.cn/db/doc/patch/chs/2/{majar_verion}.json", timeout=5).text)['patch']['patches']
-garlandtools_version = max([float(key) for key in list(min_verion.keys())])
-
-if patch_version != garlandtools_version:
-    exit(0)
+# majar_verion = json.loads(requests.get("https://garlandtools.cn/db/doc/core/chs/3/data.json", timeout=5).text)['patch']['current']
+# min_verion = json.loads(requests.get(f"https://garlandtools.cn/db/doc/patch/chs/2/{majar_verion}.json", timeout=5).text)['patch']['patches']
+# garlandtools_version = max([float(key) for key in list(min_verion.keys())])
+#
+# if patch_version != garlandtools_version:
+#     exit(0)
 
 """
 可以在市场上交易的物品ID

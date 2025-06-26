@@ -822,7 +822,7 @@ class GetItemIcon(QtCore.QThread):
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.6'
+program_version = '1.0.63'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
@@ -971,6 +971,6 @@ check_update_window.setupUi(widget3)
 # 关于面板的超链接激活
 check_update_window.label_8.setOpenExternalLinks(True)
 check_update_window.current_program_version.setText(program_version)
-check_update_window.current_data_verison.setText(date_version)
+check_update_window.current_data_verison.setText(str(date_version))
 
 sys.exit(app.exec_())

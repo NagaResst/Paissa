@@ -80,7 +80,7 @@ jobs:
             data = json.load(f)
         
         files_to_upload = {
-            "program": ["Window.py", "Queryer.py"],
+            "program": ["Window.py", "Queryer.py", "servers.json"],
             "UI": ["UI/check_update.py", "UI/cost_page.py", "UI/history_page.py", "UI/loading_page.py", "UI/main_window.py", "UI/query_item_id.py", "UI/select_item_list.py", "UI/show_price.py"],
             "data": ["Data/item.Pdt"],
             "version": ['Data/version']

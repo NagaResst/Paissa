@@ -1,6 +1,7 @@
 import copy
 import re
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 from json import loads, load
 from math import ceil
@@ -54,6 +55,8 @@ class Queryer(object):
         self.price_cache = {}
         # 当前正在查询的物品名称
         self.cq = None
+        self.server_config = None
+        self.load_server_config()
         logger.info("查询物品槽位初始化")
         self.proxies = getproxies()
 
@@ -119,107 +122,56 @@ class Queryer(object):
         except:
             logger.debug('图标获取失败')
 
+    def load_server_config(self):
+        """加载服务器配置文件"""
+        config_path = 'servers.json'
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                self.server_config = load(f)
+            logger.info("服务器配置文件加载成功")
+        except FileNotFoundError:
+            logger.warning("找不到服务器配置文件，使用默认配置")
+            self.server_config = {
+                "world_regions": {
+                    "maoxiaopang": ["猫小胖", "紫水栈桥", "延夏", "静语庄园", "摩杜纳", "海猫茶屋", "柔风海湾", "琥珀原"],
+                    "luxingniao": ["陆行鸟", "红玉海", "神意之地", "拉诺西亚", "幻影群岛", "萌芽池", "宇宙和音", "沃仙曦染", "晨曦王座"],
+                    "moguli": ["莫古力", "白银乡", "白金幻象", "神拳痕", "潮风亭", "旅人栈桥", "拂晓之间", "龙巢神殿", "梦羽宝境"],
+                    "doudouchai": ["豆豆柴", "水晶塔", "银泪湖", "太阳海岸", "伊修加德", "红茶川"]
+                },
+                "area_mappings": {
+                    "China": ["maoxiaopang", "moguli", "luxingniao", "doudouchai"]
+                }
+            }
+
     def server_list(self):
         """
         根据当前查询的大区或者服务器，为查询所有区服最低价提供支持
-        https://ff.web.sdo.com/web8/index.html#/servers
-        跨大区开放后 server_list 将返回所有区服的列表
         :return server_list -> list:包含多个服务器的str的列表，去掉了大区名称
         """
-        select_server_mao = ['猫小胖', '紫水栈桥', '延夏', '静语庄园', '摩杜纳', '海猫茶屋', '柔风海湾', '琥珀原']
-        select_server_zhu = ['莫古力', '白银乡', '白金幻象', '神拳痕', '潮风亭', '旅人栈桥', '拂晓之间', '龙巢神殿',
-                             '梦羽宝境']
-        select_server_niao = ['陆行鸟', '红玉海', '神意之地', '拉诺西亚', '幻影群岛', '萌芽池', '宇宙和音', '沃仙曦染',
-                              '晨曦王座']
-        select_server_gou = ['豆豆柴', '水晶塔', '银泪湖', '太阳海岸', '伊修加德', '红茶川']
-        select_server_Elemental = ['Elemental', 'Carbuncle', 'Kujata',
-                                   'Typhon', 'Garuda', 'Atomos', 'Tonberry', 'Aegis', 'Gungnir']
-        select_server_Gaia = ['Gaia', 'Alexander', 'Fenrir', 'Ultima',
-                              'Ifrit', 'Bahamut', 'Tiamat', 'Durandal', 'Ridill']
-        select_server_Mana = ['Mana', 'Asura', 'Pandaemonium',
-                              'Anima', 'Hades', 'Ixion', 'Titan', 'Chocobo', 'Masamune']
-        select_server_Aether = ['Aether', 'Jenova', 'Faerie', 'Siren',
-                                'Gilgamesh', 'Midgardsormr', 'Adamantoise', 'Cactuar', 'Sargatanas']
-        select_server_Primal = ['Primal', 'Famfrit', 'Exodus', 'Lamia',
-                                'Leviathan', 'Ultros', 'Behemoth', 'Excalibur', 'Hyperion']
-        select_server_Chaos = ['Chaos', 'Omega', 'Moogle', 'Cerberus',
-                               'Louisoix', 'Spriggan', 'Ragnarok', 'Sagittarius', 'Phantom']
-        select_server_Light = ['Light', 'Twintania', 'Lich',
-                               'Zodiark', 'Phoenix', 'Odin', 'Shiva', 'Alpha', 'Raiden']
-        select_server_Crystal = ['Crystal', 'Brynhildr', 'Mateus',
-                                 'Zalera', 'Diabolos', 'Coeurl', 'Malboro', 'Goblin', 'Balmung']
-        select_server_Materia = ['Materia', 'Ravana', 'Bismarck', 'Sephirot', 'Sophia', 'Zurvan']
-        select_server_Meteor = ['Meteor', 'Belias', 'Shinryu', 'Unicorn',
-                                'Yojimbo', 'Zeromus', 'Valefor', 'Ramuh', 'Mandragora']
-        select_server_Dynamis = ['Dynamis', 'Marilith', 'Seraph', 'Halicarnassus', 'Maduin']
-        select_server_japan = ['Elemental', 'Gaia', 'Mana', 'Meteor']
-        select_server_europe = ['Chaos', 'Light']
-        select_server_na = ['Aether', 'Primal', 'Crystal', 'Dynamis']
-        select_server_oceania = ['Materia']
-        select_server_china = ['猫小胖', '莫古力', '陆行鸟', '豆豆柴']
-        # 设置默认大区为猫区
-        server_list = select_server_mao
-        # 根据服务器所在大区选择比价的服务器
-        if self.server in select_server_mao:
-            server_list = select_server_mao[1:]
-            self.world = 'maoxiaopang'
-        elif self.server in select_server_niao:
-            server_list = select_server_niao[1:]
-            self.world = 'luxingniao'
-        elif self.server in select_server_zhu:
-            server_list = select_server_zhu[1:]
-            self.world = 'moguli'
-        elif self.server in select_server_gou:
-            server_list = select_server_gou[1:]
-            self.world = 'doudouchai'
-        elif self.server in select_server_Elemental:
-            server_list = select_server_Elemental[1:]
-            self.world = 'Elemental'
-        elif self.server in select_server_Gaia:
-            server_list = select_server_Gaia[1:]
-            self.world = 'Gaia'
-        elif self.server in select_server_Mana:
-            server_list = select_server_Mana[1:]
-            self.world = 'Mana'
-        elif self.server in select_server_Aether:
-            server_list = select_server_Aether[1:]
-            self.world = 'Aether'
-        elif self.server in select_server_Primal:
-            server_list = select_server_Primal[1:]
-            self.world = 'Primal'
-        elif self.server in select_server_Chaos:
-            server_list = select_server_Chaos[1:]
-            self.world = 'Chaos'
-        elif self.server in select_server_Light:
-            server_list = select_server_Light[1:]
-            self.world = 'Light'
-        elif self.server in select_server_Crystal:
-            server_list = select_server_Crystal[1:]
-            self.world = 'Crystal'
-        elif self.server in select_server_Materia:
-            server_list = select_server_Materia[1:]
-            self.world = 'Materia'
-        elif self.server in select_server_Meteor:
-            server_list = select_server_Meteor[1:]
-            self.world = 'Meteor'
-        elif self.server in select_server_Dynamis:
-            server_list = select_server_Dynamis[1:]
-            self.world = 'Dynamis'
-        elif self.server == 'Japan':
-            server_list = select_server_japan
-            self.world = 'Japan'
-        elif self.server == 'North-America':
-            server_list = select_server_na
-            self.world = 'North-America'
-        elif self.server == 'Oceania':
-            server_list = select_server_oceania
-            self.world = 'Oceania'
-        elif self.server == 'Europe':
-            server_list = select_server_europe
-            self.world = 'Europe'
-        elif self.server == 'China':
-            server_list = select_server_china
-            self.world = 'China'
+        region_servers = self.server_config['world_regions']
+        area_to_world = self.server_config['area_mappings']
+
+        # 默认值
+        server_list = region_servers['maoxiaopang'][1:]
+        self.world = 'maoxiaopang'
+
+        # 查找匹配的区域
+        for world_key, servers in region_servers.items():
+            if self.server in servers:
+                server_list = servers[1:]  # 去掉大区名
+                self.world = world_key
+                break
+        else:
+            # 如果 self.server 属于大区名称（如 Japan）
+            if self.server in area_to_world:
+                server_list = []
+                for world_key in area_to_world[self.server]:
+                    # 合并所有子区域服务器
+                    server_list.extend(region_servers.get(world_key, []))
+                self.world = self.server
+            else:
+                raise ValueError(f"未知的服务器名称: {self.server}")
+
         return server_list
 
     def query_item_id(self, name):
@@ -264,40 +216,56 @@ class Queryer(object):
         """
         # 初始化数据 清除上次查询的结果对以后查询的影响
         logger.debug('价格查询阶段')
+
+        # 初始化数据 清除上次查询的结果对以后查询的影响
         self.stuff = {}
         self.yields = 1
+
+        def safe_get(d, key, default=None):
+            return d.get(key, default)
+
         if self.hq is True:
             logger.debug('锁定查询HQ')
-            query_url = '/api/%s/%s?listings=50&hq=true&noGst=true' % (
-                self.server, self.id)
+            query_url = f'/api/{self.server}/{self.id}?listings=50&hq=true&noGst=true'
         else:
             logger.info("全品质查询")
-            query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
-        # 请求查询数据
+            query_url = f'/api/v2/{self.server}/{self.id}?listings=50&noGst=true'
+
         result = self.init_query_result(query_url)
-        # 如果查询不到物品，强制一次全品质查询
-        if self.hq is True and len(result['listings']) == 0:
+
+        # 只有当首次 HQ 查询无结果时尝试切换为全品质查询
+        if self.hq and isinstance(result, dict) and not result.get('listings'):
             logger.info("查询不到物品，强制一次全品质查询")
+            query_url = f'/api/v2/{self.server}/{self.id}?listings=50&noGst=true'
             self.hq = False
-            query_url = '/api/v2/%s/%s?listings=50&noGst=true' % (self.server, self.id)
             result = self.init_query_result(query_url)
         # 将查询结果的销量指数和平均售价取出
-        logger.debug("nqSaleVelocity:{}, hqSaleVelocity:{}".format(result['nqSaleVelocity'], result['hqSaleVelocity']))
-        if result['nqSaleVelocity'] == 0 and result['hqSaleVelocity'] > 0:
-            self.avgp = int(result['minPriceHQ'])
-            logger.debug('平均价格取出 minPriceHQ')
-        elif result['hqSaleVelocity'] == 0 and result['nqSaleVelocity'] > 0:
-            self.avgp = int(result['minPriceNQ'])
-            logger.debug('平均价格取出 minPriceNQ')
-        elif result['nqSaleVelocity'] > 0 and result['hqSaleVelocity'] / result['nqSaleVelocity'] > 3:
-            self.avgp = int(result['minPriceHQ'])
-            logger.debug('平均价格取出 minPriceHQ')
-        elif result['hqSaleVelocity'] == 0 and result['nqSaleVelocity'] == 0 and result['minPriceNQ'] == 0:
-            self.avgp = int(result['minPriceHQ'])
-            logger.debug('平均价格取出 minPriceHQ')
-        else:
-            self.avgp = int(result['minPriceNQ'])
-            logger.debug('平均价格取出 minPriceNQ')
+        nq_velocity = safe_get(result, 'nqSaleVelocity', 0)
+        hq_velocity = safe_get(result, 'hqSaleVelocity', 0)
+        min_nq = safe_get(result, 'minPriceNQ', 0)
+        min_hq = safe_get(result, 'minPriceHQ', 0)
+        logger.debug(f"nqSaleVelocity:{safe_get(result, 'nqSaleVelocity', 0)}, hqSaleVelocity:{hq_velocity}")
+
+        try:
+            if hq_velocity > 0 and nq_velocity == 0:
+                self.avgp = int(min_hq)
+                logger.debug('平均价格取出 minPriceHQ')
+            elif nq_velocity > 0 and hq_velocity == 0:
+                self.avgp = int(min_nq)
+                logger.debug('平均价格取出 minPriceNQ')
+            elif nq_velocity > 0 and hq_velocity / nq_velocity > 3:
+                self.avgp = int(min_hq)
+                logger.debug('平均价格取出 minPriceHQ')
+            elif hq_velocity == 0 and nq_velocity == 0 and min_nq == 0:
+                self.avgp = int(min_hq)
+                logger.debug('平均价格取出 minPriceHQ')
+            else:
+                self.avgp = int(min_nq)
+                logger.debug('平均价格取出 minPriceNQ')
+        except (TypeError, ValueError):
+            logger.warning("无法解析价格字段，使用默认值 0")
+            self.avgp = 0
+
         self.nqs = result['nqSaleVelocity']
         self.hqs = result['hqSaleVelocity']
         return result
@@ -311,12 +279,19 @@ class Queryer(object):
         # 清空全服差价的结果列表
         self.every_server = []
 
+        # 线程安全锁
+        result_lock = threading.Lock()
+
         # 单个服务器查询最低价格的方法
         def query_single_server(server, item_id):
-            query_url = '/api/v2/%s/%s?listings=1&noGst=true' % (server, item_id)
-            result = self.init_query_result(query_url)
-            # 重新组织比价用的数据，并加入全服查价的结果列表，如果不重新组织数据，某些区服查询出空集时，会报错
-            if len(result['listings']) != 0:
+            try:
+                result = self.init_query_result(f'/api/v2/{server}/{item_id}?listings=1&noGst=true')
+
+
+                if not result or 'listings' not in result or not result['listings']:
+                    logger.debug(f"{server} 返回空结果")
+                    return
+                # 重新组织比价用的数据，并加入全服查价的结果列表，如果不重新组织数据，某些区服查询出空集时，会报错
                 server_sale = {
                     'server': server,
                     'pricePerUnit': result['listings'][0]['pricePerUnit'],
@@ -326,17 +301,19 @@ class Queryer(object):
                     'retainerName': result['listings'][0]['retainerName'],
                     'lastReviewTime': result['listings'][0]['lastReviewTime']
                 }
-                self.every_server.append(server_sale)
-                logger.debug("{}的数据已加入池中".format(server))
+                with result_lock:
+                    self.every_server.append(server_sale)
+                    logger.debug(f"{server} 的数据已加入池中")
 
-        # 多线程操作
-        threads = []
-        for server in server_list:
-            thread = threading.Thread(target=query_single_server, args=(server, self.id))
-            thread.start()
-            threads.append(thread)
-        for t in threads:
-            t.join()
+            except Exception as e:
+                logger.exception(f"查询 {server} 时发生异常: {e}")
+
+        # 使用线程池
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(query_single_server, server, self.id) for server in server_list]
+            for future in as_completed(futures):
+                future.result()  # 触发异常传播
+
         logger.info("全部服务器查询完成，池中数据样本数 {}".format(len(self.every_server)))
 
     def query_item_craft(self):

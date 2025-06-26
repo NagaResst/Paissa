@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "world_regions": {
+    "maoxiaopang": ["猫小胖", "紫水栈桥", "延夏", "静语庄园", "摩杜纳", "海猫茶屋", "柔风海湾", "琥珀原"],
+    "luxingniao": ["陆行鸟", "红玉海", "神意之地", "拉诺西亚", "幻影群岛", "萌芽池", "宇宙和音", "沃仙曦染", "晨曦王座"],
+    "moguli": ["莫古力", "白银乡", "白金幻象", "神拳痕", "潮风亭", "旅人栈桥", "拂晓之间", "龙巢神殿", "梦羽宝境"],
+    "doudouchai": ["豆豆柴", "水晶塔", "银泪湖", "太阳海岸", "伊修加德", "红茶川"],
+    "Elemental": ["Elemental", "Carbuncle", "Kujata", "Typhon", "Garuda", "Atomos", "Tonberry", "Aegis", "Gungnir"],
+    "Gaia": ["Gaia", "Alexander", "Fenrir", "Ultima", "Ifrit", "Bahamut", "Tiamat", "Durandal", "Ridill"],
+    "Mana": ["Mana", "Asura", "Pandaemonium", "Anima", "Hades", "Ixion", "Titan", "Chocobo", "Masamune"],
+    "Aether": ["Aether", "Jenova", "Faerie", "Siren", "Gilgamesh", "Midgardsormr", "Adamantoise", "Cactuar", "Sargatanas"],
+    "Primal": ["Primal", "Famfrit", "Exodus", "Lamia", "Leviathan", "Ultros", "Behemoth", "Excalibur", "Hyperion"],
+    "Chaos": ["Chaos", "Omega", "Moogle", "Cerberus", "Louisoix", "Spriggan", "Ragnarok", "Sagittarius", "Phantom"],
+    "Light": ["Light", "Twintania", "Lich", "Zodiark", "Phoenix", "Odin", "Shiva", "Alpha", "Raiden"],
+    "Crystal": ["Crystal", "Brynhildr", "Mateus", "Zalera", "Diabolos", "Coeurl", "Malboro", "Goblin", "Balmung"],
+    "Materia": ["Materia", "Ravana", "Bismarck", "Sephirot", "Sophia", "Zurvan"],
+    "Meteor": ["Meteor", "Belias", "Shinryu", "Unicorn", "Yojimbo", "Zeromus", "Valefor", "Ramuh", "Mandragora"],
+    "Dynamis": ["Dynamis", "Marilith", "Seraph", "Halicarnassus", "Maduin"]
+  },
+  "area_mappings": {
+    "China": ["maoxiaopang", "moguli", "luxingniao", "doudouchai"],
+    "Japan": ["Elemental", "Gaia", "Mana", "Meteor"],
+    "North-America": ["Aether", "Primal", "Crystal", "Dynamis"],
+    "Oceania": ["Materia"],
+    "Europe": ["Chaos", "Light"]
+  },
+  "world_servers": {
+    "Elemental": ["Elemental", "Carbuncle", "Kujata", "Typhon", "Garuda", "Atomos", "Tonberry", "Aegis", "Gungnir"],
+    "Gaia": ["Gaia", "Alexander", "Fenrir", "Ultima", "Ifrit", "Bahamut", "Tiamat", "Durandal", "Ridill"],
+    "Aether": ["Aether", "Jenova", "Faerie", "Siren", "Gilgamesh", "Midgardsormr", "Adamantoise", "Cactuar", "Sargatanas"],
+    "Primal": ["Primal", "Famfrit", "Exodus", "Lamia", "Leviathan", "Ultros", "Behemoth", "Excalibur", "Hyperion"],
+    "Chaos": ["Chaos", "Omega", "Moogle", "Cerberus", "Louisoix", "Spriggan", "Ragnarok", "Sagittarius", "Phantom"],
+    "Light": ["Light", "Twintania", "Lich", "Zodiark", "Phoenix", "Odin", "Shiva", "Alpha", "Raiden"]
+  }
+}

@@ -20,9 +20,11 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      
+
     - name: Check and Compare Patch Version
       id: check_and_compare_version
+      env:
+        MESSAGE_PUBLISH: ${{ secrets.MESSAGE_PUBLISH }}
       run: |
         # 获取解包文件的最新 patch 版本
         FFXIV_PATCH_VERSION=$(git ls-remote https://github.com/thewakingsands/ffxiv-datamining-cn | grep "patch" | awk -F "-" '{print $2}' | tail -1)
@@ -49,6 +51,8 @@ jobs:
         else
           echo "Need to update."
           echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT
+          curl -X POST "$MESSAGE_PUBLISH" -H "Content-Type: application/json" \
+          -d "{\"title\": \"Paissa - Github Actions\", \"msg\": \"发现新的数据版本 $FFXIV_PATCH_VERSION, 准备拉取数据\"}"
           echo "need_update=true" >> $GITHUB_OUTPUT
         fi
 

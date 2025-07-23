@@ -45,6 +45,7 @@ jobs:
         OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
         OSS_BUCKET_NAME: ${{ secrets.OSS_BUCKET_NAME }}
         OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+        MESSAGE_PUBLISH: ${{ secrets.MESSAGE_PUBLISH }}
         FORCE_UPLOAD: ${{ github.event.inputs.force_upload }}
       run: |
         import os
@@ -52,6 +53,7 @@ jobs:
         from oss2 import Auth, Bucket
         import subprocess
         import zipfile
+        from requests import post
         
         
         def get_previous_version():
@@ -89,6 +91,7 @@ jobs:
         auth = Auth(os.environ['OSS_ACCESS_KEY_ID'], os.environ['OSS_ACCESS_KEY_SECRET'])
         bucket = Bucket(auth, os.environ['OSS_ENDPOINT'], os.environ['OSS_BUCKET_NAME'])
         header = {'Content-Type': 'text/plain', 'Content-Encoding': 'utf-8'}
+        message_publish = os.environ['MESSAGE_PUBLISH']
         
         if not previous_version or current_version != previous_version:
             if current_version['program'] != previous_version['program']:
@@ -108,6 +111,7 @@ jobs:
                 with zipfile.ZipFile('item.zip', 'w') as zipf:
                     zipf.write('Data/item.Pdt', arcname="item.Pdt")
                 bucket.put_object_from_file('item.zip', 'item.zip')
-                print(f"Uploaded data file to OSS.")      
+                print(f"Uploaded data file to OSS.")    
+                post(message_publish,json={"title": "Paissa - Github Actions", "msg": f"数据版本 {current_version['data']} 已经推送到阿里云 OSS"})
 
       shell: python

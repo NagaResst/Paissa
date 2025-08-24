@@ -16,9 +16,16 @@ version_online = False
 header = {"referer": "http://Paissa.public/"}
 try:
     url = 'https://paissa-data.oss-cn-hongkong.aliyuncs.com/version'
-    version_online = json.loads(get(url, timeout=3, proxies=proxies, headers=header).text)
-    logger.info(
-        "版本更新检查, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
+    for attempt in range(3):
+        try:
+            version_online = json.loads(get(url, timeout=3, proxies=proxies, headers=header).text)
+            logger.info(
+                "版本更新检查, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
+            break  # 成功获取后跳出循环
+        except Exception as e:
+            logger.warn(f"版本更新检查第{attempt + 1}次尝试失败: {e}")
+            if attempt == 2:  # 最后一次尝试仍然失败
+                raise e
 except:
     logger.warn("版本更新检查失败 ，没有获取到版本数据")
 

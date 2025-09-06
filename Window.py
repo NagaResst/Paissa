@@ -683,8 +683,8 @@ class MainWindow(Ui_mainWindow):
         # 如果没有查询过版本，就开始一次版本检查
         if check_update_window.latest_program_version.text() == 'N/A':
             version_online = item.get_online_version()
-            check_update_window.latest_program_version.setText(version_online['program'])
-            check_update_window.latest_data_version.setText(version_online['data'])
+            check_update_window.latest_program_version.setText(str(version_online['program']))
+            check_update_window.latest_data_version.setText(str(version_online['data']))
         c_p_v = check_update_window.current_program_version.text()
         c_d_v = check_update_window.current_data_verison.text()
         l_p_v = check_update_window.latest_program_version.text()
@@ -822,7 +822,7 @@ class GetItemIcon(QtCore.QThread):
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.63'
+program_version = '1.0.64'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:

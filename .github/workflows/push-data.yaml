@@ -67,13 +67,10 @@ jobs:
                     return None
                 raise
         
-        force_upload = os.environ['FORCE_UPLOAD']
+        force_upload = os.environ['FORCE_UPLOAD'].lower() == 'true'
         print(f"force_upload: {force_upload}")
-        if force_upload == "true":
-            current_version = {"program": "latest", "data": "latest"}
-        else:
-            with open('Data/version', 'r') as f:
-                current_version = json.load(f)
+        with open('Data/version', 'r') as f:
+            current_version = json.load(f)
         print(f"current_version: {current_version}")
         previous_version = get_previous_version()
         print(f"previous_version: {previous_version}")
@@ -93,8 +90,8 @@ jobs:
         header = {'Content-Type': 'text/plain', 'Content-Encoding': 'utf-8'}
         message_publish = os.environ['MESSAGE_PUBLISH']
         
-        if not previous_version or current_version != previous_version:
-            if current_version['program'] != previous_version['program']:
+        if not previous_version or current_version != previous_version or force_upload:
+            if current_version['program'] != previous_version['program'] or force_upload:
                 files = files_to_upload["program"]
                 # 上传文件
                 for file in files:
@@ -105,7 +102,7 @@ jobs:
                 bucket.put_object_from_file('version', 'Data/version')
                 bucket.put_object_from_file('Paissa.int', 'Paissa.py')
                 print(f"Uploaded program files to OSS.")
-            if current_version['data'] != previous_version['data']:
+            if current_version['data'] != previous_version['data'] or force_upload:
                 files = files_to_upload["data"]
                 bucket.put_object_from_file('version', 'Data/version')
                 with zipfile.ZipFile('item.zip', 'w') as zipf:

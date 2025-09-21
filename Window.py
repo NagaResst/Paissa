@@ -814,7 +814,10 @@ class GetItemIcon(QtCore.QThread):
         logger.debug("请求物品图标")
         item.get_icon()
         # self.sinout.emit(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
-        self.sinout.emit(item.icon)
+        try:
+            self.sinout.emit(item.icon)
+        except TypeError:
+            logger.error("图标请求失败")
 
 
 """
@@ -822,7 +825,7 @@ class GetItemIcon(QtCore.QThread):
 """
 logger.info("主程序启动，开始处理公共数据")
 # 与 Data/version 文件中的版本对应
-program_version = '1.0.64'
+program_version = '1.0.65'
 # 加载查询历史
 history_file = os.path.join('Data', "Paissa_query_history.log")
 try:
@@ -858,6 +861,7 @@ logger.info("数据文件加载完毕")
 if 'use_static' not in history_json:
     history_json['use_static'] = True
 item.static = history_json['use_static']
+logger.info(f"静态数据加速：{item.static}")
 item.item_data.pop('data-version')
 first_query = True
 server_list = []

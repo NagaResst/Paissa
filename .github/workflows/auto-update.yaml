@@ -49,8 +49,7 @@ jobs:
     
         if [ "$FFXIV_PATCH_VERSION" == "$LOCAL_VERSION" ]; then
           echo "No need to update."
-        ifelse[ "$CHECK_ALL" == "true" ]
-        then
+        elif [ "$CHECK_ALL" == "true" ]; then
           echo "Need to update."
           echo "need_update=true" >> $GITHUB_OUTPUT
           echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT

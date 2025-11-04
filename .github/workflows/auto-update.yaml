@@ -25,6 +25,7 @@ jobs:
       id: check_and_compare_version
       env:
         MESSAGE_PUBLISH: ${{ secrets.MESSAGE_PUBLISH }}
+        CHECK_ALL: ${{ github.event.inputs.check_all }}
       run: |
         # 获取解包文件的最新 patch 版本
         FFXIV_PATCH_VERSION=$(git ls-remote https://github.com/thewakingsands/ffxiv-datamining-cn | grep "patch" | awk -F "-" '{print $2}' | tail -1)
@@ -48,6 +49,11 @@ jobs:
     
         if [ "$FFXIV_PATCH_VERSION" == "$LOCAL_VERSION" ]; then
           echo "No need to update."
+        ifelse[ "$CHECK_ALL" == "true" ]
+        then
+          echo "Need to update."
+          echo "need_update=true" >> $GITHUB_OUTPUT
+          echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT
         else
           echo "Need to update."
           echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT

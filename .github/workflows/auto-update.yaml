@@ -38,7 +38,12 @@ jobs:
         echo "花环补丁版本号: $GARLANDTOOLS_VERSION"
     
         # 比较两个版本是否一致
-        if [ "$FFXIV_PATCH_VERSION" != "$GARLANDTOOLS_VERSION" ]; then
+        if [ "$CHECK_ALL" == "true" ]; then
+          echo "Need to update."
+          echo "need_update=true" >> $GITHUB_OUTPUT
+          echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT
+          exit 0
+        elif [ "$FFXIV_PATCH_VERSION" != "$GARLANDTOOLS_VERSION" ]; then
           echo "解包文件版本与花环工具版本不一致，无需更新。"
           exit 0
         fi
@@ -49,10 +54,6 @@ jobs:
     
         if [ "$FFXIV_PATCH_VERSION" == "$LOCAL_VERSION" ]; then
           echo "No need to update."
-        elif [ "$CHECK_ALL" == "true" ]; then
-          echo "Need to update."
-          echo "need_update=true" >> $GITHUB_OUTPUT
-          echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT
         else
           echo "Need to update."
           echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT

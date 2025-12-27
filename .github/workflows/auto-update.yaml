@@ -27,37 +27,20 @@ jobs:
         MESSAGE_PUBLISH: ${{ secrets.MESSAGE_PUBLISH }}
         CHECK_ALL: ${{ github.event.inputs.check_all }}
       run: |
-#        # 获取解包文件的最新 patch 版本
-#        FFXIV_PATCH_VERSION=$(git ls-remote https://github.com/thewakingsands/ffxiv-datamining-cn | grep "patch" | awk -F "-" '{print $2}' | tail -1)
-#        echo "解包文件版本号: $FFXIV_PATCH_VERSION"
-    
         # 获取 GarlandTools 的当前主版本和最新的补丁版本
         MAJOR_VERSION=$(curl -s "https://garlandtools.cn/db/doc/core/chs/3/data.json" | jq -r '.patch.current')
         PATCH_VERSIONS=$(curl -s "https://garlandtools.cn/db/doc/patch/chs/2/${MAJOR_VERSION}.json" | jq -r '.patch.patches | keys[]')
         GARLANDTOOLS_VERSION=$(echo "${PATCH_VERSIONS}" | tr ' ' '\n' | sort -n | tail -n 1)
         echo "花环补丁版本号: $GARLANDTOOLS_VERSION"
-    
-        # 比较两个版本是否一致
-#        if [ "$CHECK_ALL" == "true" ]; then
-#          echo "Need to update."
-#          echo "need_update=true" >> $GITHUB_OUTPUT
-#          echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT
-#          exit 0
-#        elif [ "$FFXIV_PATCH_VERSION" != "$GARLANDTOOLS_VERSION" ]; then
-#          echo "解包文件版本与花环工具版本不一致，无需更新。"
-#          exit 0
-#        fi
-    
+        
         # 检查本地 JSON 文件中的版本是否已经是最新的
         LOCAL_VERSION=$(jq -r '.data' Data/version)
         echo "本地存储的版本号: $LOCAL_VERSION"
     
-#        if [ "$FFXIV_PATCH_VERSION" == "$LOCAL_VERSION" ]; then
         if [ "$GARLANDTOOLS_VERSION" == "$LOCAL_VERSION" ]; then
           echo "No need to update."
         else
           echo "Need to update."
-#          echo "patch_version=$FFXIV_PATCH_VERSION"  >> $GITHUB_OUTPUT
           echo "patch_version=$GARLANDTOOLS_VERSION"  >> $GITHUB_OUTPUT
           curl -X POST "$MESSAGE_PUBLISH" -H "Content-Type: application/json" \
           -d "{\"title\": \"Paissa - Github Actions\", \"msg\": \"发现新的数据版本 $GARLANDTOOLS_VERSION, 准备拉取数据\"}"

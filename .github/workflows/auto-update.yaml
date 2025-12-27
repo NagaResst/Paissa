@@ -63,7 +63,7 @@ jobs:
       id: pull_data
       if: ${{ steps.check_and_compare_version.outputs.need_update == 'true' }}
       env:
-        FFXIV_PATCH_VERSION: ${{steps.check_and_compare_version.outputs.patch_version}}
+        PATCH_VERSION: ${{steps.check_and_compare_version.outputs.patch_version}}
         CHECK_ALL: ${{ github.event.inputs.check_all }}
         LOG_LEVEL: ${{ github.event.inputs.log_level }}
       run: |

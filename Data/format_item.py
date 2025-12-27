@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-patch_version = float(os.environ['FFXIV_PATCH_VERSION'])
+patch_version = float(os.environ['PATCH_VERSION'])
 check_all = os.environ['CHECK_ALL']
 log_level = os.environ['LOG_LEVEL'].upper()
 numeric_level = getattr(logging, log_level, "INFO")

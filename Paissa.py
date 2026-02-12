@@ -1,99 +1,182 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Paissa - FF14市场价格查询工具
+主程序入口文件
+
+作者: 夕山菀 @ 紫水栈桥
+协议: LGPL 2.1
+"""
+
 import json
 import os
+import sys
 import zipfile
 import io
-from requests import get
-from urllib.request import getproxies
+from pathlib import Path
+from typing import Dict, Any, Optional
 
-from Data.logger import logger
+# 添加项目路径到Python路径
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
 
-"""
-通过阿里云拉取程序版本
-"""
-proxies = getproxies()
-logger.info('获取系统代理 {}'.format(proxies))
-version_online = False
-header = {"referer": "http://Paissa.public/"}
-try:
-    url = 'https://paissa-data.oss-cn-hongkong.aliyuncs.com/version'
-    for attempt in range(3):
+# 导入本地模块
+import config
+from network.client import http_client
+from cache.manager import cache_manager
+from Data.logger import logger, log_performance
+
+
+class VersionManager:
+    """版本管理器 - 快速重试优化"""
+    
+    def __init__(self):
+        self.version_online: Optional[Dict[str, Any]] = None
+        self.program_version: Optional[str] = None
+        self.data_version: Optional[float] = None
+        
+    @log_performance
+    def check_online_version(self) -> bool:
+        """快速版本检查 - 短快多重试"""
         try:
-            version_online = json.loads(get(url, timeout=3, proxies=proxies, headers=header).text)
-            logger.info(
-                "版本更新检查, 主程序版本 {} ， 数据版本 {}".format(version_online['program'], version_online['data']))
-            break  # 成功获取后跳出循环
+            url = 'https://paissa-data.oss-cn-hongkong.aliyuncs.com/version'
+            
+            for attempt in range(config.Config.MAX_RETRY_ATTEMPTS):
+                # 快速重试，短间隔
+                if attempt > 0:
+                    logger.info(f"🔄 重试第{attempt + 1}次...")
+                
+                version_data = http_client.get_json(url, config.Config.TIMEOUT_SETTINGS['version_check'])
+                if version_data:
+                    self.version_online = version_data
+                    logger.info(f"✅ 版本检查成功 v{version_data['program']}")
+                    return True
+                    
+                logger.debug(f"⏳ 第{attempt + 1}次尝试失败")
+                
+                if attempt == config.Config.MAX_RETRY_ATTEMPTS - 1:
+                    logger.warning("❌ 版本检查最终失败")
+                    return False
+                    
         except Exception as e:
-            logger.warn(f"版本更新检查第{attempt + 1}次尝试失败: {e}")
-            if attempt == 2:  # 最后一次尝试仍然失败
-                raise e
-except:
-    logger.warn("版本更新检查失败 ，没有获取到版本数据")
+            logger.error(f"版本检查异常: {e}")
+            return False
+            
+        return False
+    
+    @log_performance
+    def load_local_versions(self):
+        """加载本地版本信息"""
+        try:
+            if config.Config.HISTORY_FILE.exists():
+                with open(config.Config.HISTORY_FILE, 'r', encoding='utf-8') as his:
+                    history_json = json.load(his)
+                    self.program_version = history_json.get('program_version')
+            else:
+                self.program_version = None
+                
+            if config.Config.ITEM_DATA_FILE.exists():
+                with open(config.Config.ITEM_DATA_FILE, 'r', encoding='utf-8') as data:
+                    data_json = json.load(data)
+                    self.data_version = float(data_json.get('data-version', 0))
+            else:
+                self.data_version = 0.0
+                
+        except Exception:
+            self.program_version = None
+            self.data_version = 0.0
+    
+    def need_program_update(self) -> bool:
+        """检查是否需要更新程序"""
+        if not self.version_online or not self.program_version:
+            return False
+        return self.version_online.get('program') != self.program_version
+    
+    def need_data_update(self) -> bool:
+        """检查是否需要更新数据"""
+        if not self.version_online or self.data_version is None:
+            return False
+        return float(self.version_online.get('data', 0)) > self.data_version
 
-"""
-读取本地版本进行比对
-"""
-try:
-    history_file = os.path.join('Data', "Paissa_query_history.log")
-    with open(history_file, 'r', encoding='utf-8') as his:
-        history_json = json.load(his)
-        program_version = history_json['program_version']
-        his.close()
-    logger.info("本地主程序版本 {}".format(program_version))
-except:
-    program_version = None
-    logger.error("本地主程序版本检查失败")
 
-try:
-    data_file = os.path.join('Data', "item.Pdt")
-    with open(data_file, 'r', encoding='utf-8') as data:
-        data_json = json.load(data)
-        data_version = data_json['data-version']
-    logger.info("本地数据版本 {}".format(data_version))
-except:
-    data_version = 0
-    logger.error("本地数据版本检查失败")
+class UpdateManager:
+    """更新管理器"""
+    
+    def __init__(self, version_manager: VersionManager):
+        self.version_manager = version_manager
+    
+    def update_program(self):
+        """快速程序更新"""
+        if not self.version_manager.version_online:
+            return
+            
+        try:
+            files_to_update = self.version_manager.version_online.get('files', [])
+            for file in files_to_update:
+                remote_url = f"https://paissa-data.oss-cn-hongkong.aliyuncs.com/{file}"
+                file_content = http_client.get_text(remote_url, config.Config.TIMEOUT_SETTINGS['data_download'])
+                if file_content:
+                    with open(file, 'w', encoding='utf-8') as f:
+                        f.write(file_content)
+        except:
+            pass
+    
+    def update_data(self):
+        """快速数据更新"""
+        try:
+            # 快速下载数据包
+            data_zip = http_client.get_content(
+                'https://paissa-data.oss-cn-hongkong.aliyuncs.com/item.zip',
+                config.Config.TIMEOUT_SETTINGS['data_download']
+            )
+            
+            if data_zip:
+                with zipfile.ZipFile(io.BytesIO(data_zip), mode="r") as zip_file:
+                    data_text = zip_file.read('item.Pdt').decode('utf-8')
+                with open(config.Config.ITEM_DATA_FILE, 'w', encoding='utf-8') as f:
+                    f.write(data_text)
+                    
+                # 快速更新市场数据
+                market_data = http_client.get_text('https://universalis.app/api/marketable')
+                if market_data:
+                    with open(config.Config.MARKETABLE_FILE, 'w', encoding='utf8') as f:
+                        f.write(f'marketable = {market_data}')
+                        
+        except:
+            pass
 
-if version_online['program'] != program_version:
+
+@log_performance
+def main():
+    """主程序入口 - 快速启动"""
+    logger.info("🚀 猴面雀启动")
+    
     try:
-        logger.info("从网络源更新主程序版本")
-        for file in version_online['files']:
-            with open(file, 'w', encoding='utf-8') as program:
-                remote_file = get(f"https://paissa-data.oss-cn-hongkong.aliyuncs.com/{file}", timeout=5, proxies=proxies,
-                    headers=header)
-                remote_file.encoding = 'utf-8'
-                program.write(remote_file.text)
-                program.close()
-        logger.info("主程序更新完成")
-    except:
-        logger.warning("主程序更新失败")
+        # 快速版本检查
+        version_manager = VersionManager()
+        if version_manager.check_online_version():
+            version_manager.load_local_versions()
+            update_manager = UpdateManager(version_manager)
+            
+            # 快速更新
+            if version_manager.need_program_update():
+                update_manager.update_program()
+            if version_manager.need_data_update():
+                update_manager.update_data()
+        
+        # 快速启动主窗口
+        import Window
+        Window.Window()
+        
+    except KeyboardInterrupt:
+        logger.info("用户退出")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"启动失败: {e}")
+        sys.exit(1)
+    finally:
+        http_client.close()
 
-if float(version_online['data']) > float(data_version):
-    market_filter = False
-    try:
-        data_zip = get('https://paissa-data.oss-cn-hongkong.aliyuncs.com/item.zip', timeout=7, proxies=proxies, headers=header).content
-        logger.info("版本数据压缩包下载完成")
-        zipFile = zipfile.ZipFile(io.BytesIO(data_zip), mode="r")
-        data_text = zipFile.read('item.Pdt').decode('utf-8')
-        logger.info("版本数据解析完成")
-        data_file = os.path.join('Data', "item.Pdt")
-        with open(data_file, 'w', encoding='utf-8') as data:
-            data.write(data_text)
-            data.close()
-            logger.info("数据文件更新完成")
-    except:
-        logger.warning("版本数据下载失败")
 
-    try:
-        marketable_file = os.path.join('Data', "marketable.py")
-        market_filter = 'marketable = {}'.format(get('https://universalis.app/api/marketable', timeout=5, proxies=proxies).text)
-        if market_filter:
-            with open(marketable_file, 'w', encoding='utf8') as market_table:
-                market_table.write(market_filter)
-                market_table.close()
-                logger.info("板子过滤数据更新完成")
-    except:
-        logger.info("市场过滤数据下载失败")
-
-import Window
-
-Window()
+if __name__ == "__main__":
+    main()

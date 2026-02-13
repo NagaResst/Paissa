@@ -9,7 +9,6 @@ Paissa - FF14市场价格查询工具
 """
 
 import json
-import os
 import sys
 import zipfile
 import io
@@ -23,7 +22,6 @@ sys.path.insert(0, str(project_root))
 # 导入本地模块
 import config
 from network.client import http_client
-from cache.manager import cache_manager
 from Data.logger import logger, log_performance
 
 

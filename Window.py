@@ -387,11 +387,23 @@ class MainWindow(Ui_mainWindow):
             材料树的绘制方法
             """
             node = QtWidgets.QTreeWidgetItem(father)
-            node.setText(0, material['name'])
-            node.setText(1, str(material['pricePerUnit']))
-            node.setText(2, str(material['amount']))
-            node.setText(3, str(material['priceTotal']))
-            node.setText(4, str(material['lowestPriceServer']))
+            
+            # 处理特殊提示材料（不可制造的物品）
+            if material.get('name') == '该物品不能被制作':
+                node.setText(0, '该物品不能被制作')
+                node.setText(1, 'N/A')
+                node.setText(2, 'N/A')
+                node.setText(3, 'N/A')
+                node.setText(4, 'N/A')
+                return
+            
+            # 正常材料处理
+            node.setText(0, material.get('name', '未知材料'))
+            node.setText(1, str(material.get('pricePerUnit', 'N/A')))
+            node.setText(2, str(material.get('amount', 'N/A')))
+            node.setText(3, str(material.get('priceTotal', 'N/A')))
+            node.setText(4, str(material.get('lowestPriceServer', 'N/A')))
+            
             if 'craft' in material:
                 for i in material['craft']:
                     make_tree(i, node)
@@ -911,7 +923,7 @@ select_item_page.setupUi(ui.select_item)
 select_item_page.back.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
 select_item_page.items_list_widget.doubleClicked.connect(ui.select_item_action)
 # 在选择物品界面选中物品后点击“选择物品”的按钮，把选中行作为对象传给价格查询模块
-select_item_page.select_this.clicked.connect(lambda: ui.select_item(select_item_page.items_list_widget.selectedItems()))
+select_item_page.select_this.clicked.connect(lambda: ui.select_item_action(select_item_page.items_list_widget.selectedItems()))
 
 """
 价格显示界面

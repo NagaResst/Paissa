@@ -31,19 +31,33 @@ class Config:
     # 网络超时设置 - 短而快
     TIMEOUT_SETTINGS = {
         "version_check": 1,       # 版本检查3秒超时
-        "data_download": 8,       # 数据下载8秒超时  
+        "data_download": 5,       # 数据下载5秒超时  
         "market_data": 3,         # 市场数据6秒超时
         "icon_download": 3        # 图标下载3秒超时
     }
     
     # 并发设置 - 多重试
     MAX_WORKERS = 20
-    MAX_RETRY_ATTEMPTS = 8        # 增加重试次数到8次
+    MAX_RETRY_ATTEMPTS = 3        # 增加重试次数到3次
     RETRY_DELAY_BASE = 0.5        # 基础重试延迟0.5秒
     
     # 缓存设置
     PRICE_CACHE_SIZE = 1000
     CACHE_EXPIRE_TIME = 300  # 5分钟
+
+    # 服务器配置
+    SERVER_CONFIG_FILE = BASE_DIR / "servers.json"
+
+    # 界面资源
+    HQ_ICON_FILE = DATA_DIR / "hq.png"
+    PROGRAM_VERSION = "1.0.65"
+
+    # API基础URL
+    UNIVERSALIS_BASE_URL = "https://universalis.app"
+    GARLANDTOOLS_BASE_URL = "https://garlandtools.cn"
+    CAFEMAKER_BASE_URL = "https://cafemaker.wakingsands.com"
+    OSS_DATA_BASE_URL = "https://paissa-data.oss-cn-hongkong.aliyuncs.com"
+    GITEE_RAW_BASE_URL = "https://gitee.com/nagaresst/paissa/raw/master"
     
     @classmethod
     def get_data_path(cls, filename):

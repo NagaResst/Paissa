@@ -24,13 +24,23 @@ class HttpClient:
     def _setup_session(self):
         """配置会话参数 - 快速重试策略"""
         # 针对跨境网络优化的重试策略（urllib3层重试，处理服务端错误状态码）
-        retry_strategy = Retry(
-            total=Config.MAX_RETRY_ATTEMPTS,
-            backoff_factor=Config.RETRY_DELAY_BASE,
-            status_forcelist=[408, 429, 500, 502, 503, 504, 522, 524],
-            allowed_methods=["HEAD", "GET", "OPTIONS"],
-            raise_on_status=False
-        )
+        retry_kwargs = {
+            'total': Config.MAX_RETRY_ATTEMPTS,
+            'backoff_factor': Config.RETRY_DELAY_BASE,
+            'status_forcelist': [408, 429, 500, 502, 503, 504, 522, 524],
+            'raise_on_status': False
+        }
+        
+        # urllib3 2.0+ 使用 allowed_methods，旧版本使用 method_whitelist
+        import urllib3
+        if hasattr(urllib3.util.retry.Retry, 'DEFAULT_ALLOWED_METHODS'):
+            # urllib3 2.0+
+            retry_kwargs['allowed_methods'] = ["HEAD", "GET", "OPTIONS"]
+        else:
+            # urllib3 < 2.0
+            retry_kwargs['method_whitelist'] = ["HEAD", "GET", "OPTIONS"]
+        
+        retry_strategy = Retry(**retry_kwargs)
 
         adapter = HTTPAdapter(
             max_retries=retry_strategy,

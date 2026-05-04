@@ -84,15 +84,17 @@ def _request_json(url, timeout=3):
 
 
 def _request_text(url, timeout=5):
-    """获取文本数据"""
+    """获取文本数据，带重试"""
     proxies, headers = _get_proxies_and_headers()
-    try:
-        resp = requests_get(url, timeout=timeout, proxies=proxies, headers=headers)
-        resp.encoding = 'utf-8'
-        if resp.status_code == 200:
-            return resp.text
-    except Exception:
-        pass
+    for attempt in range(_MAX_RETRIES):
+        try:
+            resp = requests_get(url, timeout=timeout, proxies=proxies, headers=headers)
+            resp.encoding = 'utf-8'
+            if resp.status_code == 200:
+                return resp.text
+            logger.debug(f"HTTP {resp.status_code} (尝试{attempt+1}/{_MAX_RETRIES}): {url}")
+        except Exception as e:
+            logger.debug(f"请求失败第{attempt+1}次: {e}")
     return None
 
 
@@ -139,6 +141,8 @@ def load_local_versions():
 def update_program(files):
     """下载并写入所有程序文件，自动创建子目录和 __init__.py"""
     created_dirs = set()
+    success_count = 0
+    fail_count = 0
 
     for file in files:
         remote_url = f"{_OSS_BASE_URL}/{file}"
@@ -158,10 +162,12 @@ def update_program(files):
             with open(file, 'w', encoding='utf-8') as f:
                 f.write(content)
             logger.info(f"已更新: {file}")
+            success_count += 1
         else:
-            logger.warning(f"下载失败: {file}")
+            logger.warning(f"下载失败: {file} (已重试{_MAX_RETRIES}次)")
+            fail_count += 1
 
-    logger.info("程序文件更新完成")
+    logger.info(f"程序文件更新完成: 成功 {success_count} 个, 失败 {fail_count} 个")
 
 
 def update_data():

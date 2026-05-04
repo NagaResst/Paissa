@@ -611,6 +611,11 @@ class Queryer(object):
         :return self.o_cost -> int 物品的原始材料成本
         """
         logger.info("开始查询物品的制作材料价格")
+        # 确保 world 设置为当前服务器所属的大区，而不是具体服务器
+        # 这样成本查询会基于整个大区的价格，而不是单个服务器
+        self.server_list()
+        logger.info(f"成本查询使用大区: {self.world} (当前服务器: {self.server})")
+        
         self.clipboard = '直接材料\t二级材料\t三级材料\t四级材料\t直接材料数量\t直接材料价值\t二级材料数量\t二级材料价值\t三级材料数量\t三级材料价值\t四级材料数量\t四级材料价值\n'
         start = time.time()
         # del self.stuff

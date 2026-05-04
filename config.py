@@ -75,7 +75,7 @@ class Config:
 
     # 界面资源
     HQ_ICON_FILE = DATA_DIR / "hq.png"
-    PROGRAM_VERSION = "2.0.2"
+    PROGRAM_VERSION = "2.0.3"
 
     # API基础URL
     UNIVERSALIS_BASE_URL = "https://universalis.app"

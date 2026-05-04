@@ -2,9 +2,11 @@ import json
 import os
 import sys
 import time
+from collections import deque
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+from config import Config
 from Data.logger import logger
 from Queryer import Queryer
 from UI.check_update import Ui_check_update
@@ -24,6 +26,110 @@ from UI.show_price import Ui_show_price
 QtCore.QCoreApplication.addLibraryPath(r'.\site-packages\PyQt5\Qt5\plugins')
 
 
+class ErrorCoordinator:
+    """错误协调器 - 统一管理所有查询错误，防止多个对话框同时弹出"""
+    
+    def __init__(self, parent_window):
+        """
+        初始化错误协调器
+        :param parent_window: 父窗口对象，用于创建对话框
+        """
+        self.parent = parent_window
+        self._dialog_showing = False
+        self._pending_errors = deque()
+    
+    def report_error(self, error_type: str, error_text: str, retry_action=None):
+        """
+        报告错误
+        :param error_type: 错误类型（如"价格查询"、"全服比价"）
+        :param error_text: 错误描述文本
+        :param retry_action: 重试时调用的回调函数
+        """
+        if self._dialog_showing:
+            # 如果对话框正在显示，将错误加入队列
+            self._pending_errors.append({
+                'type': error_type,
+                'text': error_text,
+                'action': retry_action
+            })
+            logger.warning(f"错误对话框显示中，{error_type}错误已加入队列")
+            return
+        
+        # 立即显示对话框
+        self._show_dialog([{ 'type': error_type, 'text': error_text, 'action': retry_action }])
+    
+    def _show_dialog(self, errors: list):
+        """
+        实际显示对话框
+        :param errors: 错误信息列表
+        """
+        self._dialog_showing = True
+        try:
+            # 合并错误信息
+            combined_text, has_multiple = self._merge_error_info(errors)
+            
+            # 获取第一个错误的重试动作
+            retry_action = errors[0]['action'] if errors else None
+            
+            # 创建对话框
+            msg_box = QtWidgets.QMessageBox(self.parent)
+            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+            msg_box.setWindowTitle("网络故障")
+            msg_box.setText(combined_text)
+            
+            # 根据是否有多个错误设置按钮文本
+            retry_btn_text = "重试全部" if has_multiple else "重试"
+            retry_btn = msg_box.addButton(retry_btn_text, QtWidgets.QMessageBox.AcceptRole)
+            exit_btn = msg_box.addButton("退出", QtWidgets.QMessageBox.RejectRole)
+            
+            msg_box.exec()
+            
+            # 处理用户选择
+            if msg_box.clickedButton() == retry_btn:
+                logger.info(f"用户选择重试，共{len(errors)}个错误")
+                if retry_action:
+                    retry_action()
+            else:
+                logger.info("用户选择退出程序")
+                sys.exit(0)
+            
+            # 检查是否有排队等待的错误
+            self._process_pending_errors()
+        finally:
+            self._dialog_showing = False
+    
+    def _merge_error_info(self, errors: list) -> tuple:
+        """
+        合并多个错误信息
+        :param errors: 错误信息列表
+        :return: (合并后的文本, 是否有多个错误)
+        """
+        if len(errors) == 1:
+            return errors[0]['text'], False
+        
+        # 多个错误时生成列表格式
+        error_types = [e['type'] for e in errors]
+        error_lines = [f"• {etype}失败" for etype in error_types]
+        combined = "以下查询操作失败：\n\n" + "\n".join(error_lines) + \
+                   "\n\n请检查网络连接后重试，或选择退出程序。"
+        return combined, True
+    
+    def _process_pending_errors(self):
+        """处理队列中的待处理错误"""
+        if not self._pending_errors:
+            return
+        
+        # 取出下一个错误
+        next_error = self._pending_errors.popleft()
+        logger.info(f"处理队列中的待处理错误: {next_error['type']}")
+        
+        # 在主线程中延迟显示下一个错误（300ms）
+        QtCore.QTimer.singleShot(
+            300, 
+            lambda: self._show_dialog([next_error])
+        )
+
+
 class RQMainWindow(QtWidgets.QMainWindow):
     """
     重写窗口关闭的事件用来保存查询历史记录
@@ -34,23 +140,31 @@ class RQMainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         global query_history
-        # 移除空查询
-        for i in query_history:
-            if i['itemName'] == 'None' or i['itemName'] is None:
-                query_history.remove(i)
-        # 查询服务器，是否使用静态资源加速，查询历史
-        history = {"program_version": program_version, "server": item.server, 'use_static': item.static,
-                   "history": query_history}
-        with open(history_file, 'w', encoding='utf-8') as his:
-            his.write(json.dumps(history))
-            logger.info("数据文件回写成功，准备关闭主程序")
+        try:
+            # 移除空查询（使用列表推导式替代迭代中删除）
+            query_history[:] = [i for i in query_history if i['itemName'] != 'None' and i['itemName'] is not None]
+            # 查询服务器，是否使用静态资源加速，查询历史
+            history = {"program_version": program_version, "server": item.server, 'use_static': item.static,
+                       "history": query_history}
+            with open(history_file, 'w', encoding='utf-8') as his:
+                his.write(json.dumps(history))
+                logger.info("数据文件回写成功，准备关闭主程序")
+        except Exception as e:
+            logger.error(f"关闭时保存历史记录失败: {e}")
         event.accept()
         sys.exit(0)  # 退出程序
 
 
 class MainWindow(Ui_mainWindow):
-    def __int__(self):
+    def __init__(self, parent_window=None):
         super().__init__()
+        # 初始化错误协调器
+        if parent_window is not None:
+            self.error_coordinator = ErrorCoordinator(parent_window)
+        else:
+            self.error_coordinator = None
+        # 保持对活跃线程的引用，防止被GC回收
+        self._active_threads = []
 
     def setup_menu(self):
         """
@@ -175,7 +289,7 @@ class MainWindow(Ui_mainWindow):
             self.select_server_Unicorn.triggered.connect(lambda: self.click_select_server("Unicorn"))
             self.select_server_Yojimbo.triggered.connect(lambda: self.click_select_server("Yojimbo"))
             self.select_server_Zeromus.triggered.connect(lambda: self.click_select_server("Zeromus"))
-            self.select_server_Valefor.triggered.connect(lambda: self.click_select_server(""))
+            self.select_server_Valefor.triggered.connect(lambda: self.click_select_server("Valefor"))
             self.select_server_Ramuh.triggered.connect(lambda: self.click_select_server("Ramuh"))
             self.select_server_Mandragora.triggered.connect(lambda: self.click_select_server("Mandragora"))
             self.select_server_Dynamis.triggered.connect(lambda: self.click_select_server("Dynamis"))
@@ -187,8 +301,8 @@ class MainWindow(Ui_mainWindow):
             self.select_server_na.triggered.connect(lambda: self.click_select_server("美服"))
             self.select_server_europe.triggered.connect(lambda: self.click_select_server("欧服"))
             self.select_server_oceania.triggered.connect(lambda: self.click_select_server("太平洋服"))
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"海外服务器菜单绑定失败: {e}")
         self.use_static_file.triggered.connect(self.use_static_file_or_not)
         self.check_update.triggered.connect(self.show_check_update_window)
         self.filter_item.triggered.connect(self.filter_item_or_not)
@@ -203,34 +317,25 @@ class MainWindow(Ui_mainWindow):
             item.name = selectd[1].text()
         # 如果使用者没有选择条目就点击了查询按钮，默认查询第一个
         elif type(selectd) is list and len(selectd) == 0:
-            item.id = select_item_page.items_list_widget.item(0, 0).text()
+            first_item = select_item_page.items_list_widget.item(0, 0)
+            if first_item is None:
+                logger.warning("物品选择列表为空，无法查询")
+                return
+            item.id = first_item.text()
             item.name = select_item_page.items_list_widget.item(0, 1).text()
         else:
             table_row = selectd.row()
             item.id = select_item_page.items_list_widget.item(table_row, 0).text()
             item.name = select_item_page.items_list_widget.item(table_row, 1).text()
-        logger.info("选择了一个道具，准备进行网络测试")
-        self.test_network()
+        logger.info("选择了一个道具，准备进行价格查询")
+        self.query_price()
 
-    def test_network(self):
-        global first_query
-        if first_query is True:
-            result = item.test_network()
-            logger.info('网络测试结果，{}'.format(result))
-            if result == "success":
-                ui.query_price()
-            else:
-                QtWidgets.QMessageBox.warning(self.query_item, "网络故障",
-                                              "您的网络无法连接在线数据源，请更换网络环境")
-        else:
-            logger.info('跳过网络测试')
-            self.query_price()
 
     def query_every_server(self, all_server_list):
         """
         全服比价列表填充
         """
-        hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
+        hq_icon = QtGui.QIcon(str(Config.HQ_ICON_FILE))
         # 设置表格样式
         show_price_page.all_server.clearContents()
         show_price_page.all_server.setRowCount(len(all_server_list))
@@ -264,6 +369,10 @@ class MainWindow(Ui_mainWindow):
             show_price_page.all_server.setItem(t, 6, lastReviewTime)
             t += 1
         show_price_page.all_server.repaint()
+        try:
+            show_price_page.all_server.doubleClicked.disconnect(self.click_select_other_server)
+        except TypeError:
+            pass
         show_price_page.all_server.doubleClicked.connect(self.click_select_other_server)
 
     def click_select_other_server(self, selected):
@@ -276,7 +385,7 @@ class MainWindow(Ui_mainWindow):
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("通过点击全服比价重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            item.price_cache = {}
+            item.price_cache.clear()
             self.query_price()
 
     def click_select_server(self, server):
@@ -300,7 +409,7 @@ class MainWindow(Ui_mainWindow):
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            item.price_cache = {}
+            item.price_cache.clear()
             self.query_price()
 
     def query_item_action(self):
@@ -310,11 +419,11 @@ class MainWindow(Ui_mainWindow):
         global query_history
         input_name = query_item_page.input_item_name.text()
         # 如果与上一次查询结果一致，那么直接使用上次查询的列表
-        if {"itemName": input_name} == query_history[-1]['itemName'] and len(
+        if len(query_history) > 0 and input_name == query_history[-1]['itemName'] and len(
                 item.item_list) > 1 and first_query is False:
             logger.info("与上次查询结果一致，切换到物品选择页面")
             self.show_data_box.setCurrentIndex(1)
-        elif input_name == query_history[-1]['itemName'] and item.hq == query_history[-1]['HQ'] \
+        elif len(query_history) > 0 and input_name == query_history[-1]['itemName'] and item.hq == query_history[-1]['HQ'] \
                 and item.server == query_history[-1]['server'] and len(item.item_list) == 1 and first_query is False:
             logger.info("与上次查询结果一致，切换到价格显示页面")
             self.item_icon.show()
@@ -324,43 +433,96 @@ class MainWindow(Ui_mainWindow):
             self.show_data_box.setCurrentIndex(2)
         else:
             logger.info("开始查找道具 {}".format(input_name))
-            item.query_item_id(input_name)
-            # 查询到的道具数量大于1
-            if len(item.item_list) > 1:
-                logger.info("查询到多个道具，开始渲染物品选择界面")
-                # 绘制表格，让玩家选择道具
-                r = 0
-                # 绘制前 清空上次查询结果
-                select_item_page.items_list_widget.clearContents()
-                # 设置表格样式
-                select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(
-                    QtWidgets.QHeaderView.Stretch)
-                select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0,
-                                                                                           QtWidgets.QHeaderView.Fixed)
-                select_item_page.items_list_widget.setColumnWidth(0, 120)
-                select_item_page.items_list_widget.setRowCount(len(item.item_list))
-                logger.debug("表格填充数据")
-                for i in item.item_list:
-                    item_id = QtWidgets.QTableWidgetItem(str(i['id']))
-                    item_id.setTextAlignment(4 | 128)
-                    item_name = QtWidgets.QTableWidgetItem(i['name'])
-                    item_name.setTextAlignment(4 | 128)
-                    select_item_page.items_list_widget.setItem(r, 0, item_id)
-                    select_item_page.items_list_widget.setItem(r, 1, item_name)
-                    r += 1
-                select_item_page.items_list_widget.repaint()
-                # 切换到选择物品的界面
-                self.show_data_box.setCurrentIndex(1)
-            # 只查询到一个道具
-            elif len(item.item_list) == 1:
-                logger.info("查询到一个道具，准备进行网络测试")
-                item.id = item.item_list[0]['id']
-                item.name = item.item_list[0]['name']
-                self.test_network()
-            # 查询不到道具
+            if item.static is False:
+                # 非静态模式：异步查询物品ID
+                query_item_id_thread = QueryItemIdThread(input_name)
+                query_item_id_thread.sinout.connect(self._on_query_item_id_done)
+                query_item_id_thread.error.connect(
+                    lambda: self.error_coordinator.report_error(
+                        "物品搜索",
+                        "网络查询失败，无法连接在线数据源",
+                        lambda: self.query_item_action()
+                    )
+                )
+                query_item_id_thread.finished.connect(lambda: self._cleanup_thread(query_item_id_thread))
+                loading_page.loading_text.setText("正在查询物品...")
+                self.show_data_box.setCurrentIndex(4)
+                query_item_id_thread.start()
+                self._active_threads.append(query_item_id_thread)
             else:
-                logger.warning("查询不到道具")
-                ui.show_message()
+                # 静态模式：本地查询无需异步
+                item.query_item_id(input_name)
+                if item.query_network_failed:
+                    self.error_coordinator.report_error(
+                        "物品搜索",
+                        "网络查询失败，无法连接在线数据源",
+                        lambda: self.query_item_action()
+                    )
+                    return
+                self._on_query_item_id_done()
+
+    def _on_query_item_id_done(self):
+        """
+        物品ID查询完成后的回调（异步/同步共用）
+        """
+        # 查询到的道具数量大于1
+        if len(item.item_list) > 1:
+            logger.info("查询到多个道具，开始渲染物品选择界面")
+            # 绘制表格，让玩家选择道具
+            r = 0
+            # 绘制前 清空上次查询结果
+            select_item_page.items_list_widget.clearContents()
+            # 设置表格样式
+            select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(
+                QtWidgets.QHeaderView.Stretch)
+            select_item_page.items_list_widget.horizontalHeader().setSectionResizeMode(0,
+                                                                                       QtWidgets.QHeaderView.Fixed)
+            select_item_page.items_list_widget.setColumnWidth(0, 120)
+            select_item_page.items_list_widget.setRowCount(len(item.item_list))
+            logger.debug("表格填充数据")
+            for i in item.item_list:
+                item_id = QtWidgets.QTableWidgetItem(str(i['id']))
+                item_id.setTextAlignment(4 | 128)
+                item_name = QtWidgets.QTableWidgetItem(i['name'])
+                item_name.setTextAlignment(4 | 128)
+                select_item_page.items_list_widget.setItem(r, 0, item_id)
+                select_item_page.items_list_widget.setItem(r, 1, item_name)
+                r += 1
+            select_item_page.items_list_widget.repaint()
+            # 切换到选择物品的界面
+            self.show_data_box.setCurrentIndex(1)
+        # 只查询到一个道具
+        elif len(item.item_list) == 1:
+            logger.info("查询到一个道具，准备进行网络测试")
+            item.id = item.item_list[0]['id']
+            item.name = item.item_list[0]['name']
+            self.test_network()
+        # 查询不到道具
+        else:
+            logger.warning("查询不到道具")
+            ui.show_message()
+
+    def _cleanup_thread(self, thread):
+        """
+        线程完成后从活跃列表中移除引用
+        """
+        if thread in self._active_threads:
+            self._active_threads.remove(thread)
+
+    def _update_cost_ui(self, data):
+        """
+        在主线程中更新成本UI（由 ShowItemCost.cost_data_ready 信号触发）
+        """
+        cost_page.d_cost.setText(str(data['d_cost']))
+        cost_page.o_cost.setText(str(data['o_cost']))
+        if data.get('expand', False):
+            cost_page.cost_tree.expandAll()
+        if data['yields'] > 1:
+            p = data['avgp'] * data['yields'] - data['d_cost']
+            cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, data['avgp'], data['yields'], data['d_cost']))
+        else:
+            p = data['avgp'] - data['d_cost']
+            cost_page.profit.setText('%d = ( %d - %d )' % (p, data['avgp'], data['d_cost']))
 
     def make_cost_tree(self):
         """
@@ -373,7 +535,8 @@ class MainWindow(Ui_mainWindow):
             for i in stuff:
                 make_tree(i, cost_page.cost_tree)
             self.show_cost.setText('市场价格')
-            show_query_item.quit()
+            if show_query_item.isRunning():
+                show_query_item.quit()
             self.item_icon.show()
             self.jump_to_wiki.show()
             self.show_cost.show()
@@ -387,11 +550,23 @@ class MainWindow(Ui_mainWindow):
             材料树的绘制方法
             """
             node = QtWidgets.QTreeWidgetItem(father)
-            node.setText(0, material['name'])
-            node.setText(1, str(material['pricePerUnit']))
-            node.setText(2, str(material['amount']))
-            node.setText(3, str(material['priceTotal']))
-            node.setText(4, str(material['lowestPriceServer']))
+            
+            # 处理特殊提示材料（不可制造的物品）
+            if material.get('name') == '该物品不能被制作':
+                node.setText(0, '该物品不能被制作')
+                node.setText(1, 'N/A')
+                node.setText(2, 'N/A')
+                node.setText(3, 'N/A')
+                node.setText(4, 'N/A')
+                return
+            
+            # 正常材料处理
+            node.setText(0, material.get('name', '未知材料'))
+            node.setText(1, str(material.get('pricePerUnit', 'N/A')))
+            node.setText(2, str(material.get('amount', 'N/A')))
+            node.setText(3, str(material.get('priceTotal', 'N/A')))
+            node.setText(4, str(material.get('lowestPriceServer', 'N/A')))
+            
             if 'craft' in material:
                 for i in material['craft']:
                     make_tree(i, node)
@@ -410,14 +585,30 @@ class MainWindow(Ui_mainWindow):
             self.show_data_box.setCurrentIndex(4)
             show_item_cost = ShowItemCost()
             show_item_cost.sinout.connect(start_tree)
+            show_item_cost.cost_data_ready.connect(self._update_cost_ui)
+            show_item_cost.error.connect(
+                lambda: self.error_coordinator.report_error(
+                    "成本查询",
+                    "成本查询失败，无法连接在线数据源",
+                    self.make_cost_tree
+                )
+            )
+            show_item_cost.finished.connect(lambda: self._cleanup_thread(show_item_cost))
             logger.info("开始绘制材料树")
             cost_page.cost_tree.clear()
             logger.debug("开始运行材料树线程")
             show_item_cost.start()
+            self._active_threads.append(show_item_cost)
             logger.debug("开始载入界面线程")
+            try:
+                show_query_item.sinout.disconnect(ui.show_item)
+            except TypeError:
+                pass
             show_query_item.sinout.connect(ui.show_item)
+            if show_query_item.isRunning():
+                show_query_item.quit()
+                show_query_item.wait()
             show_query_item.start()
-            show_item_cost.exec()
 
     def click_query_item_name(self, selected):
         # 点击材料树的条目将道具名复制到剪贴板
@@ -440,7 +631,16 @@ class MainWindow(Ui_mainWindow):
         """
         界面动作:售出列表填充
         """
-        hq_icon = QtGui.QIcon(os.path.join("Data", "hq.png"))
+        # 网络查询失败
+        if price_list is None:
+            self.show_data_box.setCurrentIndex(0)
+            self.error_coordinator.report_error(
+                "价格查询",
+                "网络查询失败，无法连接在线数据源",
+                self.query_price
+            )
+            return
+        hq_icon = QtGui.QIcon(str(Config.HQ_ICON_FILE))
         # 查询正在售出的记录
         logger.info("物品的售出价格查询完毕，开始绘制价格表格")
         # 更新界面的部分数据
@@ -533,18 +733,48 @@ class MainWindow(Ui_mainWindow):
         self.show_data_box.setCurrentIndex(4)
         query_item_price = QueryItemPrice()
         query_item_price.sinout.connect(ui.query_sale_list)
+        query_item_price.error.connect(
+            lambda: self.error_coordinator.report_error(
+                "价格查询",
+                "价格查询失败，无法连接在线数据源",
+                self.query_price
+            )
+        )
+        query_item_price.finished.connect(lambda: self._cleanup_thread(query_item_price))
         query_item_price.start()
+        # 超时保护：60秒后强制退出价格查询线程
+        QtCore.QTimer.singleShot(60000, query_item_price.quit)
+        self._active_threads.append(query_item_price)
         get_item_icon = GetItemIcon()
         get_item_icon.sinout.connect(self.show_item_icon)
+        get_item_icon.finished.connect(lambda: self._cleanup_thread(get_item_icon))
         get_item_icon.start()
+        # 超时保护：15秒后强制退出图标加载线程
+        QtCore.QTimer.singleShot(15000, get_item_icon.quit)
+        self._active_threads.append(get_item_icon)
         # 如果玩家选择了不在同一个大区的服务器，或者查询其他物品，就重新查询全服比价的数据
-        if server_list != item.server_list() or item.id != query_history[-1]['itemID']:
-            server_list = item.server_list()
+        last_item_id = query_history[-1]['itemID'] if len(query_history) > 0 else None
+        try:
+            current_server_list = item.server_list()
+        except ValueError as e:
+            logger.error(f"获取服务器列表失败: {e}")
+            current_server_list = []
+        if server_list != current_server_list or item.id != last_item_id:
+            server_list = current_server_list
             logger.info('查询区域为{}， 服务器列表初始化为{}'.format(item.world, server_list))
             # 查询全服比价的数据
             iquery_every_server = QueryEveryServer(server_list)
             iquery_every_server.sinout.connect(self.query_every_server)
+            iquery_every_server.error.connect(
+                lambda: self.error_coordinator.report_error(
+                    "全服比价",
+                    "全服比价查询失败，无法连接在线数据源",
+                    self.query_price
+                )
+            )
+            iquery_every_server.finished.connect(lambda: self._cleanup_thread(iquery_every_server))
             iquery_every_server.start()
+            self._active_threads.append(iquery_every_server)
         # 查询完成之后将查询记录加入历史记录。如果已经存在，删除旧的纪录，新的纪录添加到末尾
         this_query = {"itemID": item.id, "itemName": item.name, "HQ": item.hq, "server": item.server}
         if this_query in query_history:
@@ -566,8 +796,6 @@ class MainWindow(Ui_mainWindow):
         logger.debug("查询历史更新完毕")
         query_item_page.query_is_hq.setChecked(item.hq)
         cost_page.cost_tree.clear()
-        get_item_icon.exec()
-        query_item_price.exec()
 
     def click_history_query(self, selected):
         """
@@ -607,7 +835,7 @@ class MainWindow(Ui_mainWindow):
                     break
             query_item_page.input_item_name.setText(item.name)
             item.item_list = []
-            self.test_network()
+            self.query_price()
 
     @staticmethod
     def click_copy_cost_tree():
@@ -675,16 +903,36 @@ class MainWindow(Ui_mainWindow):
         elif widget2.isHidden():
             widget2.show()
 
-    @staticmethod
-    def show_check_update_window():
+    def show_check_update_window(self):
         """
         显示或者隐藏关于面板，包含检查更新的事件
         """
         # 如果没有查询过版本，就开始一次版本检查
         if check_update_window.latest_program_version.text() == 'N/A':
-            version_online = item.get_online_version()
-            check_update_window.latest_program_version.setText(str(version_online['program']))
-            check_update_window.latest_data_version.setText(str(version_online['data']))
+            check_update_window.latest_program_version.setText("检查中...")
+            check_update_window.latest_data_version.setText("检查中...")
+            check_update_thread = CheckUpdateThread()
+            check_update_thread.version_ready.connect(MainWindow._on_version_ready)
+            check_update_thread.finished.connect(lambda: self._cleanup_thread(check_update_thread))
+            check_update_thread.start()
+            self._active_threads.append(check_update_thread)
+        else:
+            MainWindow._update_update_ui()
+
+    @staticmethod
+    def _on_version_ready(version_online):
+        """
+        版本检查完成回调
+        """
+        check_update_window.latest_program_version.setText(str(version_online.get('program', 'N/A')))
+        check_update_window.latest_data_version.setText(str(version_online.get('data', 'N/A')))
+        MainWindow._update_update_ui()
+
+    @staticmethod
+    def _update_update_ui():
+        """
+        更新检查UI的通用方法
+        """
         c_p_v = check_update_window.current_program_version.text()
         c_d_v = check_update_window.current_data_verison.text()
         l_p_v = check_update_window.latest_program_version.text()
@@ -707,53 +955,95 @@ class MainWindow(Ui_mainWindow):
 
 
 class QueryItemId(Ui_query_item_id):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class SelectItemList(Ui_select_item_list):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class ShowPrice(Ui_show_price):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class LoadingPage(Ui_load_page):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class CostPage(Ui_cost_page):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class HistoryPage(Ui_history_Window):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class CheckUpdate(Ui_check_update):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
+
+
+class CheckUpdateThread(QtCore.QThread):
+    """异步检查版本更新的线程"""
+    version_ready = QtCore.pyqtSignal(dict)
+
+    def run(self):
+        try:
+            version_online = item.get_online_version()
+            if version_online is None:
+                version_online = {}
+            self.version_ready.emit(version_online)
+        except Exception as e:
+            logger.error(f"版本检查线程异常: {e}")
+            self.version_ready.emit({})
+
+
+class QueryItemIdThread(QtCore.QThread):
+    """异步查询物品ID的线程"""
+    sinout = QtCore.pyqtSignal()
+    error = QtCore.pyqtSignal()
+
+    def __init__(self, name):
+        super(QueryItemIdThread, self).__init__()
+        self.name = name
+
+    def run(self):
+        try:
+            item.query_item_id(self.name)
+            if item.query_network_failed:
+                self.error.emit()
+            else:
+                self.sinout.emit()
+        except Exception as e:
+            logger.error(f"物品ID查询线程异常: {e}")
+            self.error.emit()
 
 
 class QueryItemPrice(QtCore.QThread):
     sinout = QtCore.pyqtSignal(dict)
+    error = QtCore.pyqtSignal()
 
     def __init__(self):
         super(QueryItemPrice, self).__init__()
 
     def run(self):
-        # 发出信号
-        self.sinout.emit(item.query_item_price())
+        try:
+            # 发出信号
+            self.sinout.emit(item.query_item_price())
+        except Exception as e:
+            logger.error(f"价格查询线程异常: {e}")
+            self.error.emit()
 
 
 class QueryEveryServer(QtCore.QThread):
     sinout = QtCore.pyqtSignal(list)
+    error = QtCore.pyqtSignal()
 
     def __init__(self, server_list):
         super(QueryEveryServer, self).__init__()
@@ -761,33 +1051,44 @@ class QueryEveryServer(QtCore.QThread):
 
     def run(self):
         # 发出信号
-        item.query_every_server(server_list)
-        self.sinout.emit(item.every_server)
+        item.query_every_server(self.server_list)
+        if len(self.server_list) > 0 and len(item.every_server) == 0:
+            logger.error("全服比价查询全部失败")
+            self.error.emit()
+        else:
+            self.sinout.emit(item.every_server)
 
 
 class ShowItemCost(QtCore.QThread):
     sinout = QtCore.pyqtSignal(list)
+    error = QtCore.pyqtSignal()
+    cost_data_ready = QtCore.pyqtSignal(dict)
 
     def __init__(self):
         super(ShowItemCost, self).__init__()
 
     def run(self):
-        logger.info("开始查询材料的成本价格")
-        item.show_item_cost()
-        cost_page.d_cost.setText(str(item.d_cost))
-        cost_page.o_cost.setText(str(item.o_cost))
-        # 1级子材料数量不超过9个的时候展开材料树
-        if len(item.stuff['craft']) < 9:
-            cost_page.cost_tree.expandAll()
-        # 如果这个道具一次生产制作多个的利润算法兼容
-        if item.yields > 1:
-            p = item.avgp * item.yields - item.d_cost
-            cost_page.profit.setText('%d = ( %d * %d - %d )' % (p, item.avgp, item.yields, item.d_cost))
-        else:
-            p = item.avgp - item.d_cost
-            cost_page.profit.setText('%d = ( %d - %d )' % (p, item.avgp, item.d_cost))
-        logger.info("材料树计算完成")
-        self.sinout.emit(item.stuff['craft'])
+        try:
+            logger.info("开始查询材料的成本价格")
+            item.show_item_cost()
+            # 制作配方网络查询失败
+            if item.craft_query_failed:
+                logger.error("制作配方查询失败，触发错误信号")
+                self.error.emit()
+                return
+            cost_data = {
+                'd_cost': item.d_cost,
+                'o_cost': item.o_cost,
+                'yields': item.yields,
+                'avgp': item.avgp,
+                'expand': len(item.stuff['craft']) < 9,
+            }
+            self.cost_data_ready.emit(cost_data)
+            logger.info("材料树计算完成")
+            self.sinout.emit(item.stuff['craft'])
+        except Exception as e:
+            logger.error(f"成本查询异常: {e}")
+            self.error.emit()
 
 
 class ShowQueryItem(QtCore.QThread):
@@ -811,23 +1112,24 @@ class GetItemIcon(QtCore.QThread):
         super(GetItemIcon, self).__init__()
 
     def run(self):
-        logger.debug("请求物品图标")
-        item.get_icon()
-        # self.sinout.emit(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
         try:
-            self.sinout.emit(item.icon)
-        except TypeError:
-            logger.error("图标请求失败")
+            logger.debug("请求物品图标")
+            item.get_icon()
+            # self.sinout.emit(QtGui.QPixmap.fromImage(QtGui.QImage.fromData(item.icon)))
+            try:
+                self.sinout.emit(item.icon)
+            except TypeError:
+                logger.warning("图标数据类型错误，无法显示")
+        except Exception as e:
+            logger.warning(f"图标请求失败: {e}")
 
 
 """
 公共数据部分
 """
 logger.info("主程序启动，开始处理公共数据")
-# 与 Data/version 文件中的版本对应
-program_version = '1.0.65'
 # 加载查询历史
-history_file = os.path.join('Data', "Paissa_query_history.log")
+history_file = str(Config.HISTORY_FILE)
 try:
     with open(history_file, 'r', encoding='utf-8') as his:
         history_json = json.load(his)
@@ -852,12 +1154,20 @@ except KeyError:
     item = Queryer(history_json['server'])
     logger.info("读取查询历史成功")
 
+# 与 Data/version 文件中的版本对应
+program_version = history_json.get('program_version', Config.PROGRAM_VERSION)
+
 # 加载本地静态文件
-with open('Data/item.Pdt', 'r', encoding='utf8') as item_list_file:
-    item.item_data = json.load(item_list_file)
-date_version = item.item_data['data-version']
-item.header = {'User-Agent': 'Paissa {}'.format(program_version)}
-logger.info("数据文件加载完毕")
+try:
+    with open(str(Config.ITEM_DATA_FILE), 'r', encoding='utf8') as item_list_file:
+        item.item_data = json.load(item_list_file)
+    date_version = item.item_data['data-version']
+    item.header = {'User-Agent': 'Paissa {}'.format(program_version)}
+    logger.info("数据文件加载完毕")
+except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+    print(f"数据文件加载失败: {e}，请重新下载或检查文件完整性", file=sys.stderr)
+    logger.error(f"数据文件加载失败: {e}")
+    sys.exit(1)
 if 'use_static' not in history_json:
     history_json['use_static'] = True
 item.static = history_json['use_static']
@@ -868,113 +1178,119 @@ server_list = []
 query_check = False
 logger.info("主程序数据初始化完成")
 
-"""
-主程序开始
-"""
-app = QtWidgets.QApplication(sys.argv)
-desktop = app.primaryScreen().size()
-logger.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
-app.setStyle("Fusion")
-widget = RQMainWindow()
-ui = MainWindow()
-ui.setupUi(widget)
-widget.resize(int(desktop.width() * 0.6), int(desktop.height() * 0.6))
-ui.setup_menu()
-ui.jump_to_wiki.setOpenExternalLinks(True)
-ui.show_server.setText(item.server)
-ui.item_icon.hide()
-ui.jump_to_wiki.hide()
-ui.show_cost.hide()
-ui.back_query.hide()
-ui.query_history.show()
-ui.back_query.clicked.connect(ui.back_to_index)
-ui.show_data_box.setCurrentIndex(0)
-ui.query_history.clicked.connect(ui.hidden_history_board)
-ui.show_cost.clicked.connect(ui.make_cost_tree)
-ui.use_static_file.setChecked(history_json['use_static'])
-widget.show()
 
-"""
-物品查询首页
-"""
-query_item_page = QueryItemId()
-query_item_page.setupUi(ui.query_item)
-query_item_page.query_button.clicked.connect(ui.query_item_action)
-query_item_page.input_item_name.returnPressed.connect(ui.query_item_action)
-query_item_page.query_is_hq.clicked.connect(ui.select_hq_ornot)
+def run_app():
+    """启动Qt应用主循环"""
+    global app, widget, ui, query_item_page, select_item_page, show_price_page
+    global cost_page, loading_page, widget2, history_board, widget3, check_update_window, show_query_item
 
-"""
-模糊搜索时选择物品的界面
-"""
-select_item_page = SelectItemList()
-select_item_page.setupUi(ui.select_item)
-select_item_page.back.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
-select_item_page.items_list_widget.doubleClicked.connect(ui.select_item_action)
-# 在选择物品界面选中物品后点击“选择物品”的按钮，把选中行作为对象传给价格查询模块
-select_item_page.select_this.clicked.connect(lambda: ui.select_item(select_item_page.items_list_widget.selectedItems()))
+    """
+    主程序开始
+    """
+    app = QtWidgets.QApplication(sys.argv)
+    desktop = app.primaryScreen().size()
+    logger.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
+    app.setStyle("Fusion")
+    widget = RQMainWindow()
+    ui = MainWindow(widget)
+    ui.setupUi(widget)
+    widget.resize(int(desktop.width() * 0.6), int(desktop.height() * 0.6))
+    ui.setup_menu()
+    ui.jump_to_wiki.setOpenExternalLinks(True)
+    ui.show_server.setText(item.server)
+    ui.item_icon.hide()
+    ui.jump_to_wiki.hide()
+    ui.show_cost.hide()
+    ui.back_query.hide()
+    ui.query_history.show()
+    ui.back_query.clicked.connect(ui.back_to_index)
+    ui.show_data_box.setCurrentIndex(0)
+    ui.query_history.clicked.connect(ui.hidden_history_board)
+    ui.show_cost.clicked.connect(ui.make_cost_tree)
+    ui.use_static_file.setChecked(history_json['use_static'])
+    widget.show()
 
-"""
-价格显示界面
-"""
-show_price_page = ShowPrice()
-show_price_page.setupUi(ui.show_price)
-# 设定在售表格样式
-show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
-show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-# HQ列
-show_price_page.sale_list.setColumnWidth(1, 20)
-# 设定比价表格样式
-show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
-# HQ列
-show_price_page.all_server.setColumnWidth(2, 20)
-show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    """
+    物品查询首页
+    """
+    query_item_page = QueryItemId()
+    query_item_page.setupUi(ui.query_item)
+    query_item_page.query_button.clicked.connect(ui.query_item_action)
+    query_item_page.input_item_name.returnPressed.connect(ui.query_item_action)
+    query_item_page.query_is_hq.clicked.connect(ui.select_hq_ornot)
 
-"""
-材料成本树
-"""
-cost_page = CostPage()
-cost_page.setupUi(ui.show_craft)
-cost_page.cost_tree.setColumnWidth(0, 500)
-cost_page.cost_tree.itemDoubleClicked.connect(ui.click_query_item_name)
-cost_page.click_c.clicked.connect(ui.click_copy_cost_tree)
-show_query_item = ShowQueryItem()
+    """
+    模糊搜索时选择物品的界面
+    """
+    select_item_page = SelectItemList()
+    select_item_page.setupUi(ui.select_item)
+    select_item_page.back.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
+    select_item_page.items_list_widget.doubleClicked.connect(ui.select_item_action)
+    # 在选择物品界面选中物品后点击"选择物品"的按钮，把选中行作为对象传给价格查询模块
+    select_item_page.select_this.clicked.connect(lambda: ui.select_item_action(select_item_page.items_list_widget.selectedItems()))
 
-"""
-loading界面
-"""
-loading_page = LoadingPage()
-loading_page.setupUi(ui.loading_ui)
-loading_page.loading_text.setText("猴面雀正在为您查找资料。")
+    """
+    价格显示界面
+    """
+    show_price_page = ShowPrice()
+    show_price_page.setupUi(ui.show_price)
+    # 设定在售表格样式
+    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+    show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    # HQ列
+    show_price_page.sale_list.setColumnWidth(1, 20)
+    # 设定比价表格样式
+    show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
+    # HQ列
+    show_price_page.all_server.setColumnWidth(2, 20)
+    show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-"""
-查询历史面板
-"""
-widget2 = QtWidgets.QMainWindow()
-history_board = HistoryPage()
-history_board.setupUi(widget2)
-widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
-widget2.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
-history_board.history_list.doubleClicked.connect(ui.click_history_query)
-try:
-    for i in query_history:
-        if i['HQ'] is not True and i["itemName"] != 'None':
-            history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
-        elif i['HQ'] is True and i["itemName"] != 'None':
-            history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
-except:
-    pass
+    """
+    材料成本树
+    """
+    cost_page = CostPage()
+    cost_page.setupUi(ui.show_craft)
+    cost_page.cost_tree.setColumnWidth(0, 500)
+    cost_page.cost_tree.itemDoubleClicked.connect(ui.click_query_item_name)
+    cost_page.click_c.clicked.connect(ui.click_copy_cost_tree)
+    show_query_item = ShowQueryItem()
 
-"""
-check update
-"""
-widget3 = QtWidgets.QMainWindow()
-check_update_window = CheckUpdate()
-check_update_window.setupUi(widget3)
-# 关于面板的超链接激活
-check_update_window.label_8.setOpenExternalLinks(True)
-check_update_window.current_program_version.setText(program_version)
-check_update_window.current_data_verison.setText(str(date_version))
+    """
+    loading界面
+    """
+    loading_page = LoadingPage()
+    loading_page.setupUi(ui.loading_ui)
+    loading_page.loading_text.setText("猴面雀正在为您查找资料。")
 
-sys.exit(app.exec_())
+    """
+    查询历史面板
+    """
+    widget2 = QtWidgets.QMainWindow()
+    history_board = HistoryPage()
+    history_board.setupUi(widget2)
+    widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
+    widget2.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
+    history_board.history_list.doubleClicked.connect(ui.click_history_query)
+    try:
+        for i in query_history:
+            if i['HQ'] is not True and i["itemName"] != 'None':
+                history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
+            elif i['HQ'] is True and i["itemName"] != 'None':
+                history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+    except Exception as e:
+        logger.warning(f"历史记录加载异常: {e}")
+
+    """
+    check update
+    """
+    widget3 = QtWidgets.QMainWindow()
+    check_update_window = CheckUpdate()
+    check_update_window.setupUi(widget3)
+    # 关于面板的超链接激活
+    check_update_window.label_8.setOpenExternalLinks(True)
+    check_update_window.current_program_version.setText(program_version)
+    check_update_window.current_data_verison.setText(str(date_version))
+
+    sys.exit(app.exec_())

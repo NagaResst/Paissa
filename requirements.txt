@@ -1,0 +1,12 @@
+# 核心依赖
+requests>=2.28.0
+PyQt5>=5.15.0
+
+# 开发依赖
+pytest>=7.0.0
+pytest-qt>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
+
+# 可选依赖
+pyinstaller>=5.0.0  # 用于打包exe

@@ -3,14 +3,14 @@ import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
-from json import loads, load
+from json import load
 from math import ceil
 
-from requests import get
-from urllib.request import getproxies
-
+from config import Config
+from network.client import http_client
 from Data.marketable import marketable
 from Data.logger import logger
+from cache.manager import cache_manager
 
 
 class Queryer(object):
@@ -50,36 +50,14 @@ class Queryer(object):
         self.filter_item = True
         # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
-        self.header = {'User-Agent': ''}
-        # 物品价格静态缓存
-        self.price_cache = {}
+        # 网络查询失败标志
+        self.query_network_failed = False
+        self.craft_query_failed = False
         # 当前正在查询的物品名称
         self.cq = None
         self.server_config = None
         self.load_server_config()
         logger.info("查询物品槽位初始化")
-        self.proxies = getproxies()
-
-    def init_query_result(self, url):
-        """
-        查询结果序列化成字典
-        :param url:要调用的接口path
-        :return dist：universalis返回的查询结果
-        """
-        if url[0:5] != 'https':
-            url = 'https://universalis.app' + url
-        while True:
-            try:
-                result = get(url, timeout=5, headers=self.header, proxies=self.proxies)
-                if result.status_code == 200:
-                    result = loads(result.text)
-                    logger.debug("{} success".format(url))
-                    break
-                else:
-                    logger.warning(url + str(result.status_code))
-            except:
-                logger.error('{} timeout'.format(url))
-        return result
 
     @staticmethod
     def timestamp_to_time(timestamp):
@@ -108,40 +86,33 @@ class Queryer(object):
         if len(self.item_list) > 1 and self.static is False:
             for i in self.item_list:
                 if str(i['id']) == str(self.id):
-                    icon_url = "https://cafemaker.wakingsands.com" + i['icon']
+                    icon_url = Config.CAFEMAKER_BASE_URL + i['icon']
         elif len(self.item_list) > 1 and self.static is True:
-            icon_url = "https://garlandtools.cn/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
+            icon_url = Config.GARLANDTOOLS_BASE_URL + "/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
         elif len(self.item_list) == 1 and self.static is False:
-            icon_url = "https://cafemaker.wakingsands.com" + self.item_list[0]['icon']
+            icon_url = Config.CAFEMAKER_BASE_URL + self.item_list[0]['icon']
         elif len(self.item_list) == 1 and self.static is True:
-            icon_url = "https://garlandtools.cn/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
-        try:
-            result = get(icon_url, timeout=3, headers=self.header)
-            self.icon = result.content
+            icon_url = Config.GARLANDTOOLS_BASE_URL + "/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
+        # item_list 为空时，通过garlandtools API获取图标ID再构造URL
+        elif len(self.item_list) == 0 and self.id:
+            result = http_client.get_json(
+                Config.GARLANDTOOLS_BASE_URL + '/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id))
+            if result and 'item' in result and 'icon' in result['item']:
+                icon_url = Config.GARLANDTOOLS_BASE_URL + "/files/icons/item/t/" + str(result['item']['icon']) + '.png'
+        if icon_url is None:
+            logger.debug('无法构造图标URL，跳过图标获取')
+            return
+        content = http_client.get_content(icon_url)
+        if content:
+            self.icon = content
             logger.debug('图标获取成功')
-        except:
+        else:
+            self.icon = None
             logger.debug('图标获取失败')
 
     def load_server_config(self):
-        """加载服务器配置文件"""
-        config_path = 'servers.json'
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                self.server_config = load(f)
-            logger.info("服务器配置文件加载成功")
-        except FileNotFoundError:
-            logger.warning("找不到服务器配置文件，使用默认配置")
-            self.server_config = {
-                "world_regions": {
-                    "maoxiaopang": ["猫小胖", "紫水栈桥", "延夏", "静语庄园", "摩杜纳", "海猫茶屋", "柔风海湾", "琥珀原"],
-                    "luxingniao": ["陆行鸟", "红玉海", "神意之地", "拉诺西亚", "幻影群岛", "萌芽池", "宇宙和音", "沃仙曦染", "晨曦王座"],
-                    "moguli": ["莫古力", "白银乡", "白金幻象", "神拳痕", "潮风亭", "旅人栈桥", "拂晓之间", "龙巢神殿", "梦羽宝境"],
-                    "doudouchai": ["豆豆柴", "水晶塔", "银泪湖", "太阳海岸", "伊修加德", "红茶川"]
-                },
-                "area_mappings": {
-                    "China": ["maoxiaopang", "moguli", "luxingniao", "doudouchai"]
-                }
-            }
+        """加载服务器配置"""
+        self.server_config = Config.SERVER_CONFIG
 
     def server_list(self):
         """
@@ -170,7 +141,8 @@ class Queryer(object):
                     server_list.extend(region_servers.get(world_key, []))
                 self.world = self.server
             else:
-                raise ValueError(f"未知的服务器名称: {self.server}")
+                logger.warning(f"未知的服务器名称: {self.server}，使用默认服务器列表")
+                return server_list
 
         return server_list
 
@@ -182,11 +154,16 @@ class Queryer(object):
         """
         logger.debug("物品查找阶段")
         self.item_list = []
+        self.query_network_failed = False
         logger.debug('静态资源加速 {}'.format(self.static))
         if self.static is False:
             # cafemaker可以正确的模糊查询
-            query_url = 'https://cafemaker.wakingsands.com/search?indexes=item&string=' + name
-            result = self.init_query_result(query_url)
+            query_url = Config.CAFEMAKER_BASE_URL + '/search?indexes=item&string=' + name
+            result = http_client.get_json(query_url)
+            if result is None:
+                logger.error("物品查询请求失败")
+                self.query_network_failed = True
+                return
             # 返回的数据是个json,将其中的结果列表取出
             all_list = result["Results"]
             logger.debug('物品列表已从远端取回')
@@ -226,19 +203,23 @@ class Queryer(object):
 
         if self.hq is True:
             logger.debug('锁定查询HQ')
-            query_url = f'/api/{self.server}/{self.id}?listings=50&hq=true&noGst=true'
+            query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/{self.server}/{self.id}?listings=50&hq=true&noGst=true'
         else:
             logger.info("全品质查询")
-            query_url = f'/api/v2/{self.server}/{self.id}?listings=50&noGst=true'
+            query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/v2/{self.server}/{self.id}?listings=50&noGst=true'
 
-        result = self.init_query_result(query_url)
+        result = http_client.get_json(query_url)
 
         # 只有当首次 HQ 查询无结果时尝试切换为全品质查询
         if self.hq and isinstance(result, dict) and not result.get('listings'):
             logger.info("查询不到物品，强制一次全品质查询")
-            query_url = f'/api/v2/{self.server}/{self.id}?listings=50&noGst=true'
+            query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/v2/{self.server}/{self.id}?listings=50&noGst=true'
             self.hq = False
-            result = self.init_query_result(query_url)
+            result = http_client.get_json(query_url)
+
+        if result is None:
+            logger.error("价格查询请求失败")
+            return None
         # 将查询结果的销量指数和平均售价取出
         nq_velocity = safe_get(result, 'nqSaleVelocity', 0)
         hq_velocity = safe_get(result, 'hqSaleVelocity', 0)
@@ -266,8 +247,8 @@ class Queryer(object):
             logger.warning("无法解析价格字段，使用默认值 0")
             self.avgp = 0
 
-        self.nqs = result['nqSaleVelocity']
-        self.hqs = result['hqSaleVelocity']
+        self.nqs = result.get('nqSaleVelocity', 0)
+        self.hqs = result.get('hqSaleVelocity', 0)
         return result
 
     def query_every_server(self, server_list):
@@ -285,10 +266,9 @@ class Queryer(object):
         # 单个服务器查询最低价格的方法
         def query_single_server(server, item_id):
             try:
-                result = self.init_query_result(f'/api/v2/{server}/{item_id}?listings=1&noGst=true')
+                result = http_client.get_json(f'{Config.UNIVERSALIS_BASE_URL}/api/v2/{server}/{item_id}?listings=1&noGst=true')
 
-
-                if not result or 'listings' not in result or not result['listings']:
+                if result is None or not result or 'listings' not in result or not result['listings']:
                     logger.debug(f"{server} 返回空结果")
                     return
                 # 重新组织比价用的数据，并加入全服查价的结果列表，如果不重新组织数据，某些区服查询出空集时，会报错
@@ -321,27 +301,55 @@ class Queryer(object):
         查询物品的制作材料
         :return self.stuff -> dist 这个道具的制作配方
         """
+        self.craft_query_failed = False
         if len(self.stuff) == 0:
-            if self.static is False:
-                query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id)
-                self.stuff = self.init_query_result(query_url)['item']
+            # 先查配方缓存
+            cached_craft = cache_manager.get_craft(str(self.id))
+            if cached_craft is not None:
+                self.stuff = cached_craft
                 if 'craft' in self.stuff:
+                    if 'yield' in self.stuff:
+                        self.yields = self.stuff['yield']
+                    self.make_item_craft(self.stuff['craft'])
+                    logger.info("物品制作配方从缓存加载成功")
+                else:
+                    self.stuff = {}
+                    logger.warning("物品制作配方缓存中无配方，清空配方池")
+                return
+            if self.static is False:
+                query_url = Config.GARLANDTOOLS_BASE_URL + '/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id)
+                result = http_client.get_json(query_url)
+                if result is None:
+                    self.stuff = {}
+                    self.craft_query_failed = True
+                    logger.error("制作配方查询请求失败")
+                    return
+                self.stuff = result['item']
+                if 'craft' in self.stuff and len(self.stuff['craft']) > 0:
                     if 'yield' in self.stuff['craft'][0]:
                         self.yields = self.stuff['craft'][0]['yield']
                         self.stuff['yield'] = self.stuff['craft'][0]['yield']
                     self.stuff['craft'] = self.stuff['craft'][0]['ingredients']
                     self.make_item_craft(self.stuff['craft'])
                     logger.info("物品制作配方已查询成功")
+                    # 写入配方缓存
+                    cache_manager.set_craft(str(self.id), self.stuff)
                 else:
                     self.stuff = {}
                     logger.warning("物品制作配方已查询失败，清空配方池")
             elif self.static is True:
+                if str(self.id) not in self.item_data:
+                    logger.warning(f"静态数据中未找到物品ID: {self.id}")
+                    self.stuff = {}
+                    return
                 self.stuff = copy.deepcopy(self.item_data[str(self.id)])
                 if 'craft' in self.stuff:
                     if 'yield' in self.stuff:
                         self.yields = self.stuff['yield']
                     self.make_item_craft(self.stuff['craft'])
                     logger.info("物品制作配方已查询成功")
+                    # 写入配方缓存
+                    cache_manager.set_craft(str(self.id), self.stuff)
                 else:
                     self.stuff = {}
                     logger.warning("物品制作配方已查询失败，清空配方池")
@@ -386,17 +394,31 @@ class Queryer(object):
         :return result -> dist 物品的数据
         """
         logger.debug("材料递归查询，物品ID {} ".format(itemid))
+        # 先查配方缓存
+        cached = cache_manager.get_craft(str(itemid))
+        if cached is not None:
+            return cached
         if self.static is False:
-            query_url = 'https://garlandtools.cn/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
-            result = self.init_query_result(query_url)['item']
-            if 'craft' in result:
+            query_url = Config.GARLANDTOOLS_BASE_URL + '/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
+            result = http_client.get_json(query_url)
+            if result is None:
+                logger.error(f"物品详情查询请求失败, ID: {itemid}")
+                return {'name': '未知', 'id': str(itemid)}
+            result = result['item']
+            if 'craft' in result and len(result['craft']) > 0:
                 if 'yield' in result['craft'][0]:
                     result['yield'] = result['craft'][0]['yield']
                 result['craft'] = result['craft'][0]['ingredients']
+            cache_manager.set_craft(str(itemid), result)
             return result
         elif self.static is True:
             # 重要： 采用深复制来避免成本树的计算波及到保存在内存中的静态原始数据
-            return copy.deepcopy(self.item_data[str(itemid)])
+            if str(itemid) not in self.item_data:
+                logger.warning(f"静态数据中未找到物品ID: {itemid}")
+                return {'name': '未知材料', 'id': str(itemid)}
+            result = copy.deepcopy(self.item_data[str(itemid)])
+            cache_manager.set_craft(str(itemid), result)
+            return result
 
     def query_item_cost_min(self, item):
         """
@@ -434,7 +456,8 @@ class Queryer(object):
                     item['pricePerUnit'] = result['listings'][3]['pricePerUnit']
                     item['lowestPriceServer'] = result['listings'][3]['worldName']
                     logger.debug("{}价差较高，但是物品比较贵，排除前三，使用第4位的价格进行参考，服务器{}".format(item['name'],item['lowestPriceServer']))
-                except:
+                except (IndexError, KeyError) as e:
+                    logger.debug(f"第4位价格不可用，使用平均价格: {e}")
                     item['pricePerUnit'] = int(result['averagePrice'])
                     item['lowestPriceServer'] = result['listings'][0]['worldName']
                     logger.debug("{}价差较高，但是市场上比较稀缺，使用平均价格{}，服务器{}"
@@ -445,51 +468,75 @@ class Queryer(object):
                 logger.debug("{}差价较低，使用最低价格，服务器{}".format(item['name'],item['lowestPriceServer']))
             # 更新缓存
             logger.info("更新缓存 {}".format(item['name']))
-            self.price_cache[int(item['id'])] = copy.deepcopy(item['pricePerUnit'])
-            self.price_cache[int(item['id'])] = {"pricePerUnit": copy.deepcopy(item['pricePerUnit']), "lowestPriceServer": copy.deepcopy(item['lowestPriceServer'])}
+            cache_manager.set_price(str(item['id']), item['pricePerUnit'], item['lowestPriceServer'])
 
         if type(item) is not list:
-            # 缓存中没有数据，进行在线查询
-            if item['id'] not in self.price_cache:
+            # 先查缓存
+            cached = cache_manager.get_price(str(item['id']))
+            if cached is not None:
+                item['pricePerUnit'] = cached['pricePerUnit']
+                item['lowestPriceServer'] = cached['lowestPriceServer']
+                logger.debug("{} 缓存命中，使用缓存".format(item['name']))
+            else:
                 logger.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
                 self.cq = item['name']
-                query_url = '/api/v2/%s/%s?listings=5&noGst=true' % (self.world, item['id'])
-                result = self.init_query_result(query_url)
+                query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/v2/{self.world}/{item["id"]}?listings=5&noGst=true'
+                result = http_client.get_json(query_url)
+                if result is None:
+                    item['pricePerUnit'] = 0
+                    item['lowestPriceServer'] = '查询失败'
+                    logger.error(f"{item['name']} 价格查询失败")
+                    cache_manager.set_price(str(item['id']), 0, '查询失败')
+                    return
                 select_item_cost(result, item)
-            else:
-                # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
-                item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']]['pricePerUnit'])
-                item['lowestPriceServer']= copy.deepcopy(self.price_cache[item['id']]['lowestPriceServer'])
-                logger.debug("{} 缓存命中，使用缓存".format(item['name']))
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
             ids = []
             # 先提取出没有缓存的物品ID,有缓存直接用缓存
             for i in item:
-                if i['id'] not in self.price_cache:
+                cached = cache_manager.get_price(str(i['id']))
+                if cached is not None:
+                    i['pricePerUnit'] = cached['pricePerUnit']
+                    i['lowestPriceServer'] = cached['lowestPriceServer']
+                    logger.debug("{} 缓存命中，使用缓存".format(i['name']))
+                else:
                     ids.append(str(i['id']))
                     logger.debug("{} 没有查询到缓存 ，在线查询".format(i['name']))
                     self.cq = str(i['name'])
-                else:
-                    i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']]['pricePerUnit'])
-                    i['lowestPriceServer'] = copy.deepcopy(self.price_cache[i['id']]['lowestPriceServer'])
-                    logger.debug("{} 缓存命中，使用缓存".format(i['name']))
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
-                result = self.init_query_result(query_url)['items']
+                query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/{self.world}/{idss}?listings=5&noGst=true'
+                result_json = http_client.get_json(query_url)
+                if result_json is None:
+                    logger.error(f"批量价格查询失败，IDs: {idss}")
+                    result = []
+                else:
+                    result = result_json.get('items', [])
             elif len(ids) == 1:
-                query_url = '/api/%s/%s?listings=5&noGst=true' % (self.world, idss)
-                result = [self.init_query_result(query_url)]
+                query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/{self.world}/{idss}?listings=5&noGst=true'
+                result_json = http_client.get_json(query_url)
+                if result_json is None:
+                    logger.error(f"单个价格查询失败，ID: {idss}")
+                    result = []
+                else:
+                    result = [result_json]
             else:
                 result = []
             for i in item:
                 # 把在线查询到的结果更新到缓存中
-                if i['id'] not in self.price_cache:
+                if cache_manager.get_price(str(i['id'])) is None:
+                    matched = False
                     for r in result:
                         if str(r['itemID']) == str(i['id']):
                             select_item_cost(r, i)
+                            matched = True
+                            break
+                    if not matched:
+                        i['pricePerUnit'] = 0
+                        i['lowestPriceServer'] = '查询失败'
+                        cache_manager.set_price(str(i['id']), 0, '查询失败')
+                        logger.debug(f"{i['name']} 未匹配到价格数据，缓存失败标记")
 
     def calibration_quantity(self, stuff_list, count=1):
         """
@@ -573,6 +620,9 @@ class Queryer(object):
         self.o_cost = 0
         # 查询配方
         self.query_item_craft()
+        # 网络查询失败时提前返回，不显示"不可制作"
+        if self.craft_query_failed:
+            return None, None
         # 确认到有配方
         if len(self.stuff) > 0:
             self.calibration_quantity(self.stuff['craft'])
@@ -591,32 +641,17 @@ class Queryer(object):
         """
         通过gitee拉取程序版本
         """
-        try:
-            url = 'https://gitee.com/nagaresst/paissa/raw/master/Data/version'
-            result = loads(get(url, timeout=5, headers=self.header).text)
-        except:
-            url = 'https://paissa-data.oss-cn-hongkong.aliyuncs.com/version'
-            result = loads(get(url, timeout=5, headers=self.header).text)
+        url = Config.GITEE_RAW_BASE_URL + '/Data/version'
+        result = http_client.get_json(url, timeout=5)
+        if result is None:
+            url = Config.OSS_DATA_BASE_URL + '/version'
+            result = http_client.get_json(url, timeout=5)
+        if result is None:
+            logger.error("版本更新检查失败")
+            return {}
         logger.debug("版本更新检查 {} success".format(url))
         return result
 
-    def test_network(self):
-        """网络测试方法"""
-        url = "https://universalis.app/api/v2/猫小胖/33283?listings=1"
-        c = 0
-        while c < 3:
-            try:
-                result = get(url, timeout=5, headers=self.header)
-                if result.status_code == 200:
-                    return "success"
-                else:
-                    logger.warning(url + str(result.status_code))
-                    c += 1
-            except:
-                logger.error('市场查询网络测试 {} timeout')
-                c += 1
-        if c >= 3:
-            return "failed"
 
 
 if __name__ == '__main__':

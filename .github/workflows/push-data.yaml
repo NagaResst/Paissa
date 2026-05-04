@@ -75,15 +75,11 @@ jobs:
         previous_version = get_previous_version()
         print(f"previous_version: {previous_version}")
         
-        with open('Data/version', 'r') as f:
-            data = json.load(f)
-        
-        files_to_upload = {
-            "program": ["Window.py", "Queryer.py", "servers.json"],
-            "UI": ["UI/check_update.py", "UI/cost_page.py", "UI/history_page.py", "UI/loading_page.py", "UI/main_window.py", "UI/query_item_id.py", "UI/select_item_list.py", "UI/show_price.py"],
-            "data": ["Data/item.Pdt"],
-            "version": ['Data/version']
-        }
+        # 从 version 文件的 files 字段动态读取需要上传的程序文件
+        # 这确保 OSS 上的文件列表与客户端下载列表一致
+        program_files = current_version.get('files', [])
+        ui_files = ["UI/check_update.py", "UI/cost_page.py", "UI/history_page.py", "UI/loading_page.py",
+                     "UI/main_window.py", "UI/query_item_id.py", "UI/select_item_list.py", "UI/show_price.py"]
         
         auth = Auth(os.environ['OSS_ACCESS_KEY_ID'], os.environ['OSS_ACCESS_KEY_SECRET'])
         bucket = Bucket(auth, os.environ['OSS_ENDPOINT'], os.environ['OSS_BUCKET_NAME'])
@@ -91,19 +87,37 @@ jobs:
         message_publish = os.environ['MESSAGE_PUBLISH']
         
         if not previous_version or current_version != previous_version or force_upload:
-            if current_version['program'] != previous_version['program'] or force_upload:
-                files = files_to_upload["program"]
-                # 上传文件
-                for file in files:
+            if not previous_version or current_version['program'] != previous_version['program'] or force_upload:
+                # 上传程序文件（Paissa.py, config.py, Queryer.py, Window.py, network/*, cache/* 等）
+                for file in program_files:
                     bucket.put_object_from_file(file, file, headers=header)
-                ui_files = files_to_upload["UI"]
+                # 上传UI文件
                 for file in ui_files:
                     bucket.put_object_from_file(file, file, headers=header)
+                # 上传 version 文件（OSS key 为 'version'，本地路径为 'Data/version'）
                 bucket.put_object_from_file('version', 'Data/version')
-                bucket.put_object_from_file('Paissa.int', 'Paissa.py')
-                print(f"Uploaded program files to OSS.")
-            if current_version['data'] != previous_version['data'] or force_upload:
-                files = files_to_upload["data"]
+                
+                # 检查 files 列表中是否包含 Paissa.py，如果是则重命名为 Paissa.int 后上传
+                import shutil
+                if 'Paissa.py' in program_files:
+                    print("检测到 Paissa.py 在更新列表中，将重命名为 Paissa.int 后上传")
+                    # 复制 Paissa.py 为临时文件 Paissa.int
+                    shutil.copy2('Paissa.py', 'Paissa.int')
+                    # 上传为 Paissa.int
+                    bucket.put_object_from_file('Paissa.int', 'Paissa.int', headers=header)
+                    print("已上传 Paissa.int 到 OSS")
+                    # 清理临时文件
+                    os.remove('Paissa.int')
+                else:
+                    # 兼容旧版：即使不在 files 列表中，也上传 Paissa.int
+                    if os.path.exists('Paissa.py'):
+                        shutil.copy2('Paissa.py', 'Paissa.int')
+                        bucket.put_object_from_file('Paissa.int', 'Paissa.int', headers=header)
+                        print("已上传 Paissa.int 到 OSS（兼容模式）")
+                        os.remove('Paissa.int')
+                
+                print(f"Uploaded program files to OSS: {program_files}")
+            if not previous_version or current_version['data'] != previous_version['data'] or force_upload:
                 bucket.put_object_from_file('version', 'Data/version')
                 with zipfile.ZipFile('item.zip', 'w') as zipf:
                     zipf.write('Data/item.Pdt', arcname="item.Pdt")

@@ -96,8 +96,26 @@ jobs:
                     bucket.put_object_from_file(file, file, headers=header)
                 # 上传 version 文件（OSS key 为 'version'，本地路径为 'Data/version'）
                 bucket.put_object_from_file('version', 'Data/version')
-                # 上传 Paissa.py 到 Paissa.int（兼容旧版客户端）
-                bucket.put_object_from_file('Paissa.int', 'Paissa.py')
+                
+                # 检查 files 列表中是否包含 Paissa.py，如果是则重命名为 Paissa.int 后上传
+                import shutil
+                if 'Paissa.py' in program_files:
+                    print("检测到 Paissa.py 在更新列表中，将重命名为 Paissa.int 后上传")
+                    # 复制 Paissa.py 为临时文件 Paissa.int
+                    shutil.copy2('Paissa.py', 'Paissa.int')
+                    # 上传为 Paissa.int
+                    bucket.put_object_from_file('Paissa.int', 'Paissa.int', headers=header)
+                    print("已上传 Paissa.int 到 OSS")
+                    # 清理临时文件
+                    os.remove('Paissa.int')
+                else:
+                    # 兼容旧版：即使不在 files 列表中，也上传 Paissa.int
+                    if os.path.exists('Paissa.py'):
+                        shutil.copy2('Paissa.py', 'Paissa.int')
+                        bucket.put_object_from_file('Paissa.int', 'Paissa.int', headers=header)
+                        print("已上传 Paissa.int 到 OSS（兼容模式）")
+                        os.remove('Paissa.int')
+                
                 print(f"Uploaded program files to OSS: {program_files}")
             if not previous_version or current_version['data'] != previous_version['data'] or force_upload:
                 bucket.put_object_from_file('version', 'Data/version')

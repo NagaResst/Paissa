@@ -1,1 +1,1 @@
-{"program": "2.0.3", "data": 7.45, "files": ["Paissa.int", "config.py", "Queryer.py", "Window.py", "Data/logger.py", "network/__init__.py", "network/client.py", "cache/__init__.py", "cache/manager.py"]}
+{"program": "2.1.0", "data": 7.45, "files": ["Paissa.int", "config.py", "Queryer.py", "Window.py", "Data/logger.py", "network/__init__.py", "network/client.py", "cache/__init__.py", "cache/manager.py"]}

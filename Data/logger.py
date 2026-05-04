@@ -32,7 +32,7 @@ class Log(object):
     def file_handle(self, log_file):
         file_handler = logging.handlers.RotatingFileHandler(
             log_file, 
-            maxBytes=50*1024*1024,  # 50MB
+            maxBytes=100*1024*1024,  # 100MB
             backupCount=5, 
             encoding='utf-8'
         )
@@ -70,7 +70,9 @@ class Log(object):
         # 添加处理器
         self.log.addHandler(self.console_handle())
         self.log.addHandler(self.file_handle(log_file))
-        self.log.addHandler(self.performance_handle(log_file))
+        # 性能日志仅在DEBUG级别启用，避免正常使用时的额外I/O开销
+        if self.log.level <= logging.DEBUG:
+            self.log.addHandler(self.performance_handle(log_file))
         return self.log
 
 

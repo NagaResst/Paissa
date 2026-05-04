@@ -30,7 +30,7 @@ class Config:
     
     # 网络超时设置 - 短而快
     TIMEOUT_SETTINGS = {
-        "version_check": 1,       # 版本检查3秒超时
+        "version_check": 3,       # 版本检查3秒超时
         "data_download": 5,       # 数据下载5秒超时  
         "market_data": 3,         # 市场数据6秒超时
         "icon_download": 3        # 图标下载3秒超时
@@ -46,7 +46,33 @@ class Config:
     CACHE_EXPIRE_TIME = 300  # 5分钟
 
     # 服务器配置
-    SERVER_CONFIG_FILE = BASE_DIR / "servers.json"
+    SERVER_CONFIG = {
+        "version": "1.0",
+        "world_regions": {
+            "maoxiaopang": ["猫小胖", "紫水栈桥", "延夏", "静语庄园", "摩杜纳", "海猫茶屋", "柔风海湾", "琥珀原"],
+            "luxingniao": ["陆行鸟", "红玉海", "神意之地", "拉诺西亚", "幻影群岛", "萌芽池", "宇宙和音", "沃仙曦染", "晨曦王座"],
+            "moguli": ["莫古力", "白银乡", "白金幻象", "神拳痕", "潮风亭", "旅人栈桥", "拂晓之间", "龙巢神殿", "梦羽宝境"],
+            "doudouchai": ["豆豆柴", "水晶塔", "银泪湖", "太阳海岸", "伊修加德", "红茶川"],
+            "Elemental": ["Elemental", "Carbuncle", "Kujata", "Typhon", "Garuda", "Atomos", "Tonberry", "Aegis", "Gungnir"],
+            "Gaia": ["Gaia", "Alexander", "Fenrir", "Ultima", "Ifrit", "Bahamut", "Tiamat", "Durandal", "Ridill"],
+            "Mana": ["Mana", "Asura", "Pandaemonium", "Anima", "Hades", "Ixion", "Titan", "Chocobo", "Masamune"],
+            "Aether": ["Aether", "Jenova", "Faerie", "Siren", "Gilgamesh", "Midgardsormr", "Adamantoise", "Cactuar", "Sargatanas"],
+            "Primal": ["Primal", "Famfrit", "Exodus", "Lamia", "Leviathan", "Ultros", "Behemoth", "Excalibur", "Hyperion"],
+            "Chaos": ["Chaos", "Omega", "Moogle", "Cerberus", "Louisoix", "Spriggan", "Ragnarok", "Sagittarius", "Phantom"],
+            "Light": ["Light", "Twintania", "Lich", "Zodiark", "Phoenix", "Odin", "Shiva", "Alpha", "Raiden"],
+            "Crystal": ["Crystal", "Brynhildr", "Mateus", "Zalera", "Diabolos", "Coeurl", "Malboro", "Goblin", "Balmung"],
+            "Materia": ["Materia", "Ravana", "Bismarck", "Sephirot", "Sophia", "Zurvan"],
+            "Meteor": ["Meteor", "Belias", "Shinryu", "Unicorn", "Yojimbo", "Zeromus", "Valefor", "Ramuh", "Mandragora"],
+            "Dynamis": ["Dynamis", "Marilith", "Seraph", "Halicarnassus", "Maduin"]
+        },
+        "area_mappings": {
+            "China": ["maoxiaopang", "moguli", "luxingniao", "doudouchai"],
+            "Japan": ["Elemental", "Gaia", "Mana", "Meteor"],
+            "North-America": ["Aether", "Primal", "Crystal", "Dynamis"],
+            "Oceania": ["Materia"],
+            "Europe": ["Chaos", "Light"]
+        }
+    }
 
     # 界面资源
     HQ_ICON_FILE = DATA_DIR / "hq.png"

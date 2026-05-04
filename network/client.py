@@ -23,18 +23,18 @@ class HttpClient:
 
     def _setup_session(self):
         """配置会话参数 - 快速重试策略"""
-        # 针对跨境网络优化的重试策略
+        # 针对跨境网络优化的重试策略（urllib3层重试，处理服务端错误状态码）
         retry_strategy = Retry(
             total=Config.MAX_RETRY_ATTEMPTS,
-            backoff_factor=Config.RETRY_DELAY_BASE,  # 短延迟快速重试
+            backoff_factor=Config.RETRY_DELAY_BASE,
             status_forcelist=[408, 429, 500, 502, 503, 504, 522, 524],
             allowed_methods=["HEAD", "GET", "OPTIONS"],
-            raise_on_status=False  # 不立即抛出异常
+            raise_on_status=False
         )
 
         adapter = HTTPAdapter(
             max_retries=retry_strategy,
-            pool_connections=20,  # 增加连接池
+            pool_connections=20,
             pool_maxsize=20
         )
 
@@ -51,11 +51,31 @@ class HttpClient:
         except Exception as e:
             logger.warning(f"代理设置获取失败: {e}")
 
+    def _retry_request(self, request_func, url, timeout):
+        """应用层重试：对超时和连接错误进行额外重试"""
+        for attempt in range(Config.MAX_RETRY_ATTEMPTS):
+            try:
+                return request_func()
+            except requests.exceptions.Timeout:
+                logger.debug(f"第{attempt + 1}次尝试超时: {url}")
+                if attempt == Config.MAX_RETRY_ATTEMPTS - 1:
+                    return None
+                time.sleep(Config.RETRY_DELAY_BASE)
+            except requests.exceptions.ConnectionError:
+                logger.debug(f"第{attempt + 1}次连接失败: {url}")
+                if attempt == Config.MAX_RETRY_ATTEMPTS - 1:
+                    return None
+                time.sleep(Config.RETRY_DELAY_BASE)
+            except Exception as e:
+                logger.debug(f"请求失败 {url}: {type(e).__name__}")
+                return None
+        return None
+
     def get_json(self, url: str, timeout: Optional[int] = None) -> Optional[Dict[Any, Any]]:
-        """快速获取JSON数据"""
+        """获取JSON数据，带应用层重试"""
         timeout = timeout or Config.TIMEOUT_SETTINGS.get('data_download', 8)
 
-        try:
+        def _do_request():
             response = self.session.get(url, timeout=timeout)
             if response.status_code == 200:
                 try:
@@ -66,57 +86,36 @@ class HttpClient:
             else:
                 logger.warning(f"HTTP {response.status_code}: {url}")
                 return None
-        except requests.exceptions.Timeout:
-            logger.debug(f"⏱️ 超时 {url}")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.debug(f"🔗 连接失败 {url}")
-            return None
-        except Exception as e:
-            logger.debug(f"❌ 请求失败 {url}: {type(e).__name__}")
-            return None
+
+        return self._retry_request(_do_request, url, timeout)
 
     def get_text(self, url: str, timeout: Optional[int] = None) -> Optional[str]:
-        """快速获取文本数据"""
+        """获取文本数据，带应用层重试"""
         timeout = timeout or Config.TIMEOUT_SETTINGS.get('data_download', 8)
 
-        try:
+        def _do_request():
             response = self.session.get(url, timeout=timeout)
             if response.status_code == 200:
                 return response.text
             else:
                 logger.warning(f"HTTP {response.status_code}: {url}")
                 return None
-        except requests.exceptions.Timeout:
-            logger.debug(f"⏱️ 超时 {url}")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.debug(f"🔗 连接失败 {url}")
-            return None
-        except Exception as e:
-            logger.debug(f"❌ 请求失败 {url}: {type(e).__name__}")
-            return None
+
+        return self._retry_request(_do_request, url, timeout)
 
     def get_content(self, url: str, timeout: Optional[int] = None) -> Optional[bytes]:
-        """快速获取二进制内容"""
+        """获取二进制内容，带应用层重试"""
         timeout = timeout or Config.TIMEOUT_SETTINGS.get('icon_download', 3)
 
-        try:
+        def _do_request():
             response = self.session.get(url, timeout=timeout)
             if response.status_code == 200:
                 return response.content
             else:
                 logger.warning(f"HTTP {response.status_code}: {url}")
                 return None
-        except requests.exceptions.Timeout:
-            logger.debug(f"⏱️ 超时 {url}")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.debug(f"🔗 连接失败 {url}")
-            return None
-        except Exception as e:
-            logger.debug(f"❌ 请求失败 {url}: {type(e).__name__}")
-            return None
+
+        return self._retry_request(_do_request, url, timeout)
 
     def close(self):
         """关闭会话"""

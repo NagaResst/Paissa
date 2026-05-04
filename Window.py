@@ -289,7 +289,7 @@ class MainWindow(Ui_mainWindow):
             self.select_server_Unicorn.triggered.connect(lambda: self.click_select_server("Unicorn"))
             self.select_server_Yojimbo.triggered.connect(lambda: self.click_select_server("Yojimbo"))
             self.select_server_Zeromus.triggered.connect(lambda: self.click_select_server("Zeromus"))
-            self.select_server_Valefor.triggered.connect(lambda: self.click_select_server(""))
+            self.select_server_Valefor.triggered.connect(lambda: self.click_select_server("Valefor"))
             self.select_server_Ramuh.triggered.connect(lambda: self.click_select_server("Ramuh"))
             self.select_server_Mandragora.triggered.connect(lambda: self.click_select_server("Mandragora"))
             self.select_server_Dynamis.triggered.connect(lambda: self.click_select_server("Dynamis"))
@@ -369,6 +369,10 @@ class MainWindow(Ui_mainWindow):
             show_price_page.all_server.setItem(t, 6, lastReviewTime)
             t += 1
         show_price_page.all_server.repaint()
+        try:
+            show_price_page.all_server.doubleClicked.disconnect(self.click_select_other_server)
+        except TypeError:
+            pass
         show_price_page.all_server.doubleClicked.connect(self.click_select_other_server)
 
     def click_select_other_server(self, selected):
@@ -381,7 +385,7 @@ class MainWindow(Ui_mainWindow):
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("通过点击全服比价重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            item.price_cache = {}
+            item.price_cache.clear()
             self.query_price()
 
     def click_select_server(self, server):
@@ -405,7 +409,7 @@ class MainWindow(Ui_mainWindow):
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            item.price_cache = {}
+            item.price_cache.clear()
             self.query_price()
 
     def query_item_action(self):
@@ -415,7 +419,7 @@ class MainWindow(Ui_mainWindow):
         global query_history
         input_name = query_item_page.input_item_name.text()
         # 如果与上一次查询结果一致，那么直接使用上次查询的列表
-        if len(query_history) > 0 and {"itemName": input_name} == query_history[-1]['itemName'] and len(
+        if len(query_history) > 0 and input_name == query_history[-1]['itemName'] and len(
                 item.item_list) > 1 and first_query is False:
             logger.info("与上次查询结果一致，切换到物品选择页面")
             self.show_data_box.setCurrentIndex(1)
@@ -531,7 +535,8 @@ class MainWindow(Ui_mainWindow):
             for i in stuff:
                 make_tree(i, cost_page.cost_tree)
             self.show_cost.setText('市场价格')
-            show_query_item.quit()
+            if show_query_item.isRunning():
+                show_query_item.quit()
             self.item_icon.show()
             self.jump_to_wiki.show()
             self.show_cost.show()
@@ -595,7 +600,14 @@ class MainWindow(Ui_mainWindow):
             show_item_cost.start()
             self._active_threads.append(show_item_cost)
             logger.debug("开始载入界面线程")
+            try:
+                show_query_item.sinout.disconnect(ui.show_item)
+            except TypeError:
+                pass
             show_query_item.sinout.connect(ui.show_item)
+            if show_query_item.isRunning():
+                show_query_item.quit()
+                show_query_item.wait()
             show_query_item.start()
 
     def click_query_item_name(self, selected):
@@ -943,37 +955,37 @@ class MainWindow(Ui_mainWindow):
 
 
 class QueryItemId(Ui_query_item_id):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class SelectItemList(Ui_select_item_list):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class ShowPrice(Ui_show_price):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class LoadingPage(Ui_load_page):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class CostPage(Ui_cost_page):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class HistoryPage(Ui_history_Window):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
 class CheckUpdate(Ui_check_update):
-    def __int__(self):
+    def __init__(self):
         super().__init__()
 
 
@@ -1116,8 +1128,6 @@ class GetItemIcon(QtCore.QThread):
 公共数据部分
 """
 logger.info("主程序启动，开始处理公共数据")
-# 与 Data/version 文件中的版本对应
-program_version = Config.PROGRAM_VERSION
 # 加载查询历史
 history_file = str(Config.HISTORY_FILE)
 try:
@@ -1144,6 +1154,9 @@ except KeyError:
     item = Queryer(history_json['server'])
     logger.info("读取查询历史成功")
 
+# 与 Data/version 文件中的版本对应
+program_version = history_json.get('program_version', Config.PROGRAM_VERSION)
+
 # 加载本地静态文件
 try:
     with open(str(Config.ITEM_DATA_FILE), 'r', encoding='utf8') as item_list_file:
@@ -1165,113 +1178,119 @@ server_list = []
 query_check = False
 logger.info("主程序数据初始化完成")
 
-"""
-主程序开始
-"""
-app = QtWidgets.QApplication(sys.argv)
-desktop = app.primaryScreen().size()
-logger.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
-app.setStyle("Fusion")
-widget = RQMainWindow()
-ui = MainWindow(widget)
-ui.setupUi(widget)
-widget.resize(int(desktop.width() * 0.6), int(desktop.height() * 0.6))
-ui.setup_menu()
-ui.jump_to_wiki.setOpenExternalLinks(True)
-ui.show_server.setText(item.server)
-ui.item_icon.hide()
-ui.jump_to_wiki.hide()
-ui.show_cost.hide()
-ui.back_query.hide()
-ui.query_history.show()
-ui.back_query.clicked.connect(ui.back_to_index)
-ui.show_data_box.setCurrentIndex(0)
-ui.query_history.clicked.connect(ui.hidden_history_board)
-ui.show_cost.clicked.connect(ui.make_cost_tree)
-ui.use_static_file.setChecked(history_json['use_static'])
-widget.show()
 
-"""
-物品查询首页
-"""
-query_item_page = QueryItemId()
-query_item_page.setupUi(ui.query_item)
-query_item_page.query_button.clicked.connect(ui.query_item_action)
-query_item_page.input_item_name.returnPressed.connect(ui.query_item_action)
-query_item_page.query_is_hq.clicked.connect(ui.select_hq_ornot)
+def run_app():
+    """启动Qt应用主循环"""
+    global app, widget, ui, query_item_page, select_item_page, show_price_page
+    global cost_page, loading_page, widget2, history_board, widget3, check_update_window, show_query_item
 
-"""
-模糊搜索时选择物品的界面
-"""
-select_item_page = SelectItemList()
-select_item_page.setupUi(ui.select_item)
-select_item_page.back.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
-select_item_page.items_list_widget.doubleClicked.connect(ui.select_item_action)
-# 在选择物品界面选中物品后点击"选择物品"的按钮，把选中行作为对象传给价格查询模块
-select_item_page.select_this.clicked.connect(lambda: ui.select_item_action(select_item_page.items_list_widget.selectedItems()))
+    """
+    主程序开始
+    """
+    app = QtWidgets.QApplication(sys.argv)
+    desktop = app.primaryScreen().size()
+    logger.debug("获取到桌面大小为{} * {}".format(desktop.width(), desktop.height()))
+    app.setStyle("Fusion")
+    widget = RQMainWindow()
+    ui = MainWindow(widget)
+    ui.setupUi(widget)
+    widget.resize(int(desktop.width() * 0.6), int(desktop.height() * 0.6))
+    ui.setup_menu()
+    ui.jump_to_wiki.setOpenExternalLinks(True)
+    ui.show_server.setText(item.server)
+    ui.item_icon.hide()
+    ui.jump_to_wiki.hide()
+    ui.show_cost.hide()
+    ui.back_query.hide()
+    ui.query_history.show()
+    ui.back_query.clicked.connect(ui.back_to_index)
+    ui.show_data_box.setCurrentIndex(0)
+    ui.query_history.clicked.connect(ui.hidden_history_board)
+    ui.show_cost.clicked.connect(ui.make_cost_tree)
+    ui.use_static_file.setChecked(history_json['use_static'])
+    widget.show()
 
-"""
-价格显示界面
-"""
-show_price_page = ShowPrice()
-show_price_page.setupUi(ui.show_price)
-# 设定在售表格样式
-show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
-show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-# HQ列
-show_price_page.sale_list.setColumnWidth(1, 20)
-# 设定比价表格样式
-show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
-# HQ列
-show_price_page.all_server.setColumnWidth(2, 20)
-show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    """
+    物品查询首页
+    """
+    query_item_page = QueryItemId()
+    query_item_page.setupUi(ui.query_item)
+    query_item_page.query_button.clicked.connect(ui.query_item_action)
+    query_item_page.input_item_name.returnPressed.connect(ui.query_item_action)
+    query_item_page.query_is_hq.clicked.connect(ui.select_hq_ornot)
 
-"""
-材料成本树
-"""
-cost_page = CostPage()
-cost_page.setupUi(ui.show_craft)
-cost_page.cost_tree.setColumnWidth(0, 500)
-cost_page.cost_tree.itemDoubleClicked.connect(ui.click_query_item_name)
-cost_page.click_c.clicked.connect(ui.click_copy_cost_tree)
-show_query_item = ShowQueryItem()
+    """
+    模糊搜索时选择物品的界面
+    """
+    select_item_page = SelectItemList()
+    select_item_page.setupUi(ui.select_item)
+    select_item_page.back.clicked.connect(lambda: ui.show_data_box.setCurrentIndex(0))
+    select_item_page.items_list_widget.doubleClicked.connect(ui.select_item_action)
+    # 在选择物品界面选中物品后点击"选择物品"的按钮，把选中行作为对象传给价格查询模块
+    select_item_page.select_this.clicked.connect(lambda: ui.select_item_action(select_item_page.items_list_widget.selectedItems()))
 
-"""
-loading界面
-"""
-loading_page = LoadingPage()
-loading_page.setupUi(ui.loading_ui)
-loading_page.loading_text.setText("猴面雀正在为您查找资料。")
+    """
+    价格显示界面
+    """
+    show_price_page = ShowPrice()
+    show_price_page.setupUi(ui.show_price)
+    # 设定在售表格样式
+    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    show_price_page.sale_list.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+    show_price_page.sale_list.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    # HQ列
+    show_price_page.sale_list.setColumnWidth(1, 20)
+    # 设定比价表格样式
+    show_price_page.all_server.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    show_price_page.all_server.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
+    # HQ列
+    show_price_page.all_server.setColumnWidth(2, 20)
+    show_price_page.all_server.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-"""
-查询历史面板
-"""
-widget2 = QtWidgets.QMainWindow()
-history_board = HistoryPage()
-history_board.setupUi(widget2)
-widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
-widget2.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
-history_board.history_list.doubleClicked.connect(ui.click_history_query)
-try:
-    for i in query_history:
-        if i['HQ'] is not True and i["itemName"] != 'None':
-            history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
-        elif i['HQ'] is True and i["itemName"] != 'None':
-            history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
-except Exception as e:
-    logger.warning(f"历史记录加载异常: {e}")
+    """
+    材料成本树
+    """
+    cost_page = CostPage()
+    cost_page.setupUi(ui.show_craft)
+    cost_page.cost_tree.setColumnWidth(0, 500)
+    cost_page.cost_tree.itemDoubleClicked.connect(ui.click_query_item_name)
+    cost_page.click_c.clicked.connect(ui.click_copy_cost_tree)
+    show_query_item = ShowQueryItem()
 
-"""
-check update
-"""
-widget3 = QtWidgets.QMainWindow()
-check_update_window = CheckUpdate()
-check_update_window.setupUi(widget3)
-# 关于面板的超链接激活
-check_update_window.label_8.setOpenExternalLinks(True)
-check_update_window.current_program_version.setText(program_version)
-check_update_window.current_data_verison.setText(str(date_version))
+    """
+    loading界面
+    """
+    loading_page = LoadingPage()
+    loading_page.setupUi(ui.loading_ui)
+    loading_page.loading_text.setText("猴面雀正在为您查找资料。")
 
-sys.exit(app.exec_())
+    """
+    查询历史面板
+    """
+    widget2 = QtWidgets.QMainWindow()
+    history_board = HistoryPage()
+    history_board.setupUi(widget2)
+    widget2.resize(int(desktop.width() * 0.15), int(desktop.height() * 0.6))
+    widget2.setMaximumSize(QtCore.QSize(int(desktop.width() * 0.3), int(desktop.height() * 0.6)))
+    history_board.history_list.doubleClicked.connect(ui.click_history_query)
+    try:
+        for i in query_history:
+            if i['HQ'] is not True and i["itemName"] != 'None':
+                history_board.history_list.insertItem(0, i["itemName"] + ' - ' + i['server'])
+            elif i['HQ'] is True and i["itemName"] != 'None':
+                history_board.history_list.insertItem(0, i["itemName"] + 'HQ' + ' - ' + i['server'])
+    except Exception as e:
+        logger.warning(f"历史记录加载异常: {e}")
+
+    """
+    check update
+    """
+    widget3 = QtWidgets.QMainWindow()
+    check_update_window = CheckUpdate()
+    check_update_window.setupUi(widget3)
+    # 关于面板的超链接激活
+    check_update_window.label_8.setOpenExternalLinks(True)
+    check_update_window.current_program_version.setText(program_version)
+    check_update_window.current_data_verison.setText(str(date_version))
+
+    sys.exit(app.exec_())

@@ -10,6 +10,7 @@ from config import Config
 from network.client import http_client
 from Data.marketable import marketable
 from Data.logger import logger
+from cache.manager import cache_manager
 
 
 class Queryer(object):
@@ -49,10 +50,9 @@ class Queryer(object):
         self.filter_item = True
         # 成本查询复制到剪贴板的容器变量
         self.clipboard = ''
-        # 物品价格静态缓存
-        self.price_cache = {}
-        # 价格缓存线程安全锁（可重入锁，允许同一线程多次获取）
-        self._price_cache_lock = threading.RLock()
+        # 网络查询失败标志
+        self.query_network_failed = False
+        self.craft_query_failed = False
         # 当前正在查询的物品名称
         self.cq = None
         self.server_config = None
@@ -93,6 +93,15 @@ class Queryer(object):
             icon_url = Config.CAFEMAKER_BASE_URL + self.item_list[0]['icon']
         elif len(self.item_list) == 1 and self.static is True:
             icon_url = Config.GARLANDTOOLS_BASE_URL + "/files/icons/item/t/" + self.item_data[str(self.id)]['icon'] + '.png'
+        # item_list 为空时，通过garlandtools API获取图标ID再构造URL
+        elif len(self.item_list) == 0 and self.id:
+            result = http_client.get_json(
+                Config.GARLANDTOOLS_BASE_URL + '/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id))
+            if result and 'item' in result and 'icon' in result['item']:
+                icon_url = Config.GARLANDTOOLS_BASE_URL + "/files/icons/item/t/" + str(result['item']['icon']) + '.png'
+        if icon_url is None:
+            logger.debug('无法构造图标URL，跳过图标获取')
+            return
         content = http_client.get_content(icon_url)
         if content:
             self.icon = content
@@ -102,25 +111,8 @@ class Queryer(object):
             logger.debug('图标获取失败')
 
     def load_server_config(self):
-        """加载服务器配置文件"""
-        config_path = str(Config.SERVER_CONFIG_FILE)
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                self.server_config = load(f)
-            logger.info("服务器配置文件加载成功")
-        except FileNotFoundError:
-            logger.warning("找不到服务器配置文件，使用默认配置")
-            self.server_config = {
-                "world_regions": {
-                    "maoxiaopang": ["猫小胖", "紫水栈桥", "延夏", "静语庄园", "摩杜纳", "海猫茶屋", "柔风海湾", "琥珀原"],
-                    "luxingniao": ["陆行鸟", "红玉海", "神意之地", "拉诺西亚", "幻影群岛", "萌芽池", "宇宙和音", "沃仙曦染", "晨曦王座"],
-                    "moguli": ["莫古力", "白银乡", "白金幻象", "神拳痕", "潮风亭", "旅人栈桥", "拂晓之间", "龙巢神殿", "梦羽宝境"],
-                    "doudouchai": ["豆豆柴", "水晶塔", "银泪湖", "太阳海岸", "伊修加德", "红茶川"]
-                },
-                "area_mappings": {
-                    "China": ["maoxiaopang", "moguli", "luxingniao", "doudouchai"]
-                }
-            }
+        """加载服务器配置"""
+        self.server_config = Config.SERVER_CONFIG
 
     def server_list(self):
         """
@@ -311,6 +303,19 @@ class Queryer(object):
         """
         self.craft_query_failed = False
         if len(self.stuff) == 0:
+            # 先查配方缓存
+            cached_craft = cache_manager.get_craft(str(self.id))
+            if cached_craft is not None:
+                self.stuff = cached_craft
+                if 'craft' in self.stuff:
+                    if 'yield' in self.stuff:
+                        self.yields = self.stuff['yield']
+                    self.make_item_craft(self.stuff['craft'])
+                    logger.info("物品制作配方从缓存加载成功")
+                else:
+                    self.stuff = {}
+                    logger.warning("物品制作配方缓存中无配方，清空配方池")
+                return
             if self.static is False:
                 query_url = Config.GARLANDTOOLS_BASE_URL + '/api/get.php?type=item&lang=chs&version=3&id=' + str(self.id)
                 result = http_client.get_json(query_url)
@@ -320,13 +325,15 @@ class Queryer(object):
                     logger.error("制作配方查询请求失败")
                     return
                 self.stuff = result['item']
-                if 'craft' in self.stuff:
+                if 'craft' in self.stuff and len(self.stuff['craft']) > 0:
                     if 'yield' in self.stuff['craft'][0]:
                         self.yields = self.stuff['craft'][0]['yield']
                         self.stuff['yield'] = self.stuff['craft'][0]['yield']
                     self.stuff['craft'] = self.stuff['craft'][0]['ingredients']
                     self.make_item_craft(self.stuff['craft'])
                     logger.info("物品制作配方已查询成功")
+                    # 写入配方缓存
+                    cache_manager.set_craft(str(self.id), self.stuff)
                 else:
                     self.stuff = {}
                     logger.warning("物品制作配方已查询失败，清空配方池")
@@ -341,6 +348,8 @@ class Queryer(object):
                         self.yields = self.stuff['yield']
                     self.make_item_craft(self.stuff['craft'])
                     logger.info("物品制作配方已查询成功")
+                    # 写入配方缓存
+                    cache_manager.set_craft(str(self.id), self.stuff)
                 else:
                     self.stuff = {}
                     logger.warning("物品制作配方已查询失败，清空配方池")
@@ -385,6 +394,10 @@ class Queryer(object):
         :return result -> dist 物品的数据
         """
         logger.debug("材料递归查询，物品ID {} ".format(itemid))
+        # 先查配方缓存
+        cached = cache_manager.get_craft(str(itemid))
+        if cached is not None:
+            return cached
         if self.static is False:
             query_url = Config.GARLANDTOOLS_BASE_URL + '/api/get.php?type=item&lang=chs&version=3&id=' + str(itemid)
             result = http_client.get_json(query_url)
@@ -392,17 +405,20 @@ class Queryer(object):
                 logger.error(f"物品详情查询请求失败, ID: {itemid}")
                 return {'name': '未知', 'id': str(itemid)}
             result = result['item']
-            if 'craft' in result:
+            if 'craft' in result and len(result['craft']) > 0:
                 if 'yield' in result['craft'][0]:
                     result['yield'] = result['craft'][0]['yield']
                 result['craft'] = result['craft'][0]['ingredients']
+            cache_manager.set_craft(str(itemid), result)
             return result
         elif self.static is True:
             # 重要： 采用深复制来避免成本树的计算波及到保存在内存中的静态原始数据
             if str(itemid) not in self.item_data:
                 logger.warning(f"静态数据中未找到物品ID: {itemid}")
                 return {'name': '未知材料', 'id': str(itemid)}
-            return copy.deepcopy(self.item_data[str(itemid)])
+            result = copy.deepcopy(self.item_data[str(itemid)])
+            cache_manager.set_craft(str(itemid), result)
+            return result
 
     def query_item_cost_min(self, item):
         """
@@ -452,14 +468,16 @@ class Queryer(object):
                 logger.debug("{}差价较低，使用最低价格，服务器{}".format(item['name'],item['lowestPriceServer']))
             # 更新缓存
             logger.info("更新缓存 {}".format(item['name']))
-            with self._price_cache_lock:
-                self.price_cache[int(item['id'])] = {"pricePerUnit": copy.deepcopy(item['pricePerUnit']), "lowestPriceServer": copy.deepcopy(item['lowestPriceServer'])}
+            cache_manager.set_price(str(item['id']), item['pricePerUnit'], item['lowestPriceServer'])
 
         if type(item) is not list:
-            # 缓存中没有数据，进行在线查询
-            with self._price_cache_lock:
-                item_in_cache = item['id'] in self.price_cache
-            if not item_in_cache:
+            # 先查缓存
+            cached = cache_manager.get_price(str(item['id']))
+            if cached is not None:
+                item['pricePerUnit'] = cached['pricePerUnit']
+                item['lowestPriceServer'] = cached['lowestPriceServer']
+                logger.debug("{} 缓存命中，使用缓存".format(item['name']))
+            else:
                 logger.debug("{}缓存中没有数据，进行在线查询".format(item['name']))
                 self.cq = item['name']
                 query_url = f'{Config.UNIVERSALIS_BASE_URL}/api/v2/{self.world}/{item["id"]}?listings=5&noGst=true'
@@ -468,30 +486,23 @@ class Queryer(object):
                     item['pricePerUnit'] = 0
                     item['lowestPriceServer'] = '查询失败'
                     logger.error(f"{item['name']} 价格查询失败")
+                    cache_manager.set_price(str(item['id']), 0, '查询失败')
                     return
                 select_item_cost(result, item)
-            else:
-                # 缓存命中，直接读取数据。 缓存没有超时时间，但是不会有人开一整天猴面雀吧
-                with self._price_cache_lock:
-                    item['pricePerUnit'] = copy.deepcopy(self.price_cache[item['id']]['pricePerUnit'])
-                    item['lowestPriceServer']= copy.deepcopy(self.price_cache[item['id']]['lowestPriceServer'])
-                logger.debug("{} 缓存命中，使用缓存".format(item['name']))
         # 一次查询多个物品 ，在计算成本的时候会用到
         elif type(item) is list:
             ids = []
             # 先提取出没有缓存的物品ID,有缓存直接用缓存
             for i in item:
-                with self._price_cache_lock:
-                    i_in_cache = i['id'] in self.price_cache
-                if not i_in_cache:
+                cached = cache_manager.get_price(str(i['id']))
+                if cached is not None:
+                    i['pricePerUnit'] = cached['pricePerUnit']
+                    i['lowestPriceServer'] = cached['lowestPriceServer']
+                    logger.debug("{} 缓存命中，使用缓存".format(i['name']))
+                else:
                     ids.append(str(i['id']))
                     logger.debug("{} 没有查询到缓存 ，在线查询".format(i['name']))
                     self.cq = str(i['name'])
-                else:
-                    with self._price_cache_lock:
-                        i['pricePerUnit'] = copy.deepcopy(self.price_cache[i['id']]['pricePerUnit'])
-                        i['lowestPriceServer'] = copy.deepcopy(self.price_cache[i['id']]['lowestPriceServer'])
-                    logger.debug("{} 缓存命中，使用缓存".format(i['name']))
             # 把list转换成字符串，准备在线查询
             idss = ','.join(ids)
             if len(ids) > 1:
@@ -514,12 +525,18 @@ class Queryer(object):
                 result = []
             for i in item:
                 # 把在线查询到的结果更新到缓存中
-                with self._price_cache_lock:
-                    i_in_cache = i['id'] in self.price_cache
-                if not i_in_cache:
+                if cache_manager.get_price(str(i['id'])) is None:
+                    matched = False
                     for r in result:
                         if str(r['itemID']) == str(i['id']):
                             select_item_cost(r, i)
+                            matched = True
+                            break
+                    if not matched:
+                        i['pricePerUnit'] = 0
+                        i['lowestPriceServer'] = '查询失败'
+                        cache_manager.set_price(str(i['id']), 0, '查询失败')
+                        logger.debug(f"{i['name']} 未匹配到价格数据，缓存失败标记")
 
     def calibration_quantity(self, stuff_list, count=1):
         """

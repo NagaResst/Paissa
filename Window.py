@@ -385,7 +385,9 @@ class MainWindow(Ui_mainWindow):
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("通过点击全服比价重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            item.price_cache.clear()
+            # 清除缓存管理器中的价格缓存
+            from cache.manager import cache_manager
+            cache_manager.clear_price()
             self.query_price()
 
     def click_select_server(self, server):
@@ -409,7 +411,9 @@ class MainWindow(Ui_mainWindow):
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            item.price_cache.clear()
+            # 清除缓存管理器中的价格缓存
+            from cache.manager import cache_manager
+            cache_manager.clear_price()
             self.query_price()
 
     def query_item_action(self):

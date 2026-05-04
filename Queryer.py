@@ -113,6 +113,31 @@ class Queryer(object):
     def load_server_config(self):
         """加载服务器配置"""
         self.server_config = Config.SERVER_CONFIG
+    
+    def get_server_with_region(self, server_name):
+        """
+        获取带大区后缀的服务器名称
+        :param server_name: 服务器名称
+        :return str: 格式为 "服务器（大区）" 或 "服务器"（如果找不到对应大区）
+        """
+        region_servers = self.server_config['world_regions']
+        
+        # 国服大区映射
+        region_names = {
+            'maoxiaopang': '猫小胖',
+            'moguli': '莫古力',
+            'luxingniao': '陆行鸟',
+            'doudouchai': '豆豆柴'
+        }
+        
+        # 查找服务器所属的大区
+        for world_key, servers in region_servers.items():
+            if server_name in servers:
+                region_name = region_names.get(world_key, world_key)
+                return f"{server_name}（{region_name}）"
+        
+        # 如果是国际服或其他情况，直接返回服务器名
+        return server_name
 
     def server_list(self):
         """

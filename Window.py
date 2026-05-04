@@ -343,7 +343,9 @@ class MainWindow(Ui_mainWindow):
         logger.debug("绘制全服比价数据表格")
         t = 0
         for i in all_server_list:
-            server = QtWidgets.QTableWidgetItem(i['server'])
+            # 显示格式：大区-服务器
+            server_display = item.get_server_with_region(i['server'])
+            server = QtWidgets.QTableWidgetItem(server_display)
             server.setTextAlignment(4 | 128)
             pricePerUnit = QtWidgets.QTableWidgetItem("{:,.0f}".format(i['pricePerUnit']))
             pricePerUnit.setTextAlignment(4 | 128)
@@ -379,21 +381,38 @@ class MainWindow(Ui_mainWindow):
         """
         通过点击全服比价的结果重新选择服务器
         """
+        # 记录旧的大区标识符
+        old_world = item.world if hasattr(item, 'world') else None
+        
         server = show_price_page.all_server.item(selected.row(), 0).text()
         item.server = server
         self.show_server.setText(server)
+        
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("通过点击全服比价重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            # 清除缓存管理器中的价格缓存
-            from cache.manager import cache_manager
-            cache_manager.clear_price()
+            
+            # 调用 server_list() 获取新的大区标识符
+            item.server_list()
+            new_world = item.world
+            
+            # 如果大区发生变化，清除价格缓存
+            if old_world != new_world:
+                from cache.manager import cache_manager
+                cache_manager.clear_price()
+                logger.info(f"检测到跨大区切换 ({old_world} -> {new_world})，已清除价格缓存")
+            else:
+                logger.debug(f"同一大区内切换 ({new_world})，保留价格缓存")
+            
             self.query_price()
 
     def click_select_server(self, server):
         """
         菜单栏选择服务器重新查询的事件
         """
+        # 记录旧的大区标识符
+        old_world = item.world if hasattr(item, 'world') else None
+        
         # 修改界面上显示的当前服务器
         self.show_server.setText(server)
         if server == "欧服":
@@ -408,12 +427,23 @@ class MainWindow(Ui_mainWindow):
             item.server = 'China'
         else:
             item.server = server
+        
         # 立刻刷新价格显示的界面
         if item.name is not None and self.show_data_box.currentIndex() != 0:
             logger.info("重新选择了服务器为{}，开始进行{}价格查询".format(item.server, item.name))
-            # 清除缓存管理器中的价格缓存
-            from cache.manager import cache_manager
-            cache_manager.clear_price()
+            
+            # 调用 server_list() 获取新的大区标识符
+            item.server_list()
+            new_world = item.world
+            
+            # 如果大区发生变化，清除价格缓存
+            if old_world != new_world:
+                from cache.manager import cache_manager
+                cache_manager.clear_price()
+                logger.info(f"检测到跨大区切换 ({old_world} -> {new_world})，已清除价格缓存")
+            else:
+                logger.debug(f"同一大区内切换 ({new_world})，保留价格缓存")
+            
             self.query_price()
 
     def query_item_action(self):
@@ -569,7 +599,11 @@ class MainWindow(Ui_mainWindow):
             node.setText(1, str(material.get('pricePerUnit', 'N/A')))
             node.setText(2, str(material.get('amount', 'N/A')))
             node.setText(3, str(material.get('priceTotal', 'N/A')))
-            node.setText(4, str(material.get('lowestPriceServer', 'N/A')))
+            # 显示格式：大区-服务器
+            lowest_server = material.get('lowestPriceServer', 'N/A')
+            if lowest_server != 'N/A' and lowest_server != '查询失败':
+                lowest_server = item.get_server_with_region(lowest_server)
+            node.setText(4, str(lowest_server))
             
             if 'craft' in material:
                 for i in material['craft']:
@@ -693,9 +727,13 @@ class MainWindow(Ui_mainWindow):
             lastReviewTime = QtWidgets.QTableWidgetItem(item.timestamp_to_time(i['lastReviewTime']))
             lastReviewTime.setTextAlignment(4 | 128)
             if 'worldName' in i:
-                worldName = QtWidgets.QTableWidgetItem(i['worldName'])
+                # 显示格式：大区-服务器
+                world_display = item.get_server_with_region(i['worldName'])
+                worldName = QtWidgets.QTableWidgetItem(world_display)
             else:
-                worldName = QtWidgets.QTableWidgetItem(item.server)
+                # 显示格式：大区-服务器
+                server_display = item.get_server_with_region(item.server)
+                worldName = QtWidgets.QTableWidgetItem(server_display)
             worldName.setTextAlignment(4 | 128)
             # 填充数据 r = row
             show_price_page.sale_list.setItem(r, 0, pricePerUnit)

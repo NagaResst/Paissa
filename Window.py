@@ -527,10 +527,10 @@ class MainWindow(Ui_mainWindow):
             self.show_data_box.setCurrentIndex(1)
         # 只查询到一个道具
         elif len(item.item_list) == 1:
-            logger.info("查询到一个道具，准备进行网络测试")
+            logger.info("查询到一个道具,准备进行价格查询")
             item.id = item.item_list[0]['id']
             item.name = item.item_list[0]['name']
-            self.test_network()
+            self.query_price()
         # 查询不到道具
         else:
             logger.warning("查询不到道具")
